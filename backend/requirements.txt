@@ -6,3 +6,7 @@ passlib[bcrypt]==1.7.4
 ics==0.7.2
 python-multipart==0.0.6
 alembic==1.12.1
+beautifulsoup4==4.12.2
+lxml==4.9.3
+requests==2.31.0
+pycryptodome==3.19.0

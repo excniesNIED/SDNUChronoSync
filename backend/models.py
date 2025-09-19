@@ -30,6 +30,12 @@ class Event(Base):
     end_time = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # New fields for detailed course information
+    instructor = Column(String, nullable=True)      # 教师
+    weeks_display = Column(String, nullable=True)   # 周数 (例: "1-16周")
+    day_of_week = Column(Integer, nullable=True)    # 星期几 (1-7)
+    period = Column(String, nullable=True)          # 节次 (例: "3-4节")
 
     # Relationship with user
     owner = relationship("User", back_populates="events")

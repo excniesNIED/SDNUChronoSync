@@ -19,17 +19,23 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
     """Get all users."""
     return db.query(User).offset(skip).limit(limit).all()
 
-def create_user(db: Session, user: UserCreate) -> User:
-    """Create a new user."""
-    hashed_password = get_password_hash(user.password)
-    db_user = User(
-        student_id=user.student_id,
-        hashed_password=hashed_password,
-        full_name=user.full_name,
-        class_name=user.class_name,
-        grade=user.grade,
-        role=user.role
-    )
+def create_user(db: Session, user_data) -> User:
+    """Create a new user from UserCreate schema or dict."""
+    if isinstance(user_data, dict):
+        # Create from dict (for registration)
+        db_user = User(**user_data)
+    else:
+        # Create from UserCreate schema
+        hashed_password = get_password_hash(user_data.password)
+        db_user = User(
+            student_id=user_data.student_id,
+            hashed_password=hashed_password,
+            full_name=user_data.full_name,
+            class_name=user_data.class_name,
+            grade=user_data.grade,
+            role=user_data.role
+        )
+    
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -79,7 +85,11 @@ def create_event(db: Session, event: EventCreate, owner_id: int) -> Event:
         location=event.location,
         start_time=event.start_time,
         end_time=event.end_time,
-        owner_id=owner_id
+        owner_id=owner_id,
+        instructor=event.instructor,
+        weeks_display=event.weeks_display,
+        day_of_week=event.day_of_week,
+        period=event.period
     )
     db.add(db_event)
     db.commit()
