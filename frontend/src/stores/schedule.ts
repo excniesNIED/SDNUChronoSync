@@ -15,6 +15,11 @@ export const useScheduleStore = defineStore('schedule', () => {
   const eventsLoading = ref(false)
   const eventsError = ref<string | null>(null)
   
+  // Team view filtered events
+  const filteredEvents = ref<Event[]>([])
+  const filteredEventsLoading = ref(false)
+  const filteredEventsError = ref<string | null>(null)
+  
   // View state
   const viewMode = ref<CalendarViewMode>({ type: 'week', date: new Date() })
   
@@ -155,6 +160,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   function clearError() {
     error.value = null
     eventsError.value = null
+    filteredEventsError.value = null
   }
 
   function resetStore() {
@@ -165,6 +171,9 @@ export const useScheduleStore = defineStore('schedule', () => {
     currentMyEvents.value = []
     eventsLoading.value = false
     eventsError.value = null
+    filteredEvents.value = []
+    filteredEventsLoading.value = false
+    filteredEventsError.value = null
     localStorage.removeItem('activeScheduleId')
   }
   
@@ -268,6 +277,62 @@ export const useScheduleStore = defineStore('schedule', () => {
   function setViewMode(mode: CalendarViewMode) {
     viewMode.value = mode
   }
+  
+  // Team view methods
+  async function fetchFilteredEvents() {
+    filteredEventsLoading.value = true
+    filteredEventsError.value = null
+
+    try {
+      const filter = {
+        start_date: filterState.value.dateRange.start,
+        end_date: filterState.value.dateRange.end,
+        user_ids: filterState.value.selectedUserIds.length > 0 ? filterState.value.selectedUserIds.join(',') : undefined,
+        class_name: filterState.value.className || undefined,
+        grade: filterState.value.grade || undefined,
+        full_name_contains: filterState.value.nameKeyword || undefined,
+        event_title_contains: filterState.value.eventKeyword || undefined
+      }
+      
+      const events = await apiClient.getFilteredSchedule(filter)
+      filteredEvents.value = events
+    } catch (err: any) {
+      filteredEventsError.value = err.response?.data?.detail || '获取团队日程失败'
+      console.error('Failed to fetch filtered events:', err)
+    } finally {
+      filteredEventsLoading.value = false
+    }
+  }
+
+  function updateFilter(newFilter: Partial<FilterState>) {
+    filterState.value = { ...filterState.value, ...newFilter }
+  }
+
+  function updateDateRangeFromView() {
+    const currentDate = viewMode.value.date
+    let startDate: Date
+    let endDate: Date
+
+    if (viewMode.value.type === 'week') {
+      // Get start of week (Monday)
+      const day = currentDate.getDay()
+      const diff = currentDate.getDate() - day + (day === 0 ? -6 : 1)
+      startDate = new Date(currentDate)
+      startDate.setDate(diff)
+      
+      // Get end of week (Sunday)
+      endDate = new Date(startDate)
+      endDate.setDate(startDate.getDate() + 6)
+    } else {
+      // Get start of month
+      startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+      // Get end of month
+      endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+    }
+
+    filterState.value.dateRange.start = startDate.toISOString().split('T')[0]
+    filterState.value.dateRange.end = endDate.toISOString().split('T')[0]
+  }
 
   return {
     // State
@@ -278,6 +343,9 @@ export const useScheduleStore = defineStore('schedule', () => {
     currentMyEvents,
     eventsLoading,
     eventsError,
+    filteredEvents,
+    filteredEventsLoading,
+    filteredEventsError,
     viewMode,
     filterState,
     
@@ -299,6 +367,11 @@ export const useScheduleStore = defineStore('schedule', () => {
     deleteEvent,
     exportSchedule,
     setViewMode,
+    
+    // Team View Actions
+    fetchFilteredEvents,
+    updateFilter,
+    updateDateRangeFromView,
     
     // Utility
     clearError,

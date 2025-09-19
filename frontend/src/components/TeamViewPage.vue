@@ -85,18 +85,18 @@
           <!-- Calendar content -->
           <div class="flex-1 overflow-hidden">
             <!-- Loading state -->
-            <div v-if="scheduleStore.isLoading" class="flex justify-center items-center h-full">
+            <div v-if="scheduleStore.filteredEventsLoading" class="flex justify-center items-center h-full">
               <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
             </div>
 
             <!-- Error state -->
-            <div v-else-if="scheduleStore.error" class="flex justify-center items-center h-full">
+            <div v-else-if="scheduleStore.filteredEventsError" class="flex justify-center items-center h-full">
               <div class="rounded-md bg-red-50 p-4">
                 <div class="flex">
                   <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
                   <div class="ml-3">
                     <h3 class="text-sm font-medium text-red-800">
-                      {{ scheduleStore.error }}
+                      {{ scheduleStore.filteredEventsError }}
                     </h3>
                   </div>
                 </div>
@@ -234,8 +234,12 @@ const currentDateTitle = computed(() => {
 });
 
 const calendarEvents = computed((): CalendarEvent[] => {
+  if (!scheduleStore.filteredEvents || scheduleStore.filteredEvents.length === 0) {
+    return [];
+  }
+  
   return scheduleStore.filteredEvents.map(event => {
-    const userColor = getUserColor(event.owner_id);
+    const userColor = getUserColor(event.owner?.id || event.schedule_id);
     return {
       ...event,
       color: userColor.bg,

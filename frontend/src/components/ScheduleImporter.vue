@@ -78,7 +78,7 @@
                   </div>
 
                   <!-- Captcha -->
-                  <div v-if="sessionData">
+                  <div>
                     <label for="captcha" class="block text-sm font-medium leading-6 text-gray-900">
                       验证码 <span class="text-red-500">*</span>
                     </label>
@@ -88,21 +88,37 @@
                         v-model="form.captcha"
                         type="text"
                         required
-                        :disabled="isImporting"
+                        :disabled="isImporting || !sessionData"
                         class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 disabled:bg-gray-50 disabled:text-gray-500"
                         placeholder="请输入验证码"
                       />
-                      <div class="flex-shrink-0">
+                      <div class="flex-shrink-0 relative">
+                        <!-- Loading state -->
+                        <div v-if="isLoadingCaptcha" class="h-10 w-20 border rounded bg-gray-100 flex items-center justify-center">
+                          <div class="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        </div>
+                        <!-- Captcha image -->
                         <img
+                          v-else-if="sessionData?.captcha_image"
                           :src="`data:image/png;base64,${sessionData.captcha_image}`"
                           alt="验证码"
-                          class="h-10 w-20 border rounded cursor-pointer"
+                          class="h-10 w-20 border rounded cursor-pointer hover:opacity-80 transition-opacity"
                           @click="refreshCaptcha"
                           title="点击刷新验证码"
                         />
+                        <!-- Error state -->
+                        <div v-else class="h-10 w-20 border rounded bg-red-50 flex items-center justify-center cursor-pointer hover:bg-red-100"
+                             @click="refreshCaptcha"
+                             title="点击重新加载验证码">
+                          <span class="text-xs text-red-600">加载失败</span>
+                        </div>
                       </div>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500">点击验证码图片可刷新</p>
+                    <p class="mt-1 text-xs text-gray-500">
+                      <span v-if="isLoadingCaptcha">正在获取验证码...</span>
+                      <span v-else-if="sessionData">点击验证码图片可刷新 (如无法连接教务系统将显示演示验证码)</span>
+                      <span v-else class="text-red-500">验证码加载失败，请点击重试</span>
+                    </p>
                   </div>
 
                   <!-- Important Notice -->
@@ -168,7 +184,7 @@
                 <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                   <button
                     type="submit"
-                    :disabled="isImporting || !form.username || !form.password || !form.captcha || !sessionData"
+                    :disabled="isImporting || !form.username || !form.password || !form.captcha || !sessionData || isLoadingCaptcha"
                     class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed sm:col-start-2"
                   >
                     <CloudArrowDownIcon v-if="!isImporting" class="h-4 w-4 mr-2" />
@@ -291,23 +307,45 @@ async function handleImport() {
   }
 }
 
+const isLoadingCaptcha = ref(false);
+
 async function refreshCaptcha() {
+  if (isLoadingCaptcha.value) return; // 防止重复请求
+  
+  isLoadingCaptcha.value = true;
+  errorMessage.value = '';
+  
   try {
     const response = await apiClient.getImportSession();
-    sessionData.value = response;
-    form.value.captcha = '';
-  } catch (error) {
+    
+    if (response && response.session_id && response.captcha_image) {
+      sessionData.value = response;
+      form.value.captcha = '';
+      console.log('验证码加载成功');
+    } else {
+      throw new Error('验证码数据格式不正确');
+    }
+  } catch (error: any) {
     console.error('Failed to refresh captcha:', error);
-    errorMessage.value = '刷新验证码失败，请稍后重试';
+    errorMessage.value = error.response?.data?.detail || '刷新验证码失败，请检查网络连接';
+    sessionData.value = null;
+  } finally {
+    isLoadingCaptcha.value = false;
   }
 }
 
 // 监听模态框打开事件，自动获取验证码
-watch(() => props.isOpen, async (newValue) => {
-  if (newValue && !sessionData.value) {
+watch(() => props.isOpen, async (newValue, oldValue) => {
+  if (newValue && !oldValue) {
+    // 只有在从关闭到打开时才获取验证码
+    errorMessage.value = '';
+    successMessage.value = '';
     await refreshCaptcha();
+  } else if (!newValue && oldValue) {
+    // 模态框关闭时重置状态
+    resetForm();
   }
-});
+}, { immediate: false });
 
 function resetForm() {
   form.value = {
