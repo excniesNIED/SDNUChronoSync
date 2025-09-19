@@ -11,7 +11,13 @@
     "astro": "astro",
     "type-check": "vue-tsc --noEmit"
   },
-  "keywords": ["astro", "vue", "typescript", "schedule", "calendar"],
+  "keywords": [
+    "astro",
+    "vue",
+    "typescript",
+    "schedule",
+    "calendar"
+  ],
   "author": "SDNU CS Team",
   "license": "MIT",
   "dependencies": {
