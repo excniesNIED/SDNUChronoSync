@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
-from typing import Optional, List
+from datetime import datetime, date
+from typing import Optional, List, Dict, Any
 
 # User schemas
 class UserBase(BaseModel):
@@ -32,6 +32,33 @@ class UserPublic(UserBase):
 class UserResponse(UserPublic):
     pass
 
+# Schedule schemas
+class ScheduleBase(BaseModel):
+    name: str = Field(..., description="Schedule name, e.g., '大二上学期'")
+    status: str = Field(default="进行", description="Status: '进行', '结束', '隐藏'")
+    start_date: date = Field(..., description="Start date of the semester")
+    total_weeks: int = Field(default=20, description="Total weeks in the schedule")
+    class_times: Dict[str, Dict[str, str]] = Field(..., description="Class time slots")
+
+class ScheduleCreate(ScheduleBase):
+    pass
+
+class ScheduleUpdate(BaseModel):
+    name: Optional[str] = None
+    status: Optional[str] = None
+    start_date: Optional[date] = None
+    total_weeks: Optional[int] = None
+    class_times: Optional[Dict[str, Dict[str, str]]] = None
+
+class ScheduleResponse(ScheduleBase):
+    id: int
+    owner_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
 # Event schemas
 class EventBase(BaseModel):
     title: str
@@ -43,9 +70,10 @@ class EventBase(BaseModel):
     weeks_display: Optional[str] = None   # 周数 (例: "1-16周")
     day_of_week: Optional[int] = None     # 星期几 (1-7)
     period: Optional[str] = None          # 节次 (例: "3-4节")
+    weeks_input: Optional[str] = None     # 新增: 原始输入的周数，如 "1,4-6"
 
 class EventCreate(EventBase):
-    owner_id: Optional[int] = None  # For admin use - if not provided, uses current user
+    pass
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None
@@ -57,10 +85,11 @@ class EventUpdate(BaseModel):
     weeks_display: Optional[str] = None
     day_of_week: Optional[int] = None
     period: Optional[str] = None
+    weeks_input: Optional[str] = None
 
 class EventResponse(EventBase):
     id: int
-    owner_id: int
+    schedule_id: int
     created_at: datetime
     updated_at: datetime
     

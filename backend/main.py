@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine, get_db
 from models import Base, User
 from auth import get_password_hash
-from routers import auth, schedule, team, admin, import_route
+from routers import auth, schedule, team, admin, import_route, schedules
 import uvicorn
 
 # Initialize database with default admin user
@@ -118,6 +118,7 @@ app.include_router(schedule.router)
 app.include_router(team.router)
 app.include_router(admin.router)
 app.include_router(import_route.router)
+app.include_router(schedules.router)
 
 @app.get("/")
 async def root():
