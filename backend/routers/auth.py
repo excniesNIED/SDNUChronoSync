@@ -8,7 +8,7 @@ from auth import authenticate_user, create_access_token, get_current_user, ACCES
 from models import User
 import crud
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 @router.post("/token", response_model=Token)
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):

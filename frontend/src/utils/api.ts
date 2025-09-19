@@ -75,7 +75,7 @@ class ApiClient {
 
   // Auth endpoints
   async login(credentials: LoginRequest): Promise<TokenResponse> {
-    const response = await axios.post('/auth/token', credentials);
+    const response = await axios.post('/api/auth/token', credentials);
     this.setToken(response.data.access_token);
     return response.data;
   }
@@ -87,12 +87,12 @@ class ApiClient {
     grade: string;
     password: string;
   }): Promise<User> {
-    const response = await axios.post('/auth/register', userData);
+    const response = await axios.post('/api/auth/register', userData);
     return response.data;
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await axios.get('/auth/users/me');
+    const response = await axios.get('/api/auth/users/me');
     return response.data;
   }
 

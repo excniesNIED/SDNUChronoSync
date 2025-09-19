@@ -114,7 +114,8 @@ class ZFWImporter:
                 return {
                     "session_id": session_id,
                     "csrftoken": csrf_token,
-                    "captcha_image": captcha_base64
+                    "captcha_image": captcha_base64,
+                    "source": "real"  # 标识这是真实验证码
                 }
             
             except requests.exceptions.RequestException as e:
@@ -179,7 +180,8 @@ class ZFWImporter:
         return {
             "session_id": session_id,
             "csrftoken": f"fallback_csrf_{session_id[:8]}",
-            "captcha_image": captcha_base64
+            "captcha_image": captcha_base64,
+            "source": "fallback"  # 标识这是fallback验证码
         }
     
     def encrypt_password(self, password: str) -> str:

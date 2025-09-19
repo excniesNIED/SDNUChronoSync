@@ -133,7 +133,10 @@ def get_filtered_events(
 ) -> List[Event]:
     """Get filtered events with complex query conditions."""
     
-    query = db.query(Event).options(joinedload(Event.owner))
+    # Use proper relationships: Event -> Schedule -> User
+    query = db.query(Event).options(
+        joinedload(Event.schedule).joinedload(Schedule.owner)
+    )
     
     # Filter by date range
     query = query.filter(
@@ -143,8 +146,8 @@ def get_filtered_events(
         )
     )
     
-    # Join with User table for user-based filters
-    query = query.join(User)
+    # Join with Schedule and User tables for user-based filters
+    query = query.join(Schedule).join(User)
     
     # Filter by specific user IDs
     if user_ids:

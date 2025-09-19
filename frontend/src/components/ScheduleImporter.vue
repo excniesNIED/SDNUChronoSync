@@ -116,7 +116,15 @@
                     </div>
                     <p class="mt-1 text-xs text-gray-500">
                       <span v-if="isLoadingCaptcha">正在获取验证码...</span>
-                      <span v-else-if="sessionData">点击验证码图片可刷新 (如无法连接教务系统将显示演示验证码)</span>
+                      <span v-else-if="sessionData && sessionData.source === 'real'" class="text-green-600">
+                        ✓ 已连接到真实教务系统，点击图片可刷新验证码
+                      </span>
+                      <span v-else-if="sessionData && sessionData.source === 'fallback'" class="text-yellow-600">
+                        ⚠ 无法连接教务系统，使用演示验证码 (请输入 "DEMO" 或 "1234")
+                      </span>
+                      <span v-else-if="sessionData" class="text-blue-600">
+                        点击验证码图片可刷新
+                      </span>
                       <span v-else class="text-red-500">验证码加载失败，请点击重试</span>
                     </p>
                   </div>
