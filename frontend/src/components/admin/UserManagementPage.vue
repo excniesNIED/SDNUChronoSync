@@ -138,8 +138,8 @@
       </div>
     </div>
 
-    <!-- User Modal -->
-    <UserModal
+    <!-- User Edit Modal -->
+    <UserEditModal
       :is-open="isModalOpen"
       :user="selectedUser"
       @close="closeModal"
@@ -167,7 +167,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { apiClient } from '@/utils/api';
 import { formatDisplayDate } from '@/utils/date';
-import UserModal from './UserModal.vue';
+import UserEditModal from './UserEditModal.vue';
 import ConfirmDeleteModal from './ConfirmDeleteModal.vue';
 import type { User } from '@/types';
 
@@ -251,8 +251,8 @@ async function handleUserSave(userData: any) {
     }
     closeModal();
   } catch (err: any) {
+    error.value = err.response?.data?.detail || '保存用户失败';
     console.error('Failed to save user:', err);
-    // Error handling is done in the modal component
   }
 }
 

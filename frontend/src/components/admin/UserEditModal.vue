@@ -44,9 +44,13 @@
                         v-model="form.student_id"
                         type="text"
                         required
-                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                        :disabled="isEditMode"
+                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 disabled:bg-gray-50 disabled:text-gray-500"
                         placeholder="请输入学号"
                       />
+                      <p v-if="isEditMode" class="mt-1 text-xs text-gray-500">
+                        编辑模式下学号不可修改
+                      </p>
                     </div>
 
                     <!-- Full Name -->
@@ -259,7 +263,7 @@ async function handleSubmit() {
   isLoading.value = true;
   
   try {
-    const userData = {
+    const userData: any = {
       student_id: form.value.student_id.trim(),
       full_name: form.value.full_name.trim(),
       class_name: form.value.class_name.trim(),

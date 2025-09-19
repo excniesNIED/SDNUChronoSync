@@ -50,6 +50,15 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Import button -->
+        <button
+          @click="openImportModal"
+          class="inline-flex items-center gap-x-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        >
+          <CloudArrowDownIcon class="h-4 w-4" />
+          从教务系统导入
+        </button>
+
         <!-- Export button -->
         <button
           @click="exportSchedule"
@@ -107,6 +116,13 @@
       @save="handleEventSave"
       @delete="handleEventDelete"
     />
+
+    <!-- Schedule Importer Modal -->
+    <ScheduleImporter
+      :is-open="isImportModalOpen"
+      @close="closeImportModal"
+      @success="handleImportSuccess"
+    />
   </div>
 </template>
 
@@ -116,11 +132,13 @@ import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
 import ScheduleCalendar from './ScheduleCalendar.vue';
 import EventModal from './EventModal.vue';
+import ScheduleImporter from './ScheduleImporter.vue';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
   ArrowDownTrayIcon,
+  CloudArrowDownIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDate, formatDisplayDateTime, addWeeks, addMonths } from '@/utils/date';
@@ -133,6 +151,7 @@ const scheduleStore = useScheduleStore();
 const currentDate = ref(new Date());
 const viewMode = ref<'week' | 'month'>('week');
 const isModalOpen = ref(false);
+const isImportModalOpen = ref(false);
 const selectedEvent = ref<Event | null>(null);
 
 // Computed properties
@@ -180,6 +199,20 @@ function navigateDate(direction: number) {
 function openCreateModal() {
   selectedEvent.value = null;
   isModalOpen.value = true;
+}
+
+function openImportModal() {
+  isImportModalOpen.value = true;
+}
+
+function closeImportModal() {
+  isImportModalOpen.value = false;
+}
+
+async function handleImportSuccess(count: number) {
+  // 重新获取课表数据
+  await scheduleStore.fetchMyEvents();
+  closeImportModal();
 }
 
 function handleEventClick(event: Event) {

@@ -73,6 +73,17 @@ class ApiClient {
     return response.data;
   }
 
+  async register(userData: {
+    student_id: string;
+    full_name: string;
+    class_name: string;
+    grade: string;
+    password: string;
+  }): Promise<User> {
+    const response = await axios.post('/auth/register', userData);
+    return response.data;
+  }
+
   async getCurrentUser(): Promise<User> {
     const response = await axios.get('/auth/users/me');
     return response.data;
@@ -170,6 +181,38 @@ class ApiClient {
 
   async deleteAnyEvent(eventId: number): Promise<void> {
     await axios.delete(`/api/admin/schedule/${eventId}`);
+  }
+
+  // Import endpoints
+  async getImportSession(): Promise<{
+    session_id: string;
+    csrftoken: string;
+    captcha_image: string;
+  }> {
+    const response = await axios.get('/api/import/zfw/session');
+    return response.data;
+  }
+
+  async importFromZFW(importData: { 
+    session_id: string; 
+    username: string; 
+    password: string; 
+    captcha: string; 
+  }): Promise<{
+    success: boolean;
+    message: string;
+    imported_count: number;
+  }> {
+    const response = await axios.post('/api/import/zfw', importData);
+    return response.data;
+  }
+
+  async testImportConnection(): Promise<{
+    status: string;
+    message: string;
+  }> {
+    const response = await axios.get('/api/import/test');
+    return response.data;
   }
 
   // Utility methods

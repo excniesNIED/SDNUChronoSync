@@ -105,79 +105,28 @@
         <div class="flex flex-1 items-center">
           <h1 class="text-lg font-semibold text-gray-900">课表管理</h1>
         </div>
+        
+        <!-- Mobile user avatar -->
+        <div class="flex items-center">
+          <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
+            <UserIcon class="h-5 w-5 text-primary-600" />
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Mobile sidebar overlay -->
-    <TransitionRoot as="template" :show="mobileMenuOpen">
-      <Dialog as="div" class="relative z-50 lg:hidden" @close="mobileMenuOpen = false">
-        <TransitionChild
-          as="template"
-          enter="transition-opacity ease-linear duration-300"
-          enter-from="opacity-0"
-          enter-to="opacity-100"
-          leave="transition-opacity ease-linear duration-300"
-          leave-from="opacity-100"
-          leave-to="opacity-0"
-        >
-          <div class="fixed inset-0 bg-gray-900/80" />
-        </TransitionChild>
-
-        <div class="fixed inset-0 flex">
-          <TransitionChild
-            as="template"
-            enter="transition ease-in-out duration-300 transform"
-            enter-from="-translate-x-full"
-            enter-to="translate-x-0"
-            leave="transition ease-in-out duration-300 transform"
-            leave-from="translate-x-0"
-            leave-to="-translate-x-full"
-          >
-            <DialogPanel class="relative mr-16 flex w-full max-w-xs flex-1">
-              <TransitionChild
-                as="template"
-                enter="ease-in-out duration-300"
-                enter-from="opacity-0"
-                enter-to="opacity-100"
-                leave="ease-in-out duration-300"
-                leave-from="opacity-100"
-                leave-to="opacity-0"
-              >
-                <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
-                  <button type="button" class="-m-2.5 p-2.5" @click="mobileMenuOpen = false">
-                    <span class="sr-only">关闭侧边栏</span>
-                    <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true" />
-                  </button>
-                </div>
-              </TransitionChild>
-
-              <!-- Mobile navigation content (same as desktop) -->
-              <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
-                <div class="flex h-16 shrink-0 items-center">
-                  <h1 class="text-2xl font-bold text-primary-600">课表管理</h1>
-                </div>
-                <!-- Same navigation content as desktop -->
-                <nav class="flex flex-1 flex-col">
-                  <!-- Navigation items... (same as above) -->
-                </nav>
-              </div>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
-      </Dialog>
-    </TransitionRoot>
+    <!-- Mobile drawer -->
+    <MobileDrawer
+      :is-open="mobileMenuOpen"
+      @close="mobileMenuOpen = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import {
-  Dialog,
-  DialogPanel,
-  TransitionChild,
-  TransitionRoot,
-} from '@headlessui/vue';
+import MobileDrawer from './MobileDrawer.vue';
 import {
   Bars3Icon,
   CalendarIcon,
@@ -186,7 +135,6 @@ import {
   Cog6ToothIcon,
   UserIcon,
   ArrowRightOnRectangleIcon,
-  XMarkIcon,
 } from '@heroicons/vue/24/outline';
 
 const authStore = useAuthStore();

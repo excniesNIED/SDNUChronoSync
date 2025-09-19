@@ -60,6 +60,9 @@
             @click="$emit('event-click', event)"
           >
             <div class="font-medium truncate">{{ event.title }}</div>
+            <div v-if="event.instructor" class="text-xs opacity-75 truncate">
+              {{ event.instructor }}
+            </div>
             <div class="text-xs opacity-75 truncate">
               {{ formatTime(event.start_time) }} - {{ formatTime(event.end_time) }}
             </div>
@@ -107,10 +110,13 @@
               v-for="event in getDayEvents(day).slice(0, 3)"
               :key="event.id"
               :style="{ backgroundColor: event.color, color: event.textColor }"
-              class="text-xs px-2 py-1 rounded truncate cursor-pointer hover:shadow-sm"
+              class="text-xs px-2 py-1 rounded cursor-pointer hover:shadow-sm"
               @click.stop="$emit('event-click', event)"
             >
-              {{ event.title }}
+              <div class="truncate font-medium">{{ event.title }}</div>
+              <div v-if="event.instructor" class="truncate text-xs opacity-80">
+                {{ event.instructor }}
+              </div>
             </div>
             <div
               v-if="getDayEvents(day).length > 3"
@@ -141,9 +147,12 @@ interface Props {
   events: CalendarEvent[];
   viewMode: 'week' | 'month';
   currentDate: Date;
+  isAdminMode?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  isAdminMode: false,
+});
 
 defineEmits<{
   'event-click': [event: CalendarEvent];
@@ -214,13 +223,17 @@ function getEventStyle(event: CalendarEvent) {
 <style scoped>
 .calendar-container {
   @apply w-full overflow-hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 80vh;
+  padding: 1rem;
 }
 
-.week-view {
-  @apply min-h-[600px];
-}
-
-.month-view {
-  @apply min-h-[600px];
+.week-view, .month-view {
+  @apply min-h-[600px] w-full max-w-7xl;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  background: white;
 }
 </style>

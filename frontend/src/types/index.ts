@@ -20,6 +20,11 @@ export interface Event {
   created_at: string;
   updated_at: string;
   owner?: User;
+  // New fields for detailed course information
+  instructor?: string;      // 教师
+  weeks_display?: string;   // 周数 (例: "1-16周")
+  day_of_week?: number;     // 星期几 (1-7)
+  period?: string;          // 节次 (例: "3-4节")
 }
 
 export interface LoginRequest {
@@ -57,6 +62,10 @@ export interface CreateEventRequest {
   start_time: string;
   end_time: string;
   owner_id?: number; // For admin use
+  instructor?: string;
+  weeks_display?: string;
+  day_of_week?: number;
+  period?: string;
 }
 
 export interface UpdateEventRequest {
@@ -65,6 +74,10 @@ export interface UpdateEventRequest {
   location?: string;
   start_time?: string;
   end_time?: string;
+  instructor?: string;
+  weeks_display?: string;
+  day_of_week?: number;
+  period?: string;
 }
 
 export interface ScheduleFilter {

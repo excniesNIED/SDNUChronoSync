@@ -77,6 +77,48 @@
                       />
                     </div>
 
+                    <!-- Instructor -->
+                    <div>
+                      <label for="instructor" class="block text-sm font-medium leading-6 text-gray-900">
+                        教师
+                      </label>
+                      <input
+                        id="instructor"
+                        v-model="form.instructor"
+                        type="text"
+                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                        placeholder="请输入教师姓名"
+                      />
+                    </div>
+
+                    <!-- Course Details -->
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <label for="weeks_display" class="block text-sm font-medium leading-6 text-gray-900">
+                          周数
+                        </label>
+                        <input
+                          id="weeks_display"
+                          v-model="form.weeks_display"
+                          type="text"
+                          class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                          placeholder="例：1-16周"
+                        />
+                      </div>
+                      <div>
+                        <label for="period" class="block text-sm font-medium leading-6 text-gray-900">
+                          节次
+                        </label>
+                        <input
+                          id="period"
+                          v-model="form.period"
+                          type="text"
+                          class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                          placeholder="例：1-2节"
+                        />
+                      </div>
+                    </div>
+
                     <!-- Date and Time -->
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
@@ -108,19 +150,21 @@
                     <!-- Owner selection (Admin only) -->
                     <div v-if="isAdmin && users && users.length > 0">
                       <label for="owner_id" class="block text-sm font-medium leading-6 text-gray-900">
-                        所属用户
+                        所属用户 <span class="text-red-500">*</span>
                       </label>
                       <select
                         id="owner_id"
                         v-model="form.owner_id"
+                        required
                         class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
                       >
+                        <option value="">请选择用户</option>
                         <option
                           v-for="user in users"
                           :key="user.id"
                           :value="user.id"
                         >
-                          {{ user.full_name }} ({{ user.student_id }})
+                          {{ user.full_name }} ({{ user.student_id }}) - {{ user.class_name }}
                         </option>
                       </select>
                     </div>
@@ -214,6 +258,10 @@ const form = ref({
   start_time: '',
   end_time: '',
   owner_id: undefined as number | undefined,
+  instructor: '',
+  weeks_display: '',
+  day_of_week: undefined as number | undefined,
+  period: '',
 });
 
 const isEditMode = computed(() => props.event && props.event.id > 0);
@@ -229,6 +277,10 @@ watch(() => props.event, (newEvent) => {
       start_time: formatDateTime(newEvent.start_time),
       end_time: formatDateTime(newEvent.end_time),
       owner_id: newEvent.owner_id,
+      instructor: newEvent.instructor || '',
+      weeks_display: newEvent.weeks_display || '',
+      day_of_week: newEvent.day_of_week,
+      period: newEvent.period || '',
     };
   } else {
     // Reset form for new event
@@ -242,6 +294,10 @@ watch(() => props.event, (newEvent) => {
       start_time: formatDateTime(now),
       end_time: formatDateTime(oneHourLater),
       owner_id: undefined,
+      instructor: '',
+      weeks_display: '',
+      day_of_week: undefined,
+      period: '',
     };
   }
   error.value = null;
@@ -266,6 +322,11 @@ async function handleSubmit() {
   
   if (startTime >= endTime) {
     error.value = '结束时间必须晚于开始时间';
+    return;
+  }
+
+  if (isAdmin && !form.value.owner_id) {
+    error.value = '请选择所属用户';
     return;
   }
   

@@ -120,6 +120,7 @@
                 :events="calendarEvents"
                 :view-mode="viewMode"
                 :current-date="currentDate"
+                :is-admin-mode="true"
                 @event-click="handleEventClick"
                 @date-click="handleDateClick"
               />
