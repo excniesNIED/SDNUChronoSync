@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { apiClient } from '../utils/api'
-import type { ScheduleResponse, ScheduleCreate, ScheduleUpdate, Event, CreateEventRequest, UpdateEventRequest, CalendarViewMode } from '../types'
+import type { ScheduleResponse, ScheduleCreate, ScheduleUpdate, Event, CreateEventRequest, UpdateEventRequest, CalendarViewMode, FilterState } from '../types'
 
 export const useScheduleStore = defineStore('schedule', () => {
   // State
@@ -17,6 +17,19 @@ export const useScheduleStore = defineStore('schedule', () => {
   
   // View state
   const viewMode = ref<CalendarViewMode>({ type: 'week', date: new Date() })
+  
+  // Filter state for team view
+  const filterState = ref<FilterState>({
+    dateRange: {
+      start: new Date().toISOString().split('T')[0],
+      end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    },
+    selectedUserIds: [],
+    className: '',
+    grade: '',
+    nameKeyword: '',
+    eventKeyword: ''
+  })
 
   // Getters
   const activeSchedule = computed(() => {
@@ -266,6 +279,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     eventsLoading,
     eventsError,
     viewMode,
+    filterState,
     
     // Getters
     activeSchedule,

@@ -1,8 +1,120 @@
 <template>
   <div class="space-y-6">
-    <!-- Action bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div class="flex items-center gap-4">
+    <!-- Header with schedule selector -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <!-- Schedule selector and title -->
+        <div class="flex items-center gap-4">
+          <!-- Schedule dropdown -->
+          <div class="relative">
+            <Menu as="div" class="relative inline-block text-left">
+              <div>
+                <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  <CalendarIcon class="h-5 w-5 text-gray-400" />
+                  {{ scheduleStore.activeSchedule?.name || '选择课表' }}
+                  <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
+                </MenuButton>
+              </div>
+
+              <transition
+                enter-active-class="transition ease-out duration-100"
+                enter-from-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-active-class="transition ease-in duration-75"
+                leave-from-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
+              >
+                <MenuItems class="absolute left-0 z-10 mt-2 w-80 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <!-- Current Schedules -->
+                  <div class="px-4 py-3">
+                    <p class="text-sm font-medium text-gray-900">我的课表</p>
+                  </div>
+                  <div class="py-1">
+                    <MenuItem
+                      v-for="schedule in scheduleStore.schedules"
+                      :key="schedule.id"
+                      v-slot="{ active }"
+                    >
+                      <div
+                        @click="selectSchedule(schedule.id)"
+                        :class="[
+                          active ? 'bg-gray-100' : '',
+                          'group flex items-center justify-between px-4 py-2 text-sm cursor-pointer'
+                        ]"
+                      >
+                        <div class="flex items-center gap-3">
+                          <div 
+                            :class="[
+                              'w-2 h-2 rounded-full flex-shrink-0',
+                              schedule.status === '进行' ? 'bg-green-500' : 
+                              schedule.status === '结束' ? 'bg-gray-400' : 'bg-yellow-500'
+                            ]"
+                          ></div>
+                          <div>
+                            <p class="font-medium text-gray-900">{{ schedule.name }}</p>
+                            <p class="text-xs text-gray-500">{{ formatScheduleInfo(schedule) }}</p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                          <button
+                            @click.stop="exportSchedule(schedule.id)"
+                            class="p-1 text-gray-400 hover:text-blue-600 rounded"
+                            title="导出"
+                          >
+                            <ArrowDownTrayIcon class="h-4 w-4" />
+                          </button>
+                          <button
+                            @click.stop="openEditScheduleModal(schedule)"
+                            class="p-1 text-gray-400 hover:text-gray-600 rounded"
+                            title="编辑"
+                          >
+                            <PencilIcon class="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </MenuItem>
+                  </div>
+                  
+                  <!-- Actions -->
+                  <div class="py-1">
+                    <MenuItem v-slot="{ active }">
+                      <button
+                        @click="openCreateScheduleModal"
+                        :class="[
+                          active ? 'bg-gray-100' : '',
+                          'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                        ]"
+                      >
+                        <PlusIcon class="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+                        新建课表
+                      </button>
+                    </MenuItem>
+                  </div>
+                </MenuItems>
+              </transition>
+            </Menu>
+          </div>
+
+          <!-- Date navigation -->
+          <div class="flex items-center gap-2">
+            <button
+              @click="navigateDate(-1)"
+              class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            >
+              <ChevronLeftIcon class="h-5 w-5" />
+            </button>
+            <h2 class="text-lg font-semibold text-gray-900 min-w-[200px] text-center">
+              {{ currentDateTitle }}
+            </h2>
+            <button
+              @click="navigateDate(1)"
+              class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            >
+              <ChevronRightIcon class="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
         <!-- View mode toggle -->
         <div class="flex rounded-md shadow-sm">
           <button
@@ -29,53 +141,26 @@
           </button>
         </div>
 
-        <!-- Date navigation -->
-        <div class="flex items-center gap-2">
+        <!-- Action buttons -->
+        <div class="flex items-center gap-3">
+          <!-- Import button -->
           <button
-            @click="navigateDate(-1)"
-            class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            @click="openImportModal"
+            class="inline-flex items-center gap-x-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           >
-            <ChevronLeftIcon class="h-5 w-5" />
+            <CloudArrowDownIcon class="h-4 w-4" />
+            导入
           </button>
-          <h2 class="text-lg font-semibold text-gray-900 min-w-[200px] text-center">
-            {{ currentDateTitle }}
-          </h2>
+
+          <!-- Add event button -->
           <button
-            @click="navigateDate(1)"
-            class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            @click="openCreateModal"
+            class="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
           >
-            <ChevronRightIcon class="h-5 w-5" />
+            <PlusIcon class="h-4 w-4" />
+            添加日程
           </button>
         </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <!-- Import button -->
-        <button
-          @click="openImportModal"
-          class="inline-flex items-center gap-x-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-        >
-          <CloudArrowDownIcon class="h-4 w-4" />
-          从教务系统导入
-        </button>
-
-        <!-- Export button -->
-        <button
-          @click="exportSchedule"
-          class="inline-flex items-center gap-x-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-        >
-          <ArrowDownTrayIcon class="h-4 w-4" />
-          导出
-        </button>
-
-        <!-- Add event button -->
-        <button
-          @click="openCreateModal"
-          class="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-        >
-          <PlusIcon class="h-4 w-4" />
-          添加日程
-        </button>
       </div>
     </div>
 
@@ -138,27 +223,40 @@
       @close="closeImportModal"
       @success="handleImportSuccess"
     />
+
+    <!-- Schedule Editor Modal -->
+    <ScheduleEditor
+      :is-open="isScheduleEditorOpen"
+      :schedule-data="selectedScheduleData"
+      @close="closeScheduleEditor"
+      @save="handleScheduleSave"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
 import ScheduleCalendar from './ScheduleCalendar.vue';
 import EventModal from './EventModal.vue';
 import ScheduleImporter from './ScheduleImporter.vue';
+import ScheduleEditor from './ScheduleEditor.vue';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
   PlusIcon,
   ArrowDownTrayIcon,
   CloudArrowDownIcon,
   ExclamationTriangleIcon,
+  CalendarIcon,
+  PencilIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDate, formatDisplayDateTime, addWeeks, addMonths } from '@/utils/date';
 import { getUserColor } from '@/utils/colors';
-import type { Event, CalendarEvent } from '@/types';
+import type { Event, CalendarEvent, ScheduleResponse } from '@/types';
 
 const authStore = useAuthStore();
 const scheduleStore = useScheduleStore();
@@ -167,7 +265,9 @@ const currentDate = ref(new Date());
 const viewMode = ref<'week' | 'month'>('week');
 const isModalOpen = ref(false);
 const isImportModalOpen = ref(false);
+const isScheduleEditorOpen = ref(false);
 const selectedEvent = ref<Event | null>(null);
+const selectedScheduleData = ref<ScheduleResponse | null>(null);
 
 // Computed properties
 const currentDateTitle = computed(() => {
@@ -276,8 +376,58 @@ async function handleEventDelete(eventId: number) {
   closeModal();
 }
 
-async function exportSchedule() {
-  await scheduleStore.exportSchedule();
+async function exportSchedule(scheduleId?: number) {
+  if (scheduleId && scheduleId !== scheduleStore.activeScheduleId) {
+    // Temporarily switch to export specific schedule
+    const originalActiveId = scheduleStore.activeScheduleId;
+    scheduleStore.setActiveSchedule(scheduleId);
+    await scheduleStore.exportSchedule();
+    if (originalActiveId) {
+      scheduleStore.setActiveSchedule(originalActiveId);
+    }
+  } else {
+    await scheduleStore.exportSchedule();
+  }
+}
+
+// Schedule management methods
+function selectSchedule(scheduleId: number) {
+  scheduleStore.setActiveSchedule(scheduleId);
+}
+
+function openCreateScheduleModal() {
+  selectedScheduleData.value = null;
+  isScheduleEditorOpen.value = true;
+}
+
+function openEditScheduleModal(schedule: ScheduleResponse) {
+  selectedScheduleData.value = schedule;
+  isScheduleEditorOpen.value = true;
+}
+
+function closeScheduleEditor() {
+  isScheduleEditorOpen.value = false;
+  selectedScheduleData.value = null;
+}
+
+async function handleScheduleSave() {
+  await scheduleStore.fetchSchedules();
+  closeScheduleEditor();
+}
+
+function formatScheduleInfo(schedule: ScheduleResponse): string {
+  const parts = [];
+  
+  if (schedule.total_weeks) {
+    parts.push(`${schedule.total_weeks}周`);
+  }
+  
+  if (schedule.start_date) {
+    const startDate = new Date(schedule.start_date);
+    parts.push(`从 ${startDate.toLocaleDateString()}`);
+  }
+  
+  return parts.join(' • ') || '无信息';
 }
 
 // Initialize
