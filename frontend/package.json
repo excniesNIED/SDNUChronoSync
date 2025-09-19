@@ -1,0 +1,33 @@
+{
+  "name": "schedule-management-frontend",
+  "version": "1.0.0",
+  "description": "多用户课表与日程管理工具 - 前端",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "keywords": ["astro", "vue", "typescript", "schedule", "calendar"],
+  "author": "SDNU CS Team",
+  "license": "MIT",
+  "dependencies": {
+    "@astrojs/tailwind": "^6.0.2",
+    "@astrojs/vue": "^5.1.1",
+    "@headlessui/vue": "^1.7.23",
+    "@heroicons/vue": "^2.2.0",
+    "@tailwindcss/typography": "^0.5.16",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "@vueuse/core": "^13.9.0",
+    "astro": "^5.13.8",
+    "axios": "^1.12.2",
+    "pinia": "^3.0.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.2",
+    "vue": "^3.5.21"
+  }
+}

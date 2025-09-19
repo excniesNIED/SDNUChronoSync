@@ -1,0 +1,181 @@
+import axios from 'axios';
+import type {
+  User,
+  Event,
+  LoginRequest,
+  TokenResponse,
+  CreateUserRequest,
+  UpdateUserRequest,
+  CreateEventRequest,
+  UpdateEventRequest,
+  ScheduleFilter
+} from '@/types';
+
+const API_BASE_URL = 'http://localhost:8000';
+
+class ApiClient {
+  constructor() {
+    // Configure axios defaults
+    axios.defaults.baseURL = API_BASE_URL;
+    axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+    // Request interceptor to add auth token
+    axios.interceptors.request.use(
+      (config) => {
+        const token = this.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor to handle errors
+    axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Token expired or invalid, redirect to login
+          this.removeToken();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('access_token');
+  }
+
+  private setToken(token: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('access_token', token);
+    }
+  }
+
+  private removeToken(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+    }
+  }
+
+  // Auth endpoints
+  async login(credentials: LoginRequest): Promise<TokenResponse> {
+    const response = await axios.post('/auth/token', credentials);
+    this.setToken(response.data.access_token);
+    return response.data;
+  }
+
+  async getCurrentUser(): Promise<User> {
+    const response = await axios.get('/auth/users/me');
+    return response.data;
+  }
+
+  logout(): void {
+    this.removeToken();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  }
+
+  // Personal schedule endpoints
+  async getMyEvents(): Promise<Event[]> {
+    const response = await axios.get('/api/schedule/');
+    return response.data;
+  }
+
+  async createMyEvent(event: CreateEventRequest): Promise<Event> {
+    const response = await axios.post('/api/schedule/', event);
+    return response.data;
+  }
+
+  async updateMyEvent(eventId: number, event: UpdateEventRequest): Promise<Event> {
+    const response = await axios.put(`/api/schedule/${eventId}`, event);
+    return response.data;
+  }
+
+  async deleteMyEvent(eventId: number): Promise<void> {
+    await axios.delete(`/api/schedule/${eventId}`);
+  }
+
+  async exportMySchedule(): Promise<Blob> {
+    const response = await axios.get('/api/schedule/export/ics', {
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
+  // Team endpoints
+  async getAllUsers(): Promise<User[]> {
+    const response = await axios.get('/api/team/users');
+    return response.data;
+  }
+
+  async getUserSchedule(userId: number): Promise<Event[]> {
+    const response = await axios.get(`/api/team/schedule/user/${userId}`);
+    return response.data;
+  }
+
+  async getFilteredSchedule(filter: ScheduleFilter): Promise<Event[]> {
+    const params = new URLSearchParams();
+    params.append('start_date', filter.start_date);
+    params.append('end_date', filter.end_date);
+    
+    if (filter.user_ids) params.append('user_ids', filter.user_ids);
+    if (filter.class_name) params.append('class_name', filter.class_name);
+    if (filter.grade) params.append('grade', filter.grade);
+    if (filter.full_name_contains) params.append('full_name_contains', filter.full_name_contains);
+    if (filter.event_title_contains) params.append('event_title_contains', filter.event_title_contains);
+
+    const response = await axios.get(`/api/team/schedule/filtered?${params.toString()}`);
+    return response.data;
+  }
+
+  // Admin endpoints
+  async getAllUsersAdmin(): Promise<User[]> {
+    const response = await axios.get('/api/admin/users');
+    return response.data;
+  }
+
+  async createUser(user: CreateUserRequest): Promise<User> {
+    const response = await axios.post('/api/admin/users', user);
+    return response.data;
+  }
+
+  async updateUser(userId: number, user: UpdateUserRequest): Promise<User> {
+    const response = await axios.put(`/api/admin/users/${userId}`, user);
+    return response.data;
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    await axios.delete(`/api/admin/users/${userId}`);
+  }
+
+  async createEventForUser(userId: number, event: CreateEventRequest): Promise<Event> {
+    const response = await axios.post(`/api/admin/schedule/${userId}`, event);
+    return response.data;
+  }
+
+  async updateAnyEvent(eventId: number, event: UpdateEventRequest): Promise<Event> {
+    const response = await axios.put(`/api/admin/schedule/${eventId}`, event);
+    return response.data;
+  }
+
+  async deleteAnyEvent(eventId: number): Promise<void> {
+    await axios.delete(`/api/admin/schedule/${eventId}`);
+  }
+
+  // Utility methods
+  isAuthenticated(): boolean {
+    return this.getToken() !== null;
+  }
+}
+
+export const apiClient = new ApiClient();

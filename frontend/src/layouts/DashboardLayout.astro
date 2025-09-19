@@ -1,0 +1,25 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Navigation from '../components/Navigation.vue';
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="min-h-screen bg-gray-50">
+    <Navigation client:load />
+    
+    <main class="lg:pl-72">
+      <div class="xl:pl-96">
+        <div class="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
+          <slot />
+        </div>
+      </div>
+    </main>
+  </div>
+</BaseLayout>
