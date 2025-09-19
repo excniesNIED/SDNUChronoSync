@@ -9,9 +9,21 @@ export interface User {
   created_at: string;
 }
 
+export interface Schedule {
+  id: number;
+  name: string;
+  owner_id: number;
+  status: '进行' | '结束' | '隐藏';
+  start_date: string;  // Date in YYYY-MM-DD format
+  total_weeks: number;
+  class_times: { [key: string]: { start: string; end: string } };
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Event {
   id: number;
-  owner_id: number;
+  schedule_id: number;
   title: string;
   description?: string;
   location?: string;
@@ -25,6 +37,7 @@ export interface Event {
   weeks_display?: string;   // 周数 (例: "1-16周")
   day_of_week?: number;     // 星期几 (1-7)
   period?: string;          // 节次 (例: "3-4节")
+  weeks_input?: string;     // 原始输入的周数，如 "1,4-6"
 }
 
 export interface LoginRequest {
@@ -55,17 +68,35 @@ export interface UpdateUserRequest {
   password?: string;
 }
 
+export interface ScheduleResponse extends Schedule {}
+
+export interface ScheduleCreate {
+  name: string;
+  status?: '进行' | '结束' | '隐藏';
+  start_date: string;
+  total_weeks?: number;
+  class_times?: { [key: string]: { start: string; end: string } };
+}
+
+export interface ScheduleUpdate {
+  name?: string;
+  status?: '进行' | '结束' | '隐藏';
+  start_date?: string;
+  total_weeks?: number;
+  class_times?: { [key: string]: { start: string; end: string } };
+}
+
 export interface CreateEventRequest {
   title: string;
   description?: string;
   location?: string;
   start_time: string;
   end_time: string;
-  owner_id?: number; // For admin use
   instructor?: string;
   weeks_display?: string;
   day_of_week?: number;
   period?: string;
+  weeks_input?: string;
 }
 
 export interface UpdateEventRequest {
@@ -78,6 +109,7 @@ export interface UpdateEventRequest {
   weeks_display?: string;
   day_of_week?: number;
   period?: string;
+  weeks_input?: string;
 }
 
 export interface ScheduleFilter {

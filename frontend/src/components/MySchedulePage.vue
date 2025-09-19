@@ -80,18 +80,33 @@
     </div>
 
     <!-- Loading state -->
-    <div v-if="scheduleStore.isLoading" class="flex justify-center py-12">
+    <div v-if="scheduleStore.isLoading || scheduleStore.eventsLoading" class="flex justify-center py-12">
       <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="scheduleStore.error" class="rounded-md bg-red-50 p-4">
+    <div v-else-if="scheduleStore.error || scheduleStore.eventsError" class="rounded-md bg-red-50 p-4">
       <div class="flex">
         <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
         <div class="ml-3">
           <h3 class="text-sm font-medium text-red-800">
-            {{ scheduleStore.error }}
+            {{ scheduleStore.error || scheduleStore.eventsError }}
           </h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- No active schedule warning -->
+    <div v-else-if="!scheduleStore.activeSchedule" class="rounded-md bg-yellow-50 p-4">
+      <div class="flex">
+        <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" />
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-yellow-800">
+            请创建或选择一个课表
+          </h3>
+          <p class="text-sm text-yellow-700 mt-1">
+            您需要先创建一个课表才能查看和管理日程。
+          </p>
         </div>
       </div>
     </div>
@@ -164,8 +179,12 @@ const currentDateTitle = computed(() => {
 });
 
 const calendarEvents = computed((): CalendarEvent[] => {
+  if (!scheduleStore.currentMyEvents || scheduleStore.currentMyEvents.length === 0) {
+    return [];
+  }
+  
   return scheduleStore.currentMyEvents.map(event => {
-    const userColor = getUserColor(event.owner_id);
+    const userColor = getUserColor(event.owner?.id || event.schedule_id);
     return {
       ...event,
       color: userColor.bg,
@@ -224,7 +243,7 @@ function handleDateClick(date: Date) {
   // Create new event at clicked date
   selectedEvent.value = {
     id: 0,
-    owner_id: authStore.currentUser?.id || 0,
+    schedule_id: scheduleStore.activeScheduleId || 0,
     title: '',
     description: '',
     location: '',
@@ -271,7 +290,7 @@ onMounted(async () => {
     return;
   }
 
-  // Load my events
-  await scheduleStore.fetchMyEvents();
+  // Load schedules first, which will auto-load events for active schedule
+  await scheduleStore.fetchSchedules();
 });
 </script>

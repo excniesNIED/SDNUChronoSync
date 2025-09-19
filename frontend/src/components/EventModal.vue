@@ -147,27 +147,6 @@
                       </div>
                     </div>
 
-                    <!-- Owner selection (Admin only) -->
-                    <div v-if="isAdmin && users && users.length > 0">
-                      <label for="owner_id" class="block text-sm font-medium leading-6 text-gray-900">
-                        所属用户 <span class="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="owner_id"
-                        v-model="form.owner_id"
-                        required
-                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
-                      >
-                        <option value="">请选择用户</option>
-                        <option
-                          v-for="user in users"
-                          :key="user.id"
-                          :value="user.id"
-                        >
-                          {{ user.full_name }} ({{ user.student_id }}) - {{ user.class_name }}
-                        </option>
-                      </select>
-                    </div>
                   </div>
                 </div>
 
@@ -228,18 +207,16 @@ import { ref, computed, watch } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { formatDateTime } from '@/utils/date';
-import type { Event, User } from '@/types';
+import type { Event } from '@/types';
 
 interface Props {
   isOpen: boolean;
   event?: Event | null;
   isAdmin?: boolean;
-  users?: User[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isAdmin: false,
-  users: () => [],
 });
 
 const emit = defineEmits<{
@@ -257,7 +234,6 @@ const form = ref({
   location: '',
   start_time: '',
   end_time: '',
-  owner_id: undefined as number | undefined,
   instructor: '',
   weeks_display: '',
   day_of_week: undefined as number | undefined,
@@ -276,7 +252,6 @@ watch(() => props.event, (newEvent) => {
       location: newEvent.location || '',
       start_time: formatDateTime(newEvent.start_time),
       end_time: formatDateTime(newEvent.end_time),
-      owner_id: newEvent.owner_id,
       instructor: newEvent.instructor || '',
       weeks_display: newEvent.weeks_display || '',
       day_of_week: newEvent.day_of_week,
@@ -293,7 +268,6 @@ watch(() => props.event, (newEvent) => {
       location: '',
       start_time: formatDateTime(now),
       end_time: formatDateTime(oneHourLater),
-      owner_id: undefined,
       instructor: '',
       weeks_display: '',
       day_of_week: undefined,
@@ -324,11 +298,6 @@ async function handleSubmit() {
     error.value = '结束时间必须晚于开始时间';
     return;
   }
-
-  if (isAdmin && !form.value.owner_id) {
-    error.value = '请选择所属用户';
-    return;
-  }
   
   isLoading.value = true;
   
@@ -339,7 +308,10 @@ async function handleSubmit() {
       location: form.value.location?.trim() || undefined,
       start_time: new Date(form.value.start_time).toISOString(),
       end_time: new Date(form.value.end_time).toISOString(),
-      owner_id: form.value.owner_id,
+      instructor: form.value.instructor?.trim() || undefined,
+      weeks_display: form.value.weeks_display?.trim() || undefined,
+      day_of_week: form.value.day_of_week,
+      period: form.value.period?.trim() || undefined,
     };
     
     emit('save', eventData);

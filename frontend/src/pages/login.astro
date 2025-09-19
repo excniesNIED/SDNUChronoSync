@@ -23,7 +23,16 @@ import LoginForm from '../components/LoginForm.vue';
       <LoginForm client:load />
 
       <div class="text-center">
-        <div class="text-sm text-gray-600">
+        <div class="text-sm">
+          <p class="text-gray-600 mb-4">
+            还没有账户？
+            <a href="/register" class="font-medium text-primary-600 hover:text-primary-500">
+              立即注册
+            </a>
+          </p>
+        </div>
+        
+        <div class="text-sm text-gray-600 border-t pt-4">
           <p class="mb-2">测试账户：</p>
           <p><strong>管理员：</strong> admin / admin123</p>
           <p><strong>学生：</strong> 202311001145 / password123</p>

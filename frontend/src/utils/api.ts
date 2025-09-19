@@ -8,7 +8,14 @@ import type {
   UpdateUserRequest,
   CreateEventRequest,
   UpdateEventRequest,
-  ScheduleFilter
+  ScheduleFilter,
+  ScheduleResponse,
+  ScheduleCreate,
+  ScheduleUpdate,
+  RegisterRequest,
+  ImportSessionResponse,
+  ImportRequest,
+  ImportResponse
 } from '@/types';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -212,6 +219,57 @@ class ApiClient {
     message: string;
   }> {
     const response = await axios.get('/api/import/test');
+    return response.data;
+  }
+
+  // Schedule management endpoints
+  async getSchedules(): Promise<ScheduleResponse[]> {
+    const response = await axios.get('/api/schedules/');
+    return response.data;
+  }
+
+  async createSchedule(scheduleData: ScheduleCreate): Promise<ScheduleResponse> {
+    const response = await axios.post('/api/schedules/', scheduleData);
+    return response.data;
+  }
+
+  async getSchedule(scheduleId: number): Promise<ScheduleResponse> {
+    const response = await axios.get(`/api/schedules/${scheduleId}`);
+    return response.data;
+  }
+
+  async updateSchedule(scheduleId: number, scheduleData: ScheduleUpdate): Promise<ScheduleResponse> {
+    const response = await axios.put(`/api/schedules/${scheduleId}`, scheduleData);
+    return response.data;
+  }
+
+  async deleteSchedule(scheduleId: number): Promise<void> {
+    await axios.delete(`/api/schedules/${scheduleId}`);
+  }
+
+  async getScheduleEvents(scheduleId: number): Promise<Event[]> {
+    const response = await axios.get(`/api/schedules/${scheduleId}/events`);
+    return response.data;
+  }
+
+  async createScheduleEvent(scheduleId: number, eventData: CreateEventRequest): Promise<Event> {
+    const response = await axios.post(`/api/schedules/${scheduleId}/events`, eventData);
+    return response.data;
+  }
+
+  async updateScheduleEvent(scheduleId: number, eventId: number, eventData: UpdateEventRequest): Promise<Event> {
+    const response = await axios.put(`/api/schedules/${scheduleId}/events/${eventId}`, eventData);
+    return response.data;
+  }
+
+  async deleteScheduleEvent(scheduleId: number, eventId: number): Promise<void> {
+    await axios.delete(`/api/schedules/${scheduleId}/events/${eventId}`);
+  }
+
+  async exportScheduleToICS(scheduleId: number): Promise<Blob> {
+    const response = await axios.get(`/api/schedules/${scheduleId}/export.ics`, {
+      responseType: 'blob',
+    });
     return response.data;
   }
 

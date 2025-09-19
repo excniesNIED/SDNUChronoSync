@@ -1,274 +1,293 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import type { Event, ScheduleFilter, CalendarViewMode, FilterState } from '@/types';
-import { apiClient } from '@/utils/api';
-import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd } from '@/utils/date';
+import { defineStore } from 'pinia'
+import { ref, computed, watch } from 'vue'
+import { apiClient } from '../utils/api'
+import type { ScheduleResponse, ScheduleCreate, ScheduleUpdate, Event, CreateEventRequest, UpdateEventRequest, CalendarViewMode } from '../types'
 
 export const useScheduleStore = defineStore('schedule', () => {
   // State
-  const events = ref<Event[]>([]);
-  const myEvents = ref<Event[]>([]);
-  const isLoading = ref(false);
-  const error = ref<string | null>(null);
-
+  const schedules = ref<ScheduleResponse[]>([])
+  const activeScheduleId = ref<number | null>(null)
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+  
+  // Event state
+  const currentMyEvents = ref<Event[]>([])
+  const eventsLoading = ref(false)
+  const eventsError = ref<string | null>(null)
+  
   // View state
-  const viewMode = ref<CalendarViewMode>({
-    type: 'week',
-    date: new Date(),
-  });
-
-  // Filter state
-  const filterState = ref<FilterState>({
-    dateRange: {
-      start: formatDate(getWeekStart(new Date())),
-      end: formatDate(getWeekEnd(new Date())),
-    },
-    selectedUserIds: [],
-    className: '',
-    grade: '',
-    nameKeyword: '',
-    eventKeyword: '',
-  });
+  const viewMode = ref<CalendarViewMode>({ type: 'week', date: new Date() })
 
   // Getters
-  const currentEvents = computed(() => events.value);
-  const currentMyEvents = computed(() => myEvents.value);
+  const activeSchedule = computed(() => {
+    if (!activeScheduleId.value) return null
+    return schedules.value.find(s => s.id === activeScheduleId.value) || null
+  })
 
-  const filteredEvents = computed(() => {
-    return events.value.filter(event => {
-      const eventDate = new Date(event.start_time);
-      const startDate = new Date(filterState.value.dateRange.start);
-      const endDate = new Date(filterState.value.dateRange.end);
-
-      // Date range filter
-      if (eventDate < startDate || eventDate > endDate) {
-        return false;
-      }
-
-      // User filter
-      if (filterState.value.selectedUserIds.length > 0 && 
-          !filterState.value.selectedUserIds.includes(event.owner_id)) {
-        return false;
-      }
-
-      // Class filter
-      if (filterState.value.className && 
-          event.owner?.class_name !== filterState.value.className) {
-        return false;
-      }
-
-      // Grade filter
-      if (filterState.value.grade && 
-          event.owner?.grade !== filterState.value.grade) {
-        return false;
-      }
-
-      // Name keyword filter
-      if (filterState.value.nameKeyword && 
-          !event.owner?.full_name.includes(filterState.value.nameKeyword)) {
-        return false;
-      }
-
-      // Event keyword filter
-      if (filterState.value.eventKeyword && 
-          !event.title.includes(filterState.value.eventKeyword)) {
-        return false;
-      }
-
-      return true;
-    });
-  });
-
-  const currentViewDateRange = computed(() => {
-    if (viewMode.value.type === 'week') {
-      return {
-        start: getWeekStart(viewMode.value.date),
-        end: getWeekEnd(viewMode.value.date),
-      };
-    } else {
-      return {
-        start: getMonthStart(viewMode.value.date),
-        end: getMonthEnd(viewMode.value.date),
-      };
-    }
-  });
+  const activeSchedules = computed(() => {
+    return schedules.value.filter(s => s.status === '进行')
+  })
 
   // Actions
-  async function fetchMyEvents(): Promise<void> {
-    isLoading.value = true;
-    error.value = null;
+  async function fetchSchedules() {
+    isLoading.value = true
+    error.value = null
 
     try {
-      const fetchedEvents = await apiClient.getMyEvents();
-      myEvents.value = fetchedEvents;
-    } catch (err: any) {
-      error.value = err.response?.data?.detail || '获取个人日程失败';
-      console.error('Failed to fetch my events:', err);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  async function fetchFilteredEvents(): Promise<void> {
-    isLoading.value = true;
-    error.value = null;
-
-    try {
-      const filter: ScheduleFilter = {
-        start_date: filterState.value.dateRange.start,
-        end_date: filterState.value.dateRange.end,
-        user_ids: filterState.value.selectedUserIds.length > 0 
-          ? filterState.value.selectedUserIds.join(',') 
-          : undefined,
-        class_name: filterState.value.className || undefined,
-        grade: filterState.value.grade || undefined,
-        full_name_contains: filterState.value.nameKeyword || undefined,
-        event_title_contains: filterState.value.eventKeyword || undefined,
-      };
-
-      const fetchedEvents = await apiClient.getFilteredSchedule(filter);
-      events.value = fetchedEvents;
-    } catch (err: any) {
-      error.value = err.response?.data?.detail || '获取团队日程失败';
-      console.error('Failed to fetch filtered events:', err);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  async function createEvent(eventData: any): Promise<Event | null> {
-    isLoading.value = true;
-    error.value = null;
-
-    try {
-      const newEvent = await apiClient.createMyEvent(eventData);
-      myEvents.value.push(newEvent);
-      return newEvent;
-    } catch (err: any) {
-      error.value = err.response?.data?.detail || '创建日程失败';
-      console.error('Failed to create event:', err);
-      return null;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  async function updateEvent(eventId: number, eventData: any): Promise<Event | null> {
-    isLoading.value = true;
-    error.value = null;
-
-    try {
-      const updatedEvent = await apiClient.updateMyEvent(eventId, eventData);
+      const response = await apiClient.getSchedules()
+      schedules.value = response
       
-      // Update in myEvents array
-      const index = myEvents.value.findIndex(e => e.id === eventId);
+      // 从localStorage恢复activeScheduleId
+      const savedActiveId = localStorage.getItem('activeScheduleId')
+      if (savedActiveId && schedules.value.some(s => s.id === parseInt(savedActiveId))) {
+        activeScheduleId.value = parseInt(savedActiveId)
+      } else if (!activeScheduleId.value && activeSchedules.value.length > 0) {
+        // 如果没有设置活跃课表，自动选择第一个进行中的课表
+        setActiveSchedule(activeSchedules.value[0].id)
+      }
+      
+      // 自动加载活跃课表的事件
+      if (activeScheduleId.value) {
+        await fetchMyEvents()
+      }
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '获取课表列表失败'
+      console.error('Failed to fetch schedules:', err)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function createSchedule(scheduleData: ScheduleCreate) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const newSchedule = await apiClient.createSchedule(scheduleData)
+      schedules.value.push(newSchedule)
+      
+      // 自动设置为活跃课表
+      activeScheduleId.value = newSchedule.id
+      
+      return newSchedule
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '创建课表失败'
+      console.error('Failed to create schedule:', err)
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function updateSchedule(scheduleId: number, updateData: ScheduleUpdate) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const updatedSchedule = await apiClient.updateSchedule(scheduleId, updateData)
+      
+      const index = schedules.value.findIndex(s => s.id === scheduleId)
       if (index !== -1) {
-        myEvents.value[index] = updatedEvent;
+        schedules.value[index] = updatedSchedule
       }
-
-      // Update in events array if it exists there
-      const teamIndex = events.value.findIndex(e => e.id === eventId);
-      if (teamIndex !== -1) {
-        events.value[teamIndex] = updatedEvent;
-      }
-
-      return updatedEvent;
+      
+      return updatedSchedule
     } catch (err: any) {
-      error.value = err.response?.data?.detail || '更新日程失败';
-      console.error('Failed to update event:', err);
-      return null;
+      error.value = err.response?.data?.detail || '更新课表失败'
+      console.error('Failed to update schedule:', err)
+      throw err
     } finally {
-      isLoading.value = false;
+      isLoading.value = false
     }
   }
 
-  async function deleteEvent(eventId: number): Promise<boolean> {
-    isLoading.value = true;
-    error.value = null;
+  async function deleteSchedule(scheduleId: number) {
+    isLoading.value = true
+    error.value = null
 
     try {
-      await apiClient.deleteMyEvent(eventId);
+      await apiClient.deleteSchedule(scheduleId)
       
-      // Remove from myEvents array
-      myEvents.value = myEvents.value.filter(e => e.id !== eventId);
+      schedules.value = schedules.value.filter(s => s.id !== scheduleId)
       
-      // Remove from events array
-      events.value = events.value.filter(e => e.id !== eventId);
-
-      return true;
+      // 如果删除的是当前活跃课表，重新选择
+      if (activeScheduleId.value === scheduleId) {
+        activeScheduleId.value = activeSchedules.value.length > 0 ? activeSchedules.value[0].id : null
+      }
     } catch (err: any) {
-      error.value = err.response?.data?.detail || '删除日程失败';
-      console.error('Failed to delete event:', err);
-      return false;
+      error.value = err.response?.data?.detail || '删除课表失败'
+      console.error('Failed to delete schedule:', err)
+      throw err
     } finally {
-      isLoading.value = false;
+      isLoading.value = false
     }
   }
 
-  async function exportSchedule(): Promise<void> {
+  function setActiveSchedule(scheduleId: number | null) {
+    if (scheduleId === null || schedules.value.some(s => s.id === scheduleId)) {
+      activeScheduleId.value = scheduleId
+      
+      // 保存到localStorage
+      if (scheduleId) {
+        localStorage.setItem('activeScheduleId', scheduleId.toString())
+        // 自动加载新的活跃课表的事件
+        fetchMyEvents()
+      } else {
+        localStorage.removeItem('activeScheduleId')
+        currentMyEvents.value = []
+      }
+    }
+  }
+
+  function clearError() {
+    error.value = null
+    eventsError.value = null
+  }
+
+  function resetStore() {
+    schedules.value = []
+    activeScheduleId.value = null
+    isLoading.value = false
+    error.value = null
+    currentMyEvents.value = []
+    eventsLoading.value = false
+    eventsError.value = null
+    localStorage.removeItem('activeScheduleId')
+  }
+  
+  // Event management functions
+  async function fetchMyEvents() {
+    if (!activeScheduleId.value) {
+      currentMyEvents.value = []
+      return
+    }
+
+    eventsLoading.value = true
+    eventsError.value = null
+
     try {
-      const blob = await apiClient.exportMySchedule();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'my_schedule.ics';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const events = await apiClient.getScheduleEvents(activeScheduleId.value)
+      currentMyEvents.value = events
     } catch (err: any) {
-      error.value = err.response?.data?.detail || '导出日程失败';
-      console.error('Failed to export schedule:', err);
+      eventsError.value = err.response?.data?.detail || '获取事件失败'
+      console.error('Failed to fetch events:', err)
+    } finally {
+      eventsLoading.value = false
     }
   }
 
-  // View actions
-  function setViewMode(mode: CalendarViewMode): void {
-    viewMode.value = mode;
-    updateDateRangeFromView();
+  async function createEvent(eventData: CreateEventRequest) {
+    if (!activeScheduleId.value) {
+      throw new Error('没有选择活跃的课表')
+    }
+
+    try {
+      const newEvent = await apiClient.createScheduleEvent(activeScheduleId.value, eventData)
+      currentMyEvents.value.push(newEvent)
+      return newEvent
+    } catch (err: any) {
+      eventsError.value = err.response?.data?.detail || '创建事件失败'
+      console.error('Failed to create event:', err)
+      throw err
+    }
   }
 
-  function updateDateRangeFromView(): void {
-    const range = currentViewDateRange.value;
-    filterState.value.dateRange = {
-      start: formatDate(range.start),
-      end: formatDate(range.end),
-    };
+  async function updateEvent(eventId: number, eventData: UpdateEventRequest) {
+    if (!activeScheduleId.value) {
+      throw new Error('没有选择活跃的课表')
+    }
+
+    try {
+      const updatedEvent = await apiClient.updateScheduleEvent(activeScheduleId.value, eventId, eventData)
+      
+      const index = currentMyEvents.value.findIndex(e => e.id === eventId)
+      if (index !== -1) {
+        currentMyEvents.value[index] = updatedEvent
+      }
+      
+      return updatedEvent
+    } catch (err: any) {
+      eventsError.value = err.response?.data?.detail || '更新事件失败'
+      console.error('Failed to update event:', err)
+      throw err
+    }
   }
 
-  function updateFilter(newFilter: Partial<FilterState>): void {
-    filterState.value = { ...filterState.value, ...newFilter };
+  async function deleteEvent(eventId: number) {
+    if (!activeScheduleId.value) {
+      throw new Error('没有选择活跃的课表')
+    }
+
+    try {
+      await apiClient.deleteScheduleEvent(activeScheduleId.value, eventId)
+      currentMyEvents.value = currentMyEvents.value.filter(e => e.id !== eventId)
+    } catch (err: any) {
+      eventsError.value = err.response?.data?.detail || '删除事件失败'
+      console.error('Failed to delete event:', err)
+      throw err
+    }
   }
 
-  function clearError(): void {
-    error.value = null;
+  async function exportSchedule() {
+    if (!activeScheduleId.value) {
+      throw new Error('没有选择活跃的课表')
+    }
+
+    try {
+      const blob = await apiClient.exportScheduleToICS(activeScheduleId.value)
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `schedule-${activeSchedule.value?.name || 'export'}.ics`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (err: any) {
+      eventsError.value = err.response?.data?.detail || '导出失败'
+      console.error('Failed to export schedule:', err)
+      throw err
+    }
+  }
+
+  function setViewMode(mode: CalendarViewMode) {
+    viewMode.value = mode
   }
 
   return {
     // State
-    events,
-    myEvents,
+    schedules,
+    activeScheduleId,
     isLoading,
     error,
-    viewMode,
-    filterState,
-
-    // Getters
-    currentEvents,
     currentMyEvents,
-    filteredEvents,
-    currentViewDateRange,
-
-    // Actions
+    eventsLoading,
+    eventsError,
+    viewMode,
+    
+    // Getters
+    activeSchedule,
+    activeSchedules,
+    
+    // Schedule Actions
+    fetchSchedules,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    setActiveSchedule,
+    
+    // Event Actions
     fetchMyEvents,
-    fetchFilteredEvents,
     createEvent,
     updateEvent,
     deleteEvent,
     exportSchedule,
     setViewMode,
-    updateDateRangeFromView,
-    updateFilter,
+    
+    // Utility
     clearError,
-  };
-});
+    resetStore
+  }
+})
