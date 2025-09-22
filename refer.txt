@@ -1,0 +1,14 @@
+https://github.com/openschoolcn/zfn_api
+https://github.com/whliao5am/zfnew
+https://github.com/whx1024/zfn_api12
+https://github.com/zaigie/zfnew_webApi
+https://blog.csdn.net/gitblog_00713/article/details/147225292
+https://github.com/dairoot/school-api
+https://gitee.com/DuskU/zhengfang
+https://github.com/FarmerChillax/new-school-sdk
+https://github.com/xxyangyoulin/ClassSchedule
+https://yzune.github.io/2018/08/15/WakeUp%E8%AF%BE%E7%A8%8B%E8%A1%A8%E9%87%8D%E6%9E%84%E8%AF%B4%E6%98%8E/
+https://github.com/Srpihot/zfapi
+https://github.com/YZune/WakeupSchedule_Kotlin
+https://github.com/qwqVictor/CQUPT-ics
+https://github.com/XiaoNaoWeiSuo/Grade2
