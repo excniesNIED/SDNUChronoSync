@@ -40,7 +40,7 @@ def init_db():
             {
                 "student_id": "202311000516",
                 "password": "password123",
-                "full_name": "赵恒堂",
+                "full_name": "黄浩二",
                 "class_name": "计工本2303",
                 "grade": "2023",
                 "role": "user"

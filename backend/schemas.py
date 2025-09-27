@@ -5,7 +5,7 @@ from typing import Optional, List, Dict, Any
 # User schemas
 class UserBase(BaseModel):
     student_id: str = Field(..., description="Student ID, e.g., '202311001145'")
-    full_name: str = Field(..., description="Full name, e.g., '赵恒堂'")
+    full_name: str = Field(..., description="Full name, e.g., '黄浩二'")
     class_name: str = Field(..., description="Class name, e.g., '计工本2303'")
     grade: str = Field(..., description="Grade, e.g., '2023'")
 
@@ -120,7 +120,7 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     student_id: str = Field(..., description="Student ID, e.g., '202311001145'")
     password: str = Field(..., min_length=6, description="Password (minimum 6 characters)")
-    full_name: str = Field(..., description="Full name, e.g., '赵恒堂'")
+    full_name: str = Field(..., description="Full name, e.g., '黄浩二'")
     class_name: str = Field(..., description="Class name, e.g., '计工本2303'")
     grade: str = Field(..., description="Grade, e.g., '2023'")
 
