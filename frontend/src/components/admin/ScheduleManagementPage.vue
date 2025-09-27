@@ -253,7 +253,7 @@ const currentDateTitle = computed(() => {
 
 const calendarEvents = computed((): CalendarEvent[] => {
   return scheduleStore.filteredEvents.map(event => {
-    const userColor = getUserColor(event.owner_id);
+    const userColor = getUserColor(event.owner?.id || event.schedule_id);
     return {
       ...event,
       color: userColor.bg,

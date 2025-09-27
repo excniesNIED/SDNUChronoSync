@@ -24,14 +24,17 @@ const userColorCache = new Map<number, typeof USER_COLORS[0]>();
 /**
  * Get a consistent color for a user based on their ID
  */
-export function getUserColor(userId: number): typeof USER_COLORS[0] {
-  if (userColorCache.has(userId)) {
-    return userColorCache.get(userId)!;
+export function getUserColor(userId: number | undefined | null): typeof USER_COLORS[0] {
+  // 处理无效的 userId，使用默认值
+  const validUserId = (typeof userId === 'number' && !isNaN(userId)) ? userId : 0;
+  
+  if (userColorCache.has(validUserId)) {
+    return userColorCache.get(validUserId)!;
   }
 
-  const colorIndex = userId % USER_COLORS.length;
+  const colorIndex = validUserId % USER_COLORS.length;
   const color = USER_COLORS[colorIndex];
-  userColorCache.set(userId, color);
+  userColorCache.set(validUserId, color);
   
   return color;
 }
@@ -39,7 +42,7 @@ export function getUserColor(userId: number): typeof USER_COLORS[0] {
 /**
  * Generate CSS classes for user events
  */
-export function getUserEventClasses(userId: number): {
+export function getUserEventClasses(userId: number | undefined | null): {
   background: string;
   border: string;
   text: string;

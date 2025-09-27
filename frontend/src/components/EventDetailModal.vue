@@ -48,6 +48,12 @@
                         <span>{{ event.owner.full_name }} ({{ event.owner.class_name }})</span>
                       </div>
 
+                      <!-- Instructor Information -->
+                      <div v-if="event.instructor" class="flex items-center text-sm text-gray-600">
+                        <AcademicCapIcon class="h-4 w-4 mr-2 text-gray-400" />
+                        <span>任课教师: {{ event.instructor }}</span>
+                      </div>
+
                       <!-- Time Information -->
                       <div class="flex items-center text-sm text-gray-600">
                         <ClockIcon class="h-4 w-4 mr-2 text-gray-400" />
@@ -56,6 +62,25 @@
                           <div class="text-xs text-gray-500">
                             至 {{ formatDisplayDateTime(event.end_time) }}
                           </div>
+                        </div>
+                      </div>
+
+                      <!-- Course Schedule Information -->
+                      <div v-if="event.weeks_display || event.day_of_week || event.period" class="space-y-2">
+                        <!-- Week Information -->
+                        <div v-if="event.weeks_display" class="flex items-center text-sm text-gray-600">
+                          <CalendarDaysIcon class="h-4 w-4 mr-2 text-gray-400" />
+                          <span>上课周数: {{ event.weeks_display }}</span>
+                        </div>
+
+                        <!-- Day and Period Information -->
+                        <div v-if="event.day_of_week || event.period" class="flex items-center text-sm text-gray-600">
+                          <BookmarkIcon class="h-4 w-4 mr-2 text-gray-400" />
+                          <span>
+                            <span v-if="event.day_of_week">{{ getDayOfWeekText(event.day_of_week) }}</span>
+                            <span v-if="event.day_of_week && event.period"> - </span>
+                            <span v-if="event.period">{{ event.period }}</span>
+                          </span>
                         </div>
                       </div>
 
@@ -120,6 +145,9 @@ import {
   MapPinIcon,
   UserIcon,
   DocumentTextIcon,
+  AcademicCapIcon,
+  CalendarDaysIcon,
+  BookmarkIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDateTime } from '@/utils/date';
 import { getUserColor } from '@/utils/colors';
@@ -138,7 +166,9 @@ defineEmits<{
 
 const eventColor = computed(() => {
   if (!props.event) return { bg: '#f3f4f6', text: '#374151' };
-  return getUserColor(props.event.owner_id);
+  // 使用 owner?.id 而不是 owner_id，并提供默认值
+  const userId = props.event.owner?.id || props.event.schedule_id || 0;
+  return getUserColor(userId);
 });
 
 const eventDuration = computed(() => {
@@ -159,4 +189,10 @@ const eventDuration = computed(() => {
     return `${hours}小时${minutes}分钟`;
   }
 });
+
+// 获取星期几的中文显示
+function getDayOfWeekText(dayOfWeek: number): string {
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  return days[dayOfWeek] || '未知';
+}
 </script>
