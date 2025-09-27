@@ -149,12 +149,27 @@
                   </div>
                 </div>
 
+                <!-- Test Results -->
+                <div v-if="testResults.length > 0" class="mt-4 rounded-md bg-blue-50 p-4">
+                  <div class="flex">
+                    <ExclamationCircleIcon class="h-5 w-5 text-blue-400" />
+                    <div class="ml-3">
+                      <h4 class="text-sm font-medium text-blue-800 mb-2">测试结果详情：</h4>
+                      <div class="text-xs text-blue-700 space-y-1 font-mono">
+                        <div v-for="(detail, index) in testResults" :key="index" class="whitespace-pre-wrap">
+                          {{ detail }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Success Message -->
                 <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-4">
                   <div class="flex">
                     <CheckCircleIcon class="h-5 w-5 text-green-400" />
                     <div class="ml-3">
-                      <h3 class="text-sm font-medium text-green-800">
+                      <h3 class="text-sm font-medium text-green-800 whitespace-pre-line">
                         {{ successMessage }}
                       </h3>
                     </div>
@@ -189,23 +204,36 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                <div class="mt-5 sm:mt-6 space-y-3">
+                  <!-- Test login button -->
                   <button
-                    type="submit"
-                    :disabled="isImporting || !form.username || !form.password || !form.captcha || !sessionData || isLoadingCaptcha"
-                    class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed sm:col-start-2"
-                  >
-                    <CloudArrowDownIcon v-if="!isImporting" class="h-4 w-4 mr-2" />
-                    {{ isImporting ? '导入中...' : '立即导入' }}
-                  </button>
-                  <button
+                    @click="handleTestLogin"
+                    :disabled="isTesting || !form.username || !form.password || !form.captcha || !sessionData || isLoadingCaptcha"
                     type="button"
-                    @click="$emit('close')"
-                    :disabled="isImporting"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed sm:col-start-1 sm:mt-0"
+                    class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ isImporting ? '导入中...' : '取消' }}
+                    <ExclamationCircleIcon v-if="!isTesting" class="h-4 w-4 mr-2" />
+                    {{ isTesting ? '测试中...' : '测试登录' }}
                   </button>
+                  
+                  <div class="sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                    <button
+                      type="submit"
+                      :disabled="isImporting || !form.username || !form.password || !form.captcha || !sessionData || isLoadingCaptcha"
+                      class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed sm:col-start-2"
+                    >
+                      <CloudArrowDownIcon v-if="!isImporting" class="h-4 w-4 mr-2" />
+                      {{ isImporting ? '导入中...' : '立即导入' }}
+                    </button>
+                    <button
+                      type="button"
+                      @click="$emit('close')"
+                      :disabled="isImporting"
+                      class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed sm:col-start-1 sm:mt-0"
+                    >
+                      {{ isImporting ? '导入中...' : '取消' }}
+                    </button>
+                  </div>
                 </div>
               </form>
             </DialogPanel>
@@ -249,6 +277,8 @@ const importStatus = ref('');
 const importProgress = ref(0);
 const successMessage = ref('');
 const errorMessage = ref('');
+const isTesting = ref(false);
+const testResults = ref<string[]>([]);
 const sessionData = ref<{
   session_id: string;
   csrftoken: string;
@@ -312,6 +342,44 @@ async function handleImport() {
     isImporting.value = false;
     importStatus.value = '';
     importProgress.value = 0;
+  }
+}
+
+async function handleTestLogin() {
+  if (!sessionData.value) {
+    errorMessage.value = '请先获取验证码';
+    return;
+  }
+
+  isTesting.value = true;
+  testResults.value = [];
+  successMessage.value = '';
+  errorMessage.value = '';
+
+  try {
+    const response = await apiClient.testLogin({
+      session_id: sessionData.value.session_id,
+      username: form.value.username,
+      password: form.value.password,
+      captcha: form.value.captcha,
+    });
+
+    testResults.value = response.details;
+
+    if (response.success) {
+      successMessage.value = `✅ ${response.message}`;
+      if (response.working_url) {
+        successMessage.value += `\n可用的课表URL: ${response.working_url}`;
+      }
+    } else {
+      errorMessage.value = `❌ ${response.message}`;
+    }
+
+  } catch (error: any) {
+    console.error('Test login failed:', error);
+    errorMessage.value = error.response?.data?.detail || error.response?.data?.message || '测试失败，请检查网络连接';
+  } finally {
+    isTesting.value = false;
   }
 }
 

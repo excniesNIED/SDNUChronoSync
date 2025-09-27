@@ -329,8 +329,8 @@ function closeImportModal() {
 }
 
 async function handleImportSuccess(count: number) {
-  // 重新获取课表数据
-  await scheduleStore.fetchMyEvents();
+  // 重新获取课表列表和事件数据
+  await scheduleStore.fetchSchedules();
   closeImportModal();
 }
 

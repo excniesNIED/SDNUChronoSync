@@ -246,12 +246,16 @@ const onDelete = computed(() => emit);
 // Watch for event changes to populate form
 watch(() => props.event, (newEvent) => {
   if (newEvent) {
+    // Safely format dates with fallback to current time
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    
     form.value = {
       title: newEvent.title || '',
       description: newEvent.description || '',
       location: newEvent.location || '',
-      start_time: formatDateTime(newEvent.start_time),
-      end_time: formatDateTime(newEvent.end_time),
+      start_time: newEvent.start_time ? formatDateTime(newEvent.start_time) : formatDateTime(now),
+      end_time: newEvent.end_time ? formatDateTime(newEvent.end_time) : formatDateTime(oneHourLater),
       instructor: newEvent.instructor || '',
       weeks_display: newEvent.weeks_display || '',
       day_of_week: newEvent.day_of_week,

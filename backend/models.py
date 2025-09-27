@@ -59,6 +59,7 @@ class Event(Base):
     day_of_week = Column(Integer, nullable=True)    # 星期几 (1-7)
     period = Column(String, nullable=True)          # 节次 (例: "3-4节")
     weeks_input = Column(String, nullable=True)     # 新增: 用于存储原始输入的周数，如 "1,4-6"
+    color = Column(String, nullable=True)           # 课程颜色 (例: "#3B82F6")
 
     # Relationship with schedule
     schedule = relationship("Schedule", back_populates="events")

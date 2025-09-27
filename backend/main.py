@@ -38,26 +38,10 @@ def init_db():
         # Create some sample users for testing
         sample_users = [
             {
-                "student_id": "202311001145",
+                "student_id": "202311000516",
                 "password": "password123",
                 "full_name": "赵恒堂",
                 "class_name": "计工本2303",
-                "grade": "2023",
-                "role": "user"
-            },
-            {
-                "student_id": "202311001146",
-                "password": "password123",
-                "full_name": "李小明",
-                "class_name": "计工本2303",
-                "grade": "2023",
-                "role": "user"
-            },
-            {
-                "student_id": "202311001147",
-                "password": "password123",
-                "full_name": "王小红",
-                "class_name": "计工本2304",
                 "grade": "2023",
                 "role": "user"
             }

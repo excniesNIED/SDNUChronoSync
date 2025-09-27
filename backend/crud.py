@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_
 from typing import List, Optional
 from datetime import datetime
-from models import User, Event
+from models import User, Event, Schedule
 from schemas import UserCreate, UserUpdate, EventCreate, EventUpdate
 from auth import get_password_hash
 
@@ -70,22 +70,26 @@ def delete_user(db: Session, user_id: int) -> bool:
 
 # Event CRUD operations
 def get_event(db: Session, event_id: int) -> Optional[Event]:
-    """Get event by ID with owner information."""
-    return db.query(Event).options(joinedload(Event.owner)).filter(Event.id == event_id).first()
+    """Get event by ID with schedule and owner information."""
+    return db.query(Event).options(
+        joinedload(Event.schedule).joinedload(Schedule.owner)
+    ).filter(Event.id == event_id).first()
 
 def get_user_events(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Event]:
-    """Get all events for a specific user."""
-    return db.query(Event).options(joinedload(Event.owner)).filter(Event.owner_id == user_id).offset(skip).limit(limit).all()
+    """Get all events for a specific user through their schedules."""
+    return db.query(Event).options(
+        joinedload(Event.schedule).joinedload(Schedule.owner)
+    ).join(Schedule).filter(Schedule.owner_id == user_id).offset(skip).limit(limit).all()
 
-def create_event(db: Session, event: EventCreate, owner_id: int) -> Event:
-    """Create a new event."""
+def create_event(db: Session, event: EventCreate, schedule_id: int) -> Event:
+    """Create a new event in a specific schedule."""
     db_event = Event(
+        schedule_id=schedule_id,
         title=event.title,
         description=event.description,
         location=event.location,
         start_time=event.start_time,
         end_time=event.end_time,
-        owner_id=owner_id,
         instructor=event.instructor,
         weeks_display=event.weeks_display,
         day_of_week=event.day_of_week,

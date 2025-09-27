@@ -214,6 +214,30 @@ class ApiClient {
     return response.data;
   }
 
+  async refreshCaptcha(sessionId: string): Promise<{
+    session_id: string;
+    csrftoken: string;
+    captcha_image: string;
+  }> {
+    const response = await axios.get(`/api/import/zfw/refresh/${sessionId}`);
+    return response.data;
+  }
+
+  async testLogin(importData: { 
+    session_id: string; 
+    username: string; 
+    password: string; 
+    captcha: string; 
+  }): Promise<{
+    success: boolean;
+    message: string;
+    details: string[];
+    working_url?: string;
+  }> {
+    const response = await axios.post('/api/import/test-login', importData);
+    return response.data;
+  }
+
   async testImportConnection(): Promise<{
     status: string;
     message: string;

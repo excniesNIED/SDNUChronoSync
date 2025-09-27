@@ -71,6 +71,7 @@ class EventBase(BaseModel):
     day_of_week: Optional[int] = None     # 星期几 (1-7)
     period: Optional[str] = None          # 节次 (例: "3-4节")
     weeks_input: Optional[str] = None     # 新增: 原始输入的周数，如 "1,4-6"
+    color: Optional[str] = None           # 课程颜色
 
 class EventCreate(EventBase):
     pass
@@ -93,11 +94,16 @@ class EventResponse(EventBase):
     created_at: datetime
     updated_at: datetime
     
-    # Include owner information for team views
-    owner: Optional[UserPublic] = None
+    # Include schedule and owner information for team views
+    schedule: Optional['ScheduleResponse'] = None
 
     class Config:
         from_attributes = True
+        
+    @property
+    def owner(self) -> Optional[UserPublic]:
+        """Get owner from schedule relationship."""
+        return self.schedule.owner if self.schedule else None
 
 # Auth schemas
 class Token(BaseModel):

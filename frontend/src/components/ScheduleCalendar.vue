@@ -29,11 +29,14 @@
         <!-- Time column -->
         <div class="border-r border-gray-200">
           <div
-            v-for="hour in timeSlots"
-            :key="hour"
-            class="h-16 border-b border-gray-100 flex items-center justify-center text-xs text-gray-500"
+            v-for="(timeSlot, index) in timeSlots"
+            :key="index"
+            class="h-24 border-b border-gray-100 flex items-center justify-center text-xs text-gray-500"
           >
-            {{ formatTimeSlot(hour) }}
+            <div class="text-center">
+              <div class="font-medium">{{ timeSlot.period }}</div>
+              <div class="text-xs opacity-75">{{ timeSlot.start }}-{{ timeSlot.end }}</div>
+            </div>
           </div>
         </div>
 
@@ -45,10 +48,10 @@
         >
           <!-- Time slots background -->
           <div
-            v-for="hour in timeSlots"
-            :key="hour"
-            class="h-16 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
-            @click="$emit('date-click', new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour))"
+            v-for="(timeSlot, index) in timeSlots"
+            :key="index"
+            class="h-24 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
+            @click="$emit('date-click', day)"
           ></div>
 
           <!-- Events -->
@@ -76,11 +79,11 @@
       <!-- Month header -->
       <div class="grid grid-cols-7 border-b border-gray-200">
         <div
-          v-for="day in ['日', '一', '二', '三', '四', '五', '六']"
+          v-for="day in ['一', '二', '三', '四', '五', '六', '日']"
           :key="day"
           class="p-4 text-center text-sm font-medium text-gray-900"
         >
-          {{ day }}
+          周{{ day }}
         </div>
       </div>
 
@@ -137,6 +140,7 @@ import type { CalendarEvent } from '@/types';
 import {
   formatDisplayTime,
   getWeekDays,
+  getWeekStart,
   getCalendarDays,
   isToday,
   isSameDay,
@@ -159,11 +163,26 @@ defineEmits<{
   'date-click': [date: Date];
 }>();
 
-// Time slots for week view (8 AM to 8 PM)
-const timeSlots = Array.from({ length: 12 }, (_, i) => i + 8);
+// 课表时间段（按照山东师范大学作息时间）
+const classTimeSlots = [
+  { period: '第1节', start: '08:20', end: '09:05' },
+  { period: '第2节', start: '09:10', end: '09:55' },
+  { period: '第3节', start: '10:10', end: '10:55' },
+  { period: '第4节', start: '11:00', end: '11:45' },
+  { period: '第5节', start: '14:00', end: '14:45' },
+  { period: '第6节', start: '14:50', end: '15:35' },
+  { period: '第7节', start: '15:50', end: '16:35' },
+  { period: '第8节', start: '16:40', end: '17:25' },
+  { period: '第9节', start: '19:00', end: '19:45' },
+  { period: '第10节', start: '19:45', end: '20:30' }
+];
+
+const timeSlots = classTimeSlots;
 
 const weekDays = computed(() => {
-  return getWeekDays(props.currentDate);
+  // 确保周视图从星期一开始
+  const weekStart = getWeekStart(props.currentDate);
+  return getWeekDays(weekStart);
 });
 
 const monthDays = computed(() => {
@@ -171,12 +190,17 @@ const monthDays = computed(() => {
 });
 
 function formatDayHeader(date: Date): string {
-  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-  return days[date.getDay()];
+  const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  // 调整索引：星期一(1)对应索引0，星期日(0)对应索引6
+  const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
+  return days[dayIndex];
 }
 
-function formatTimeSlot(hour: number): string {
-  return `${hour.toString().padStart(2, '0')}:00`;
+function formatTimeSlot(timeSlot: any): string {
+  if (typeof timeSlot === 'object') {
+    return timeSlot.period;
+  }
+  return `${timeSlot.toString().padStart(2, '0')}:00`;
 }
 
 function formatTime(dateTime: string): string {
@@ -199,20 +223,41 @@ function getEventStyle(event: CalendarEvent) {
   const startTime = new Date(event.start_time);
   const endTime = new Date(event.end_time);
   
-  // Calculate position and height for week view
-  const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-  const endHour = endTime.getHours() + endTime.getMinutes() / 60;
+  // 获取时间对应的时间段索引
+  const startTimeStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`;
+  const endTimeStr = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
   
-  // Only show events within our time range (8 AM to 8 PM)
-  const displayStartHour = Math.max(8, startHour);
-  const displayEndHour = Math.min(20, endHour);
+  // 查找事件所在的时间段
+  let timeSlotIndex = -1;
+  let timeSlotHeight = 1;
   
-  const top = ((displayStartHour - 8) / 12) * 100;
-  const height = ((displayEndHour - displayStartHour) / 12) * 100;
+  for (let i = 0; i < timeSlots.length; i++) {
+    const slot = timeSlots[i];
+    if (startTimeStr >= slot.start && startTimeStr < slot.end) {
+      timeSlotIndex = i;
+      // 计算跨越的时间段数量
+      for (let j = i; j < timeSlots.length; j++) {
+        if (endTimeStr <= timeSlots[j].end) {
+          timeSlotHeight = j - i + 1;
+          break;
+        }
+      }
+      break;
+    }
+  }
+  
+  // 如果找不到匹配的时间段，默认显示在第一个时间段
+  if (timeSlotIndex === -1) {
+    timeSlotIndex = 0;
+    timeSlotHeight = 1;
+  }
+  
+  const top = (timeSlotIndex / timeSlots.length) * 100;
+  const height = (timeSlotHeight / timeSlots.length) * 100;
   
   return {
     top: `${top}%`,
-    height: `${Math.max(height, 8)}%`, // Minimum height
+    height: `${Math.max(height, 14)}%`, // Minimum height
     backgroundColor: event.color,
     color: event.textColor,
     borderLeft: `3px solid ${event.textColor}`,
@@ -231,9 +276,14 @@ function getEventStyle(event: CalendarEvent) {
 }
 
 .week-view, .month-view {
-  @apply min-h-[600px] w-full max-w-7xl;
+  @apply min-h-[800px] w-full max-w-7xl;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   border-radius: 0.5rem;
   background: white;
+}
+
+.week-view {
+  /* 确保晚上课程有足够空间显示 */
+  min-height: 900px;
 }
 </style>

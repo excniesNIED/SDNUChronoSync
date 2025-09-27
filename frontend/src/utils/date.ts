@@ -4,16 +4,25 @@
 
 export function formatDate(date: Date | string): string {
   const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '';
+  }
   return d.toISOString().split('T')[0];
 }
 
 export function formatDateTime(date: Date | string): string {
   const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '';
+  }
   return d.toISOString().slice(0, 16);
 }
 
 export function formatDisplayDate(date: Date | string): string {
   const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '无效日期';
+  }
   return d.toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: 'long',
@@ -23,6 +32,9 @@ export function formatDisplayDate(date: Date | string): string {
 
 export function formatDisplayTime(date: Date | string): string {
   const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '无效时间';
+  }
   return d.toLocaleTimeString('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -31,6 +43,9 @@ export function formatDisplayTime(date: Date | string): string {
 
 export function formatDisplayDateTime(date: Date | string): string {
   const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '无效日期时间';
+  }
   return d.toLocaleString('zh-CN', {
     year: 'numeric',
     month: 'long',
@@ -43,7 +58,8 @@ export function formatDisplayDateTime(date: Date | string): string {
 export function getWeekStart(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  // 将星期一设为一周的开始：星期日(0)往前移6天，其他往前移(day-1)天
+  const diff = d.getDate() - (day === 0 ? 6 : day - 1);
   return new Date(d.setDate(diff));
 }
 

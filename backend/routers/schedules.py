@@ -295,87 +295,202 @@ async def export_schedule_to_ics(
             detail="Schedule not found"
         )
     
-    # 获取所有事件
-    events = db.query(Event).filter(Event.schedule_id == schedule_id).all()
+        # 获取所有事件（确保有序，防止结果顺序不稳定）
+        events = (
+            db.query(Event)
+            .filter(Event.schedule_id == schedule_id)
+            .order_by(Event.day_of_week, Event.period, Event.start_time)
+            .all()
+        )
+    
+    print(f"\n=== ICS导出调试信息 ===")
+    print(f"当前用户ID: {current_user.id} ({current_user.full_name})")
+    print(f"请求导出的课表ID: {schedule_id}")
+    print(f"课表名称: {schedule.name}")
+    print(f"课表拥有者ID: {schedule.owner_id}")
+    print(f"课表开始日期: {schedule.start_date}")
+    print(f"课表状态: {schedule.status}")
+    print(f"查询条件: Event.schedule_id == {schedule_id}")
+    print(f"找到事件数量: {len(events)}")
+    
+    # 如果没有找到事件，进一步调试
+    if len(events) == 0:
+        print("\n⚠️  警告：没有找到任何事件！")
+        # 检查用户的所有课表
+        user_schedules = db.query(Schedule).filter(Schedule.owner_id == current_user.id).all()
+        print(f"用户拥有的课表数量: {len(user_schedules)}")
+        for s in user_schedules:
+            event_count = db.query(Event).filter(Event.schedule_id == s.id).count()
+            print(f"  课表ID {s.id} '{s.name}': {event_count} 个事件")
+    else:
+        # 显示前几个事件的基本信息
+        print(f"\n前3个事件概览:")
+        for i, event in enumerate(events[:3]):
+            print(f"  {i+1}. {event.title} - {event.start_time} (事件ID: {event.id})")
     
     # 创建日历对象
     calendar = ics.Calendar()
     calendar.creator = f"Schedule Management System - {schedule.name}"
     
     # 遍历每个事件
-    for event in events:
-        # 解析周数
-        weeks = parse_weeks(event.weeks_input or event.weeks_display or "")
-        if not weeks:
-            # 如果没有周数信息，创建单次事件
-            weeks = [1]
-        
-        # 解析节次获取时间
-        period_numbers = parse_period_to_class_numbers(event.period or "")
-        
-        # 获取开始和结束时间
-        if period_numbers and schedule.class_times:
-            first_period = str(period_numbers[0])
-            last_period = str(period_numbers[-1])
+    successful_events = 0
+    failed_events = 0
+    
+    for i, event in enumerate(events):
+        try:
+            print(f"\n>>> 处理第 {i+1} 个事件: {event.title}")
+            print(f"    事件ID: {event.id}")
+            print(f"    周数输入: {event.weeks_input}")
+            print(f"    周数显示: {event.weeks_display}")
+            print(f"    星期几: {event.day_of_week}")
+            print(f"    节次: {event.period}")
+            print(f"    地点: {event.location}")
+            print(f"    教师: {event.instructor}")
+            print(f"    原始开始时间: {event.start_time}")
+            print(f"    原始结束时间: {event.end_time}")
             
-            if first_period in schedule.class_times and last_period in schedule.class_times:
-                start_time_str = schedule.class_times[first_period].get("start", "08:00")
-                end_time_str = schedule.class_times[last_period].get("end", "09:00")
+            # 解析周数
+            weeks = parse_weeks(event.weeks_input or event.weeks_display or "")
+            if not weeks:
+                # 如果没有周数信息，创建单次事件
+                weeks = [1]
+                print(f"    ⚠️  周数信息为空，使用默认周数: [1]")
+            
+            print(f"    解析后周数: {weeks}")
+            
+            # 解析节次获取时间
+            period_numbers = parse_period_to_class_numbers(event.period or "")
+            print(f"    解析后节次: {period_numbers}")
+            
+            # 获取开始和结束时间
+            if period_numbers and schedule.class_times:
+                first_period = str(period_numbers[0])
+                last_period = str(period_numbers[-1])
+                
+                print(f"    查找时间 - 第一节: {first_period}, 最后一节: {last_period}")
+                print(f"    课表时间配置: {schedule.class_times}")
+                
+                if first_period in schedule.class_times and last_period in schedule.class_times:
+                    start_time_str = schedule.class_times[first_period].get("start", "08:00")
+                    end_time_str = schedule.class_times[last_period].get("end", "09:00")
+                    print(f"    使用课表时间: {start_time_str} - {end_time_str}")
+                else:
+                    # 使用事件原始时间
+                    start_time_str = event.start_time.strftime("%H:%M")
+                    end_time_str = event.end_time.strftime("%H:%M")
+                    print(f"    使用事件原始时间: {start_time_str} - {end_time_str}")
             else:
                 # 使用事件原始时间
                 start_time_str = event.start_time.strftime("%H:%M")
                 end_time_str = event.end_time.strftime("%H:%M")
-        else:
-            # 使用事件原始时间
-            start_time_str = event.start_time.strftime("%H:%M")
-            end_time_str = event.end_time.strftime("%H:%M")
-        
-        # 为每个周数创建ICS事件
-        for week_num in weeks:
-            # 计算具体日期
-            if event.day_of_week:
-                # 基于星期几计算日期
-                days_from_start = (week_num - 1) * 7 + (event.day_of_week - 1)
-                event_date = schedule.start_date + timedelta(days=days_from_start)
-            else:
-                # 使用原始事件日期
-                event_date = event.start_time.date()
+                print(f"    使用事件原始时间(无节次信息): {start_time_str} - {end_time_str}")
             
-            # 创建开始和结束时间
-            start_hour, start_minute = map(int, start_time_str.split(':'))
-            end_hour, end_minute = map(int, end_time_str.split(':'))
+            # 为每个周数创建ICS事件
+            for week_num in weeks:
+                # 防止 week_num 无效
+                if week_num < 1 or week_num > 60:
+                    print(f"    ⚠️  无效的周数 {week_num}，跳过")
+                    continue
+                
+                try:
+                    # 计算具体日期
+                    if event.day_of_week is not None:
+                        day_of_week = event.day_of_week
+                        if day_of_week == 0:
+                            # 如果存储为0，视为周日（7）
+                            day_of_week = 7
+                        if day_of_week < 1 or day_of_week > 7:
+                            raise ValueError(f"day_of_week 无效: {event.day_of_week}")
+                        # 基于星期几计算日期（周一=1 -> offset=0, 周日=7 -> offset=6）
+                        day_offset = day_of_week - 1
+                        days_from_start = (week_num - 1) * 7 + day_offset
+                        event_date = schedule.start_date + timedelta(days=days_from_start)
+                        print(f"    第 {week_num} 周 - 星期 {day_of_week} - 计算日期: {event_date}")
+                    else:
+                        # 使用原始事件日期
+                        event_date = event.start_time.date()
+                        print(f"    第 {week_num} 周 - 使用原始日期: {event_date} (day_of_week=None)")
+                        day_of_week = event.start_time.weekday() + 1  # Python: Monday=0
+                    
+                    # 生成 ICS 的星期几（周日=SU）
+                    weekday_map = {1: 'MO', 2: 'TU', 3: 'WE', 4: 'TH', 5: 'FR', 6: 'SA', 7: 'SU'}
+                    ics_weekday = weekday_map.get(day_of_week, 'MO')
+                    
+                    # 创建开始和结束时间
+                    start_hour, start_minute = map(int, start_time_str.split(':'))
+                    end_hour, end_minute = map(int, end_time_str.split(':'))
+                    
+                    start_datetime = datetime.combine(event_date, datetime.min.time().replace(
+                        hour=start_hour, minute=start_minute
+                    ))
+                    end_datetime = datetime.combine(event_date, datetime.min.time().replace(
+                        hour=end_hour, minute=end_minute
+                    ))
+                    
+                    print(f"    创建ICS事件: {start_datetime} 到 {end_datetime}")
+                    
+                    # 创建ICS事件
+                    ics_event = ics.Event()
+                    ics_event.name = event.title
+                    ics_event.begin = start_datetime
+                    ics_event.end = end_datetime
+                    
+                    # 设置位置和描述
+                    location_parts = []
+                    description_parts = []
+                    
+                    # 处理地点信息 - 即使是"未排地点"也要显示
+                    if event.location and event.location.strip():
+                        location_parts.append(event.location.strip())
+                        description_parts.append(f"地点: {event.location.strip()}")
+                    else:
+                        location_parts.append("未排地点")
+                        description_parts.append("地点: 未排地点")
+                    
+                    # 处理教师信息
+                    if event.instructor and event.instructor.strip():
+                        description_parts.append(f"教师: {event.instructor.strip()}")
+                    
+                    # 处理周数信息
+                    if event.weeks_display or event.weeks_input:
+                        weeks_info = (event.weeks_display or event.weeks_input).strip()
+                        if weeks_info:
+                            description_parts.append(f"周数: {weeks_info}")
+                    
+                    # 处理节次信息
+                    if event.period and event.period.strip():
+                        description_parts.append(f"节次: {event.period.strip()}")
+                    
+                    # 设置ICS事件的位置和描述
+                    ics_event.location = "|".join(location_parts)
+                    ics_event.description = " | ".join(description_parts)
+                    
+                    # 添加提醒（提前10分钟）
+                    ics_event.alarms = [ics.DisplayAlarm(trigger=timedelta(minutes=-10))]
+                    
+                    # 生成唯一ID - 使用更安全的格式
+                    import hashlib
+                    uid_source = f"{schedule_id}-{event.id}-{week_num}-{start_datetime.isoformat()}"
+                    uid_hash = hashlib.md5(uid_source.encode()).hexdigest()[:8]
+                    ics_event.uid = f"event-{schedule_id}-{event.id}-w{week_num}-{uid_hash}@chronosync"
+                    
+                    calendar.events.add(ics_event)
+                    successful_events += 1
+                    
+                except Exception as week_error:
+                    print(f"    ❌ 第 {week_num} 周处理失败: {str(week_error)}")
+                    failed_events += 1
+                    continue
             
-            start_datetime = datetime.combine(event_date, datetime.min.time().replace(
-                hour=start_hour, minute=start_minute
-            ))
-            end_datetime = datetime.combine(event_date, datetime.min.time().replace(
-                hour=end_hour, minute=end_minute
-            ))
-            
-            # 创建ICS事件
-            ics_event = ics.Event()
-            ics_event.name = event.title
-            ics_event.begin = start_datetime
-            ics_event.end = end_datetime
-            
-            # 设置位置和描述
-            location_parts = []
-            if event.location:
-                location_parts.append(event.location)
-            if event.instructor:
-                location_parts.append(event.instructor)
-            
-            if location_parts:
-                ics_event.location = "|".join(location_parts)
-                ics_event.description = "|".join(location_parts)
-            
-            # 添加提醒（提前10分钟）
-            ics_event.alarms = [ics.DisplayAlarm(trigger=timedelta(minutes=-10))]
-            
-            # 生成唯一ID
-            ics_event.uid = f"{schedule_id}{event.id}{week_num}{int(start_datetime.timestamp())}"
-            
-            calendar.events.add(ics_event)
+        except Exception as event_error:
+            print(f"    ❌ 事件 {event.id} '{event.title}' 处理失败: {str(event_error)}")
+            failed_events += 1
+            continue
+    
+    print(f"\n=== ICS导出完成 ===")
+    print(f"成功处理: {successful_events} 个事件")
+    print(f"处理失败: {failed_events} 个事件")
+    print(f"总共创建了 {len(calendar.events)} 个ICS事件")
     
     # 生成ICS内容
     ics_content = str(calendar)

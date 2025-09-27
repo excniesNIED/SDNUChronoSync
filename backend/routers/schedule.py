@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas import EventCreate, EventUpdate, EventResponse
 from auth import get_current_user
-from models import User
+from models import User, Schedule
 import crud
 from ics import Calendar, Event as ICSEvent
 from datetime import datetime
@@ -29,7 +29,39 @@ async def create_my_event(
     db: Session = Depends(get_db)
 ):
     """Create a new event for the current user."""
-    db_event = crud.create_event(db, event, current_user.id)
+    # Get or create user's default schedule
+    user_schedule = db.query(Schedule).filter(Schedule.owner_id == current_user.id).first()
+    
+    if not user_schedule:
+        # Create default schedule
+        from datetime import date
+        default_class_times = {
+            "1": {"start": "08:00", "end": "08:45"},
+            "2": {"start": "08:50", "end": "09:35"},
+            "3": {"start": "09:50", "end": "10:35"},
+            "4": {"start": "10:40", "end": "11:25"},
+            "5": {"start": "11:30", "end": "12:15"},
+            "6": {"start": "14:00", "end": "14:45"},
+            "7": {"start": "14:50", "end": "15:35"},
+            "8": {"start": "15:50", "end": "16:35"},
+            "9": {"start": "16:40", "end": "17:25"},
+            "10": {"start": "19:00", "end": "19:45"},
+            "11": {"start": "19:50", "end": "20:35"}
+        }
+        
+        user_schedule = Schedule(
+            name="我的课表",
+            owner_id=current_user.id,
+            status="进行",
+            start_date=date(2024, 9, 1),
+            total_weeks=20,
+            class_times=default_class_times
+        )
+        db.add(user_schedule)
+        db.commit()
+        db.refresh(user_schedule)
+    
+    db_event = crud.create_event(db, event, user_schedule.id)
     # Reload with owner information
     return crud.get_event(db, db_event.id)
 
@@ -46,7 +78,7 @@ async def update_my_event(
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
     
-    if db_event.owner_id != current_user.id:
+    if db_event.schedule.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to modify this event"
@@ -67,7 +99,7 @@ async def delete_my_event(
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
     
-    if db_event.owner_id != current_user.id:
+    if db_event.schedule.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this event"
