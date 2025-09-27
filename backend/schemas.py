@@ -135,6 +135,9 @@ class ImportRequest(BaseModel):
     username: str
     password: str
     captcha: str
+    schedule_id: Optional[int] = None  # 指定要导入到的课表ID，如果为None则创建新课表
+    action: str = "create_new"  # "use_existing" 或 "create_new"
+    schedule_name: Optional[str] = None  # 创建新课表时的名称
 
 class ImportResponse(BaseModel):
     success: bool

@@ -1,13 +1,25 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 from database import get_db
-from schemas import ImportSessionResponse, ImportRequest, ImportResponse
+from schemas import ImportSessionResponse, ImportRequest, ImportResponse, ScheduleResponse
 from auth import get_current_user
 from models import User, Event, Schedule
 from importer import ZFWImporter
 import crud
 
 router = APIRouter(prefix="/api/import", tags=["import"])
+
+@router.get("/schedules", response_model=List[ScheduleResponse])
+async def get_user_schedules(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    获取当前用户的所有课表列表，用于导入时选择
+    """
+    schedules = db.query(Schedule).filter(Schedule.owner_id == current_user.id).all()
+    return schedules
 
 @router.get("/zfw/session", response_model=ImportSessionResponse)
 async def get_import_session():
@@ -53,11 +65,24 @@ async def import_from_zfw(
                 message="未找到课表数据，请检查学号或联系管理员"
             )
         
-        # 获取或创建用户的默认课表
-        user_schedule = db.query(Schedule).filter(Schedule.owner_id == current_user.id).first()
+        # 根据用户选择获取或创建课表
+        user_schedule = None
         
-        if not user_schedule:
-            # 创建默认课表
+        if import_request.action == "use_existing" and import_request.schedule_id:
+            # 使用现有课表
+            user_schedule = db.query(Schedule).filter(
+                Schedule.id == import_request.schedule_id,
+                Schedule.owner_id == current_user.id
+            ).first()
+            
+            if not user_schedule:
+                return ImportResponse(
+                    success=False,
+                    message="指定的课表不存在或您没有权限访问",
+                    imported_count=0
+                )
+        else:
+            # 创建新课表
             from datetime import date
             default_class_times = {
                 "1": {"start": "08:20", "end": "09:05"},
@@ -72,8 +97,9 @@ async def import_from_zfw(
                 "10": {"start": "19:45", "end": "20:30"}
             }
             
+            schedule_name = import_request.schedule_name or "导入的课表"
             user_schedule = Schedule(
-                name="导入的课表",
+                name=schedule_name,
                 owner_id=current_user.id,
                 status="进行",
                 start_date=date(2025, 9, 7),  # 2025年第一学期开始日期（第一周）

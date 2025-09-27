@@ -129,6 +129,101 @@
                     </p>
                   </div>
 
+                  <!-- Schedule Selection -->
+                  <div class="space-y-3">
+                    <label class="block text-sm font-medium leading-6 text-gray-900">
+                      导入到哪个课表？ <span class="text-red-500">*</span>
+                    </label>
+                    
+                    <div class="space-y-2">
+                      <!-- Current schedule option -->
+                      <label 
+                        v-if="props.currentSchedule"
+                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                        :class="{ 'border-blue-500 bg-blue-50': form.action === 'use_current' }"
+                      >
+                        <input
+                          type="radio"
+                          name="schedule-action"
+                          value="use_current"
+                          v-model="form.action"
+                          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        />
+                        <div class="ml-3 flex-1">
+                          <div class="text-sm font-medium text-gray-900">
+                            导入到当前课表: {{ props.currentSchedule.name }}
+                            <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 ml-2">
+                              推荐
+                            </span>
+                          </div>
+                          <div class="text-xs text-gray-500">将覆盖当前正在查看的课表中的课程</div>
+                        </div>
+                      </label>
+
+                      <!-- Create new schedule option -->
+                      <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                             :class="{ 'border-blue-500 bg-blue-50': form.action === 'create_new' }">
+                        <input
+                          type="radio"
+                          name="schedule-action"
+                          value="create_new"
+                          v-model="form.action"
+                          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        />
+                        <div class="ml-3 flex-1">
+                          <div class="text-sm font-medium text-gray-900">创建新课表</div>
+                          <div class="text-xs text-gray-500">将为导入的课程创建一个全新的课表</div>
+                        </div>
+                      </label>
+
+                      <!-- New schedule name input -->
+                      <div v-if="form.action === 'create_new'" class="ml-7">
+                        <input
+                          v-model="form.scheduleName"
+                          type="text"
+                          placeholder="请输入新课表名称，如：2024秋季学期"
+                          class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        />
+                      </div>
+
+                      <!-- Use other existing schedule option -->
+                      <label 
+                        v-if="otherSchedules.length > 0"
+                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                        :class="{ 'border-blue-500 bg-blue-50': form.action === 'use_existing' }"
+                      >
+                        <input
+                          type="radio"
+                          name="schedule-action"
+                          value="use_existing"
+                          v-model="form.action"
+                          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        />
+                        <div class="ml-3 flex-1">
+                          <div class="text-sm font-medium text-gray-900">导入到其他课表</div>
+                          <div class="text-xs text-gray-500">选择其他已存在的课表进行导入</div>
+                        </div>
+                      </label>
+
+                      <!-- Other schedules dropdown -->
+                      <div v-if="form.action === 'use_existing' && otherSchedules.length > 0" class="ml-7">
+                        <select
+                          v-model="form.scheduleId"
+                          class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        >
+                          <option value="">请选择要导入的课表</option>
+                          <option
+                            v-for="schedule in otherSchedules"
+                            :key="schedule.id"
+                            :value="schedule.id"
+                          >
+                            {{ schedule.name }} ({{ schedule.status }})
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Important Notice -->
                   <div class="rounded-md bg-yellow-50 p-4">
                     <div class="flex">
@@ -140,7 +235,8 @@
                         <div class="mt-2 text-sm text-yellow-700">
                           <ul class="list-disc pl-5 space-y-1">
                             <li>您的密码仅用于一次性导入，不会被存储</li>
-                            <li>导入将覆盖现有的课程数据</li>
+                            <li>导入将覆盖选中课表中的现有课程数据</li>
+                            <li>建议选择"导入到当前课表"以便直接查看导入结果</li>
                             <li>请确保网络连接正常</li>
                           </ul>
                         </div>
@@ -245,7 +341,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import {
   CloudArrowDownIcon,
@@ -257,6 +353,7 @@ import { apiClient } from '@/utils/api';
 
 interface Props {
   isOpen: boolean;
+  currentSchedule?: any; // 当前活跃的课表
 }
 
 const props = defineProps<Props>();
@@ -270,6 +367,9 @@ const form = ref({
   username: '',
   password: '',
   captcha: '',
+  action: 'use_current', // 默认选择当前课表
+  scheduleId: '',
+  scheduleName: '',
 });
 
 const isImporting = ref(false);
@@ -279,11 +379,19 @@ const successMessage = ref('');
 const errorMessage = ref('');
 const isTesting = ref(false);
 const testResults = ref<string[]>([]);
+const userSchedules = ref<any[]>([]);
+const isLoadingSchedules = ref(false);
 const sessionData = ref<{
   session_id: string;
   csrftoken: string;
   captcha_image: string;
 } | null>(null);
+
+// 计算属性：排除当前课表的其他课表
+const otherSchedules = computed(() => {
+  if (!props.currentSchedule) return userSchedules.value;
+  return userSchedules.value.filter(schedule => schedule.id !== props.currentSchedule.id);
+});
 
 async function handleImport() {
   if (!sessionData.value) {
@@ -301,11 +409,30 @@ async function handleImport() {
     importStatus.value = '正在登录教务系统...';
     importProgress.value = 40;
 
+    // 根据选择的操作确定参数
+    let apiAction = form.value.action;
+    let scheduleId = undefined;
+    let scheduleName = undefined;
+
+    if (form.value.action === 'use_current' && props.currentSchedule) {
+      apiAction = 'use_existing';
+      scheduleId = props.currentSchedule.id;
+    } else if (form.value.action === 'use_existing') {
+      apiAction = 'use_existing';
+      scheduleId = parseInt(form.value.scheduleId);
+    } else if (form.value.action === 'create_new') {
+      apiAction = 'create_new';
+      scheduleName = form.value.scheduleName;
+    }
+
     const response = await apiClient.importFromZFW({
       session_id: sessionData.value.session_id,
       username: form.value.username,
       password: form.value.password,
       captcha: form.value.captcha,
+      action: apiAction,
+      schedule_id: scheduleId,
+      schedule_name: scheduleName,
     });
 
     importStatus.value = '正在解析课表数据...';
@@ -385,6 +512,23 @@ async function handleTestLogin() {
 
 const isLoadingCaptcha = ref(false);
 
+async function loadUserSchedules() {
+  if (isLoadingSchedules.value) return;
+  
+  isLoadingSchedules.value = true;
+  
+  try {
+    const response = await apiClient.getUserSchedules();
+    userSchedules.value = response;
+  } catch (error: any) {
+    console.error('Failed to load user schedules:', error);
+    errorMessage.value = '获取课表列表失败';
+    userSchedules.value = [];
+  } finally {
+    isLoadingSchedules.value = false;
+  }
+}
+
 async function refreshCaptcha() {
   if (isLoadingCaptcha.value) return; // 防止重复请求
   
@@ -410,13 +554,25 @@ async function refreshCaptcha() {
   }
 }
 
-// 监听模态框打开事件，自动获取验证码
+// 监听模态框打开事件，自动获取验证码和课表列表
 watch(() => props.isOpen, async (newValue, oldValue) => {
   if (newValue && !oldValue) {
-    // 只有在从关闭到打开时才获取验证码
+    // 只有在从关闭到打开时才获取数据
     errorMessage.value = '';
     successMessage.value = '';
-    await refreshCaptcha();
+    
+    // 根据是否有当前课表设置默认选项
+    if (props.currentSchedule) {
+      form.value.action = 'use_current';
+    } else {
+      form.value.action = 'create_new';
+    }
+    
+    // 同时获取验证码和课表列表
+    await Promise.all([
+      refreshCaptcha(),
+      loadUserSchedules()
+    ]);
   } else if (!newValue && oldValue) {
     // 模态框关闭时重置状态
     resetForm();
@@ -428,9 +584,13 @@ function resetForm() {
     username: '',
     password: '',
     captcha: '',
+    action: props.currentSchedule ? 'use_current' : 'create_new',
+    scheduleId: '',
+    scheduleName: '',
   };
   successMessage.value = '';
   errorMessage.value = '';
   sessionData.value = null;
+  userSchedules.value = [];
 }
 </script>

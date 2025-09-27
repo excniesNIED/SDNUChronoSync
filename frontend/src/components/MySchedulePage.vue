@@ -220,6 +220,7 @@
     <!-- Schedule Importer Modal -->
     <ScheduleImporter
       :is-open="isImportModalOpen"
+      :current-schedule="scheduleStore.activeSchedule"
       @close="closeImportModal"
       @success="handleImportSuccess"
     />

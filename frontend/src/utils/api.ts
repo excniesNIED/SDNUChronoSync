@@ -191,6 +191,11 @@ class ApiClient {
   }
 
   // Import endpoints
+  async getUserSchedules(): Promise<ScheduleResponse[]> {
+    const response = await axios.get('/api/import/schedules');
+    return response.data;
+  }
+
   async getImportSession(): Promise<{
     session_id: string;
     csrftoken: string;
@@ -204,7 +209,10 @@ class ApiClient {
     session_id: string; 
     username: string; 
     password: string; 
-    captcha: string; 
+    captcha: string;
+    action: string;
+    schedule_id?: number;
+    schedule_name?: string;
   }): Promise<{
     success: boolean;
     message: string;
