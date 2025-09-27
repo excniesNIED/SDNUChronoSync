@@ -158,6 +158,12 @@ class JwxtLogin:
 class ZFWImporter:
     """正方教务系统导入器 - 基于新的登录流程"""
     
+    # 教务系统相关URL
+    login_url = "http://jwxt.sdnu.edu.cn/jwglxt/xtgl/login_slogin.html"
+    schedule_urls = [
+        "http://jwxt.sdnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N253508"
+    ]
+    
     @classmethod
     def create_session(cls) -> Dict[str, str]:
         """第一步：创建登录会话，获取验证码"""
