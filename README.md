@@ -141,6 +141,48 @@ SDNUChronoSync/
 - `PUT /api/admin/schedule/{id}` - 更新任意日程
 - `DELETE /api/admin/schedule/{id}` - 删除任意日程
 
+## 教务系统课表导入
+
+系统支持从山东师范大学正方教务系统导入课表。导入流程如下：
+
+1.  **获取会话与验证码**
+    -   `GET /api/import/zfw/session`
+    -   **描述**: 初始化导入流程，返回一个临时的 `session_id` 和 Base64 编码的验证码图片。
+    -   **响应**:
+        ```json
+        {
+          "session_id": "string",
+          "captcha_image": "string (base64)",
+          "source": "string ('real' or 'fallback')"
+        }
+        ```
+
+2.  **提交登录信息并导入**
+    -   `POST /api/import/zfw`
+    -   **描述**: 用户输入学号、密码和验证码后，提交至此接口。服务器将尝试登录教务系统，获取、解析课表，并存入当前用户账户。
+    -   **请求体**:
+        ```json
+        {
+          "session_id": "string",
+          "username": "string (学号)",
+          "password": "string",
+          "captcha": "string (验证码)"
+        }
+        ```
+    -   **响应**:
+        ```json
+        {
+          "success": "boolean",
+          "message": "string",
+          "imported_count": "integer"
+        }
+        ```
+
+3.  **刷新验证码 (可选)**
+    -   `GET /api/import/zfw/refresh/{session_id}`
+    -   **描述**: 如果验证码无法识别，可使用此接口刷新验证码。
+    -   **响应**: 返回与获取会话接口相同的结构，但包含新的验证码图片。
+
 ## 开发指南
 
 ### 后端开发
