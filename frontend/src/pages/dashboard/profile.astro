@@ -1,15 +1,18 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<BaseLayout title="个人中心 - SDNUChronoSync">
+<DashboardLayout title="个人中心 - SDNUChronoSync">
   <div id="profile-app"></div>
   
   <script>
     import ProfilePage from '../../components/ProfilePage.vue';
     import { createApp } from 'vue';
+    import { createPinia } from 'pinia';
     
     const app = createApp(ProfilePage);
+    const pinia = createPinia();
+    app.use(pinia);
     app.mount('#profile-app');
   </script>
-</BaseLayout>
+</DashboardLayout>

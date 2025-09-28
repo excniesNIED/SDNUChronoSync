@@ -1,23 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-6">
-          <div class="flex items-center">
-            <a href="/dashboard/my-schedule" class="flex items-center text-gray-600 hover:text-gray-900">
-              <ArrowLeftIcon class="h-5 w-5 mr-2" />
-              返回课表
-            </a>
-          </div>
-          <h1 class="text-2xl font-bold text-gray-900">个人中心</h1>
-          <div class="w-20"></div> <!-- Spacer -->
-        </div>
-      </div>
-    </header>
+    <!-- Main Content (removed separate header) -->
 
-    <!-- Main Content -->
-    <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 lg:ml-72">
       <div class="space-y-8">
         <!-- Profile Card -->
         <div class="bg-white shadow rounded-lg">
