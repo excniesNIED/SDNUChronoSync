@@ -568,6 +568,12 @@ class ZFWImporter:
                 # 解析课表数据
                 events = cls._parse_schedule_json(schedule_data)
                 
+                # 提取用户信息
+                user_info = None
+                if 'xsxx' in schedule_data and schedule_data['xsxx']:
+                    user_info = schedule_data['xsxx']
+                    print(f"提取到用户信息: {user_info}")
+                
                 # 清理缓存
                 _session_cache.pop(session_id, None)
                 
@@ -575,7 +581,8 @@ class ZFWImporter:
                     "success": True,
                     "message": f"课表导入成功！共获取到 {len(events)} 个事件",
                     "imported_count": len(events),
-                    "events": events
+                    "events": events,
+                    "user_info": user_info
                 }
                 
             except Exception as e:

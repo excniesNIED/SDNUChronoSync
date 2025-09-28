@@ -245,17 +245,19 @@
                   </div>
                 </div>
 
-                <!-- User Welcome Info -->
-                <div v-if="userWelcomeInfo" class="mt-4 rounded-md bg-blue-50 p-4">
+                <!-- User Info Results -->
+                <div v-if="userInfo" class="mt-4 rounded-md bg-blue-50 p-4">
                   <div class="flex">
-                    <CheckCircleIcon class="h-5 w-5 text-blue-400" />
+                    <ExclamationCircleIcon class="h-5 w-5 text-blue-400" />
                     <div class="ml-3">
-                      <h4 class="text-sm font-medium text-blue-800 mb-2">登录成功，欢迎您！</h4>
-                      <div class="text-sm text-blue-700 space-y-1">
-                        <div><strong>姓名：</strong>{{ userWelcomeInfo.fullName }}</div>
-                        <div><strong>学号：</strong>{{ userWelcomeInfo.studentId }}</div>
-                        <div v-if="userWelcomeInfo.className"><strong>班级：</strong>{{ userWelcomeInfo.className }}</div>
-                        <div v-if="userWelcomeInfo.grade"><strong>年级：</strong>{{ userWelcomeInfo.grade }}</div>
+                      <h4 class="text-sm font-medium text-blue-800 mb-2">获取到的用户信息：</h4>
+                      <div class="text-sm text-blue-700 space-y-2">
+                        <div><strong>姓名：</strong>{{ userInfo.XM }}</div>
+                        <div><strong>学号：</strong>{{ userInfo.XH }}</div>
+                        <div><strong>班级：</strong>{{ userInfo.BJMC }}</div>
+                        <div><strong>年级：</strong>{{ userInfo.XQM === '1' ? '大一' : userInfo.XQM === '2' ? '大二' : userInfo.XQM === '3' ? '大三' : userInfo.XQM === '4' ? '大四' : '其他' }}</div>
+                        <div><strong>专业：</strong>{{ userInfo.ZYMC }}</div>
+                        <div><strong>学年：</strong>{{ userInfo.XNMC }}</div>
                       </div>
                     </div>
                   </div>
@@ -337,6 +339,7 @@ import {
   CloudArrowDownIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/vue/24/outline';
 import { apiClient } from '@/utils/api';
 
@@ -366,12 +369,7 @@ const importStatus = ref('');
 const importProgress = ref(0);
 const successMessage = ref('');
 const errorMessage = ref('');
-const userWelcomeInfo = ref<{
-  fullName: string;
-  studentId: string;
-  className?: string;
-  grade?: string;
-} | null>(null);
+const userInfo = ref<any>(null);
 const userSchedules = ref<any[]>([]);
 const isLoadingSchedules = ref(false);
 const sessionData = ref<{
@@ -443,19 +441,19 @@ async function handleImport() {
     importProgress.value = 100;
 
     if (response.success) {
-      successMessage.value = response.message;
-      
-      // 显示用户欢迎信息
+      // 显示用户信息
       if (response.user_info) {
-        userWelcomeInfo.value = response.user_info;
+        userInfo.value = response.user_info;
       }
+      
+      successMessage.value = response.message;
       
       // 延迟关闭并触发成功回调
       setTimeout(() => {
         emit('success', response.imported_count || 0);
         emit('close');
         resetForm();
-      }, 3000); // 延长显示时间以便用户看到欢迎信息
+      }, 2000);
     } else {
       errorMessage.value = response.message;
     }
@@ -551,7 +549,7 @@ function resetForm() {
   };
   successMessage.value = '';
   errorMessage.value = '';
-  userWelcomeInfo.value = null;
+  userInfo.value = null;
   sessionData.value = null;
   userSchedules.value = [];
 }

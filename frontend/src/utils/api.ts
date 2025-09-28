@@ -217,12 +217,7 @@ class ApiClient {
     success: boolean;
     message: string;
     imported_count: number;
-    user_info?: {
-      fullName: string;
-      studentId: string;
-      className?: string;
-      grade?: string;
-    };
+    user_info?: any;
   }> {
     const response = await axios.post('/api/import/zfw', importData);
     return response.data;
@@ -237,14 +232,6 @@ class ApiClient {
     return response.data;
   }
 
-
-  async testImportConnection(): Promise<{
-    status: string;
-    message: string;
-  }> {
-    const response = await axios.get('/api/import/test');
-    return response.data;
-  }
 
   // Schedule management endpoints
   async getSchedules(): Promise<ScheduleResponse[]> {

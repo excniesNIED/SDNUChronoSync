@@ -56,8 +56,9 @@ async def import_from_zfw(
         if not result["success"]:
             return ImportResponse(**result)
         
-        # 获取导入的事件数据
+        # 获取导入的事件数据和用户信息
         events_data = result.get("events", [])
+        user_info = result.get("user_info", None)
         
         if not events_data:
             return ImportResponse(
@@ -102,7 +103,7 @@ async def import_from_zfw(
                 name=schedule_name,
                 owner_id=current_user.id,
                 status="进行",
-                start_date=date(2025, 9, 7),  # 2025年第一学期开始日期（第一周）
+                start_date=date(2025, 9, 8),  # 2025年第一学期开始日期（第一周）
                 total_weeks=20,
                 class_times=default_class_times
             )
@@ -167,14 +168,6 @@ async def import_from_zfw(
         # 验证数据库中的事件
         saved_events = db.query(Event).filter(Event.schedule_id == user_schedule.id).count()
         print(f"数据库中该课表的总事件数: {saved_events}")
-        
-        # 构建用户信息
-        user_info = {
-            "fullName": current_user.full_name,
-            "studentId": current_user.student_id,
-            "className": current_user.class_name,
-            "grade": current_user.grade
-        }
         
         return ImportResponse(
             success=True,
@@ -246,239 +239,5 @@ async def refresh_captcha(session_id: str):
             detail=f"刷新验证码失败: {str(e)}"
         )
 
-@router.post("/test-login")
-async def test_login_flow(
-    import_request: ImportRequest
-):
-    """测试登录流程 - 只验证登录是否成功，不导入数据"""
-    try:
-        # 从缓存中获取session
-        from importer import _session_cache
-        session_data = _session_cache.get(import_request.session_id)
-        if not session_data:
-            return {
-                "success": False,
-                "message": "会话已过期，请重新获取验证码",
-                "details": []
-            }
-        
-        # 获取session对象和相关信息
-        session_obj = session_data.get("session")
-        csrf_token = session_data.get("csrf_token", "")
-        
-        if session_obj == "fallback":
-            return {
-                "success": False,
-                "message": "这是fallback会话，无法测试真实登录",
-                "details": []
-            }
-        
-        # 执行登录测试
-        result = await test_real_login(
-            session_obj, 
-            import_request.username, 
-            import_request.password, 
-            import_request.captcha, 
-            csrf_token
-        )
-        
-        # 清理缓存
-        _session_cache.pop(import_request.session_id, None)
-        
-        return result
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "message": f"测试过程中发生错误: {str(e)}",
-            "details": []
-        }
 
-async def test_real_login(session, username: str, password: str, captcha: str, csrf_token: str):
-    """测试真实登录流程"""
-    details = []
-    
-    try:
-        from importer import ZFWImporter
-        importer = ZFWImporter()
-        
-        details.append("=== 开始登录测试 ===")
-        details.append(f"用户名: {username}")
-        details.append(f"验证码: {captcha}")
-        details.append(f"CSRF Token: {csrf_token[:20]}..." if csrf_token else "无CSRF Token")
-        
-        # 构建登录数据
-        login_data = {
-            'yhm': username,  # 用户名
-            'mm': password,   # 密码
-            'yzm': captcha,   # 验证码
-        }
-        
-        # 如果有CSRF token，添加到数据中
-        if csrf_token:
-            login_data.update({
-                'csrftoken': csrf_token,
-                '_token': csrf_token,
-                '__VIEWSTATE': csrf_token
-            })
-        
-        details.append(f"登录URL: {importer.login_url}")
-        details.append("正在发送登录请求...")
-        
-        # 发送登录请求
-        login_response = session.post(
-            importer.login_url,
-            data=login_data,
-            timeout=15,
-            allow_redirects=False  # 不自动跟随重定向
-        )
-        
-        details.append(f"登录响应状态码: {login_response.status_code}")
-        details.append(f"响应头: {dict(login_response.headers)}")
-        
-        # 检查登录结果
-        if login_response.status_code == 302:
-            # 重定向通常表示登录成功
-            location = login_response.headers.get('Location', '')
-            details.append(f"重定向到: {location}")
-            
-            if 'index' in location.lower() or 'main' in location.lower() or 'home' in location.lower():
-                details.append("✅ 登录成功！检测到成功重定向")
-                
-                # 测试访问课表页面
-                return await test_schedule_access(session, details)
-                
-            elif 'login' in location.lower():
-                details.append("❌ 登录失败：重定向回登录页面")
-                return {
-                    "success": False,
-                    "message": "登录失败，用户名、密码或验证码错误",
-                    "details": details
-                }
-            else:
-                details.append("⚠️ 未知重定向，尝试访问课表页面")
-                return await test_schedule_access(session, details)
-                
-        elif login_response.status_code == 200:
-            # 检查响应内容
-            response_text = login_response.text
-            details.append(f"登录响应内容长度: {len(response_text)}")
-            
-            # 检查是否包含错误信息
-            error_keywords = ['验证码错误', '用户名或密码错误', '登录失败', '账号或密码错误', '验证码不正确']
-            for error_keyword in error_keywords:
-                if error_keyword in response_text:
-                    details.append(f"❌ 登录失败：检测到错误信息 '{error_keyword}'")
-                    if '验证码' in error_keyword:
-                        return {
-                            "success": False,
-                            "message": "验证码错误，请重新输入",
-                            "details": details
-                        }
-                    else:
-                        return {
-                            "success": False,
-                            "message": "用户名或密码错误",
-                            "details": details
-                        }
-            
-            # 检查是否包含成功标识
-            success_keywords = ['欢迎', '课表', '学生信息', '个人中心', '教学管理']
-            if any(keyword in response_text for keyword in success_keywords):
-                details.append("✅ 登录成功！检测到成功标识")
-                return await test_schedule_access(session, details)
-            else:
-                details.append("⚠️ 未检测到明确的成功/失败标识，尝试访问课表页面")
-                return await test_schedule_access(session, details)
-        else:
-            details.append(f"❌ 登录请求失败，状态码: {login_response.status_code}")
-            return {
-                "success": False,
-                "message": f"登录请求失败，状态码: {login_response.status_code}",
-                "details": details
-            }
-            
-    except Exception as e:
-        details.append(f"❌ 登录过程异常: {str(e)}")
-        return {
-            "success": False,
-            "message": f"登录过程中发生错误: {str(e)}",
-            "details": details
-        }
 
-async def test_schedule_access(session, details):
-    """测试课表页面访问"""
-    try:
-        from importer import ZFWImporter
-        importer = ZFWImporter()
-        
-        details.append("\n=== 开始测试课表页面访问 ===")
-        
-        # 测试所有课表URL
-        for i, schedule_url in enumerate(importer.schedule_urls):
-            try:
-                details.append(f"测试URL {i+1}: {schedule_url}")
-                
-                # 获取课表页面
-                schedule_response = session.get(schedule_url, timeout=15)
-                details.append(f"响应状态码: {schedule_response.status_code}")
-                details.append(f"响应内容长度: {len(schedule_response.text)}")
-                details.append(f"内容类型: {schedule_response.headers.get('content-type', '未知')}")
-                
-                # 检查页面内容
-                if schedule_response.status_code == 200:
-                    if len(schedule_response.text) > 1000:
-                        # 检查是否包含课表相关内容
-                        if '课表' in schedule_response.text or 'timetable' in schedule_response.text or 'td_wrap' in schedule_response.text:
-                            details.append(f"✅ URL {i+1} 访问成功！包含课表内容")
-                            details.append(f"页面前200字符: {schedule_response.text[:200]}")
-                            
-                            return {
-                                "success": True,
-                                "message": "登录成功，课表页面访问正常",
-                                "details": details,
-                                "working_url": schedule_url
-                            }
-                        else:
-                            details.append(f"⚠️ URL {i+1} 访问成功但不包含课表内容")
-                            details.append(f"页面前200字符: {schedule_response.text[:200]}")
-                    else:
-                        details.append(f"⚠️ URL {i+1} 页面内容过短")
-                else:
-                    details.append(f"❌ URL {i+1} 响应状态码异常: {schedule_response.status_code}")
-                    
-            except Exception as e:
-                details.append(f"❌ URL {i+1} 访问异常: {str(e)}")
-                continue
-        
-        # 如果所有URL都无法正常访问
-        details.append("❌ 所有课表URL都无法正常访问")
-        return {
-            "success": False,
-            "message": "登录成功，但无法访问课表页面",
-            "details": details
-        }
-        
-    except Exception as e:
-        details.append(f"❌ 课表页面测试异常: {str(e)}")
-        return {
-            "success": False,
-            "message": f"课表页面测试失败: {str(e)}",
-            "details": details
-        }
-
-@router.get("/test")
-async def test_import_connection():
-    """测试教务系统连接"""
-    try:
-        # 简单的连接测试
-        import requests
-        response = requests.get("http://jwxt.sdnu.edu.cn", timeout=5)
-        
-        if response.status_code == 200:
-            return {"status": "success", "message": "教务系统连接正常"}
-        else:
-            return {"status": "error", "message": f"教务系统响应异常: {response.status_code}"}
-            
-    except Exception as e:
-        return {"status": "error", "message": f"连接测试失败: {str(e)}"}
