@@ -213,6 +213,7 @@ class ApiClient {
     action: string;
     schedule_id?: number;
     schedule_name?: string;
+    start_date?: string;
   }): Promise<{
     success: boolean;
     message: string;

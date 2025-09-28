@@ -176,14 +176,27 @@
                         </div>
                       </label>
 
-                      <!-- New schedule name input -->
-                      <div v-if="form.action === 'create_new'" class="ml-7">
+                      <!-- New schedule name and start date inputs -->
+                      <div v-if="form.action === 'create_new'" class="ml-7 space-y-3">
                         <input
                           v-model="form.scheduleName"
                           type="text"
-                          placeholder="请输入新课表名称，如：2024秋季学期"
+                          placeholder="请输入新课表名称，如：2025春季学期"
                           class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
                         />
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">
+                            开学日期（第一周的周一）
+                          </label>
+                          <input
+                            v-model="form.startDate"
+                            type="date"
+                            class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                          />
+                          <p class="mt-1 text-xs text-gray-500">
+                            请选择第一周周一的日期，课程时间将基于此日期计算
+                          </p>
+                        </div>
                       </div>
 
                       <!-- Use other existing schedule option -->
@@ -362,6 +375,7 @@ const form = ref({
   action: 'use_current', // 默认选择当前课表
   scheduleId: '',
   scheduleName: '',
+  startDate: new Date().toISOString().split('T')[0], // 默认为今天
 });
 
 const isImporting = ref(false);
@@ -424,6 +438,7 @@ async function handleImport() {
       action: apiAction,
       schedule_id: scheduleId,
       schedule_name: scheduleName,
+      start_date: form.value.action === 'create_new' ? form.value.startDate : undefined,
     });
 
     importStatus.value = '正在解析课表数据...';
@@ -546,6 +561,7 @@ function resetForm() {
     action: props.currentSchedule ? 'use_current' : 'create_new',
     scheduleId: '',
     scheduleName: '',
+    startDate: new Date().toISOString().split('T')[0],
   };
   successMessage.value = '';
   errorMessage.value = '';

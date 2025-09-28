@@ -50,6 +50,38 @@ export interface TokenResponse {
   token_type: string;
 }
 
+export interface RegisterRequest {
+  student_id: string;
+  password: string;
+  full_name: string;
+  class_name: string;
+  grade: string;
+}
+
+export interface ImportSessionResponse {
+  session_id: string;
+  csrftoken: string;
+  captcha_image: string;
+}
+
+export interface ImportRequest {
+  session_id: string;
+  username: string;
+  password: string;
+  captcha: string;
+  schedule_id?: number;
+  action: string;
+  schedule_name?: string;
+  start_date?: string;
+}
+
+export interface ImportResponse {
+  success: boolean;
+  message: string;
+  imported_count?: number;
+  user_info?: any;
+}
+
 export interface CreateUserRequest {
   student_id: string;
   password: string;

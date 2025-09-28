@@ -45,12 +45,35 @@ async def import_from_zfw(
     第二步：使用验证码和密码登录并导入课表
     """
     try:
-        # 执行登录和导入
+        # 先确定使用的课表和开学日期
+        target_schedule = None
+        target_start_date = None
+        
+        if import_request.action == "use_existing" and import_request.schedule_id:
+            # 使用现有课表
+            target_schedule = db.query(Schedule).filter(
+                Schedule.id == import_request.schedule_id,
+                Schedule.owner_id == current_user.id
+            ).first()
+            
+            if not target_schedule:
+                return ImportResponse(
+                    success=False,
+                    message="指定的课表不存在或您没有权限访问"
+                )
+            
+            target_start_date = target_schedule.start_date
+        else:
+            # 创建新课表时，使用用户指定的开学日期，如果没有则使用默认值
+            target_start_date = import_request.start_date or date(2025, 9, 8)
+        
+        # 执行登录和导入，传入开学日期
         result = ZFWImporter.login_and_import(
             import_request.session_id,
             import_request.username,
             import_request.password,
-            import_request.captcha
+            import_request.captcha,
+            target_start_date
         )
         
         if not result["success"]:
@@ -67,21 +90,9 @@ async def import_from_zfw(
             )
         
         # 根据用户选择获取或创建课表
-        user_schedule = None
-        
-        if import_request.action == "use_existing" and import_request.schedule_id:
+        if target_schedule:
             # 使用现有课表
-            user_schedule = db.query(Schedule).filter(
-                Schedule.id == import_request.schedule_id,
-                Schedule.owner_id == current_user.id
-            ).first()
-            
-            if not user_schedule:
-                return ImportResponse(
-                    success=False,
-                    message="指定的课表不存在或您没有权限访问",
-                    imported_count=0
-                )
+            user_schedule = target_schedule
         else:
             # 创建新课表
             from datetime import date
@@ -103,7 +114,7 @@ async def import_from_zfw(
                 name=schedule_name,
                 owner_id=current_user.id,
                 status="进行",
-                start_date=date(2025, 9, 8),  # 2025年第一学期开始日期（第一周）
+                start_date=target_start_date,  # 使用确定的开学日期
                 total_weeks=20,
                 class_times=default_class_times
             )

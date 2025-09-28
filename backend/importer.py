@@ -4,7 +4,7 @@
 
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import re
 import base64
 import uuid
@@ -286,7 +286,7 @@ class ZFWImporter:
             return password
     
     @classmethod 
-    def _parse_schedule_json(cls, schedule_data: Dict) -> List[Dict]:
+    def _parse_schedule_json(cls, schedule_data: Dict, start_date: date = None) -> List[Dict]:
         """解析从教务系统获取的JSON格式课表数据"""
         events = []
         
@@ -339,8 +339,11 @@ class ZFWImporter:
                     start_time_str, end_time_str = cls._get_period_time(start_period, end_period)
                     print(f"    计算出的时间: {start_time_str} - {end_time_str}")
                     
-                    # 2025年第一学期开始日期（第一周为9月7日）
-                    semester_start = datetime(2025, 9, 8)  # 第一周从9月8日开始
+                    # 使用传入的开学日期，如果没有则使用默认值
+                    if start_date:
+                        semester_start = datetime.combine(start_date, datetime.min.time())
+                    else:
+                        semester_start = datetime(2025, 9, 8)  # 默认开学日期
                     
                     # 为每个周数创建事件
                     for week_num in week_numbers:
@@ -493,7 +496,7 @@ class ZFWImporter:
         return colors[color_index]
 
     @classmethod
-    def login_and_import(cls, session_id: str, username: str, password: str, captcha: str) -> Dict:
+    def login_and_import(cls, session_id: str, username: str, password: str, captcha: str, start_date: date = None) -> Dict:
         """第二步：使用验证码和密码登录并导入数据"""
         try:
             # 从缓存中获取session
@@ -566,7 +569,7 @@ class ZFWImporter:
                 print("=" * 50)
                 
                 # 解析课表数据
-                events = cls._parse_schedule_json(schedule_data)
+                events = cls._parse_schedule_json(schedule_data, start_date)
                 
                 # 提取用户信息
                 user_info = None

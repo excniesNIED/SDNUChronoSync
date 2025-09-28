@@ -138,6 +138,7 @@ class ImportRequest(BaseModel):
     schedule_id: Optional[int] = None  # 指定要导入到的课表ID，如果为None则创建新课表
     action: str = "create_new"  # "use_existing" 或 "create_new"
     schedule_name: Optional[str] = None  # 创建新课表时的名称
+    start_date: Optional[date] = None  # 开学日期，仅在创建新课表时生效
 
 class ImportResponse(BaseModel):
     success: bool
