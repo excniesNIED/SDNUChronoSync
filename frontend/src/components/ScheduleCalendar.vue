@@ -78,7 +78,7 @@
                 <!-- 团队视图：紧凑显示课程名 + 气泡人数 -->
                 <div v-if="props.isAdminMode" class="flex items-center justify-between">
                   <div class="flex items-center gap-1 flex-1 min-w-0">
-                    <span class="font-medium truncate">{{ eventGroup[0].title }}</span>
+                    <span class="font-bold truncate">{{ eventGroup[0].title }}</span>
                     <span 
                       v-if="eventGroup.length > 1"
                       class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-current flex-shrink-0"
@@ -91,23 +91,23 @@
                 <!-- 个人视图：详细分行显示 -->
                 <div v-else class="space-y-1">
                   <!-- 课程名称 -->
-                  <div class="font-medium truncate text-sm">{{ eventGroup[0].title }}</div>
+                  <div class="font-bold truncate text-sm">{{ eventGroup[0].title }}</div>
                   
                   <!-- 教师 -->
-                  <div v-if="eventGroup[0].instructor" class="text-xs text-white/80 truncate flex items-center">
-                    <span class="w-8 text-white/60">👨‍🏫</span>
+                  <div v-if="eventGroup[0].instructor" class="text-xs truncate flex items-center opacity-85">
+                    <span class="w-8 opacity-75">👨‍🏫</span>
                     <span>{{ eventGroup[0].instructor }}</span>
                   </div>
                   
                   <!-- 教室 -->
-                  <div v-if="eventGroup[0].location" class="text-xs text-white/80 truncate flex items-center">
-                    <span class="w-8 text-white/60">📍</span>
+                  <div v-if="eventGroup[0].location" class="text-xs truncate flex items-center opacity-85">
+                    <span class="w-8 opacity-75">📍</span>
                     <span>{{ eventGroup[0].location }}</span>
                   </div>
                   
                   <!-- 周数 -->
-                  <div v-if="eventGroup[0].weeks_display" class="text-xs text-white/80 truncate flex items-center">
-                    <span class="w-8 text-white/60">📅</span>
+                  <div v-if="eventGroup[0].weeks_display" class="text-xs truncate flex items-center opacity-85">
+                    <span class="w-8 opacity-75">📅</span>
                     <span>{{ eventGroup[0].weeks_display }}</span>
                   </div>
                 </div>
@@ -130,7 +130,7 @@
               <!-- 团队视图：紧凑单行显示 -->
               <div v-if="props.isAdminMode" class="flex items-center justify-between">
                 <div class="flex items-center gap-1 flex-1 min-w-0">
-                  <span class="font-medium truncate">{{ eventGroup[0].title }}</span>
+                  <span class="font-bold truncate">{{ eventGroup[0].title }}</span>
                   <span v-if="eventGroup[0].owner" 
                         class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-current flex-shrink-0">
                     1
@@ -141,23 +141,23 @@
               <!-- 个人视图：详细分行显示 -->
               <div v-else class="space-y-1">
                 <!-- 课程名称 -->
-                <div class="font-medium truncate text-sm">{{ eventGroup[0].title }}</div>
+                <div class="font-bold truncate text-sm">{{ eventGroup[0].title }}</div>
                 
                 <!-- 教师 -->
-                <div v-if="eventGroup[0].instructor" class="text-xs text-white/80 truncate flex items-center">
-                  <span class="w-8 text-white/60">👨‍🏫</span>
+                <div v-if="eventGroup[0].instructor" class="text-xs truncate flex items-center opacity-85">
+                  <span class="w-8 opacity-75">👨‍🏫</span>
                   <span>{{ eventGroup[0].instructor }}</span>
                 </div>
                 
                 <!-- 教室 -->
-                <div v-if="eventGroup[0].location" class="text-xs text-white/80 truncate flex items-center">
-                  <span class="w-8 text-white/60">📍</span>
+                <div v-if="eventGroup[0].location" class="text-xs truncate flex items-center opacity-85">
+                  <span class="w-8 opacity-75">📍</span>
                   <span>{{ eventGroup[0].location }}</span>
                 </div>
                 
                 <!-- 周数 -->
-                <div v-if="eventGroup[0].weeks_display" class="text-xs text-white/80 truncate flex items-center">
-                  <span class="w-8 text-white/60">📅</span>
+                <div v-if="eventGroup[0].weeks_display" class="text-xs truncate flex items-center opacity-85">
+                  <span class="w-8 opacity-75">📅</span>
                   <span>{{ eventGroup[0].weeks_display }}</span>
                 </div>
               </div>
@@ -220,7 +220,7 @@
               <div v-if="props.isAdminMode">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-1 flex-1 min-w-0">
-                    <span class="font-medium truncate text-xs">{{ eventGroup[0].title }}</span>
+                    <span class="font-bold truncate text-xs">{{ eventGroup[0].title }}</span>
                     <span 
                       v-if="eventGroup.length > 1"
                       class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-white/25 text-current flex-shrink-0"
@@ -233,15 +233,15 @@
               
               <!-- 个人视图：月视图详细显示 -->
               <div v-else class="space-y-0.5">
-                <div class="font-medium truncate text-xs">{{ eventGroup[0].title }}</div>
-                <div v-if="eventGroup[0].instructor" class="truncate text-xs opacity-80 flex items-center">
-                  <span class="mr-1">👨‍🏫</span>{{ eventGroup[0].instructor }}
+                <div class="font-bold truncate text-xs">{{ eventGroup[0].title }}</div>
+                <div v-if="eventGroup[0].instructor" class="truncate text-xs opacity-85 flex items-center">
+                  <span class="mr-1 opacity-75">👨‍🏫</span>{{ eventGroup[0].instructor }}
                 </div>
-                <div v-if="eventGroup[0].location" class="truncate text-xs opacity-80 flex items-center">
-                  <span class="mr-1">📍</span>{{ eventGroup[0].location }}
+                <div v-if="eventGroup[0].location" class="truncate text-xs opacity-85 flex items-center">
+                  <span class="mr-1 opacity-75">📍</span>{{ eventGroup[0].location }}
                 </div>
-                <div v-if="eventGroup[0].weeks_display" class="truncate text-xs opacity-80 flex items-center">
-                  <span class="mr-1">📅</span>{{ eventGroup[0].weeks_display }}
+                <div v-if="eventGroup[0].weeks_display" class="truncate text-xs opacity-85 flex items-center">
+                  <span class="mr-1 opacity-75">📅</span>{{ eventGroup[0].weeks_display }}
                 </div>
               </div>
             </div>
