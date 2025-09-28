@@ -329,7 +329,7 @@ class ApiClient {
     return response.data;
   }
 
-  async testAlistConnection(config: any): Promise<{ success: boolean; message: string; user_info?: any }> {
+  async testAlistConnection(config: any): Promise<{ success: boolean; message: string; auth_method?: string; user_info?: any }> {
     const response = await axios.post('/api/admin/settings/test-alist', config);
     return response.data;
   }

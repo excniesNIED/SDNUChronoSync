@@ -89,12 +89,12 @@
           </div>
 
           <!-- Alist Storage Settings -->
-          <div v-show="settings.storage.provider === 'alist'" class="space-y-4">
+          <div v-show="settings.storage.provider === 'alist'" class="space-y-6">
             <div class="flex items-center justify-between">
               <h4 class="text-lg font-medium text-gray-900">Alist 存储设置</h4>
               <button
                 @click="testAlistConnection"
-                :disabled="isTestingConnection || !settings.storage.alist.url || !settings.storage.alist.token"
+                :disabled="isTestingConnection || !canTestConnection"
                 class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="isTestingConnection" class="mr-2">
@@ -107,49 +107,155 @@
               </button>
             </div>
             
-            <div class="grid grid-cols-1 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Alist URL</label>
-                <input
-                  v-model="settings.storage.alist.url"
-                  type="url"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="https://your-alist-instance.com"
-                />
-                <p class="mt-2 text-sm text-gray-500">Alist 服务器的完整URL地址</p>
+            <!-- Basic Configuration -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h5 class="text-sm font-medium text-gray-900 mb-3">基本配置</h5>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700">Alist 版本</label>
+                  <select
+                    v-model="settings.storage.alist.version"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option :value="2">Alist v2</option>
+                    <option :value="3">Alist v3</option>
+                  </select>
+                  <p class="mt-1 text-sm text-gray-500">选择您的 Alist 服务器版本</p>
+                </div>
+                
+                <div class="sm:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700">Alist URL</label>
+                  <input
+                    v-model="settings.storage.alist.url"
+                    type="url"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="https://your-alist-instance.com"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">Alist 服务器的完整URL地址</p>
+                </div>
+                
+                <div class="sm:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700">上传路径</label>
+                  <input
+                    v-model="settings.storage.alist.upload_path"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="assets"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">在 Alist 中存储文件的相对路径</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Authentication Configuration -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <h5 class="text-sm font-medium text-gray-900 mb-3">鉴权配置</h5>
+              <div class="mb-4">
+                <div class="flex items-center space-x-4">
+                  <label class="inline-flex items-center">
+                    <input
+                      v-model="authMethod"
+                      type="radio"
+                      value="token"
+                      class="form-radio h-4 w-4 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span class="ml-2 text-sm text-gray-700">使用 Token</span>
+                  </label>
+                  <label class="inline-flex items-center">
+                    <input
+                      v-model="authMethod"
+                      type="radio"
+                      value="credentials"
+                      class="form-radio h-4 w-4 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span class="ml-2 text-sm text-gray-700">使用用户名密码</span>
+                  </label>
+                </div>
               </div>
               
-              <div>
-                <label class="block text-sm font-medium text-gray-700">访问Token</label>
-                <input
-                  v-model="settings.storage.alist.token"
-                  type="password"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="alist-your-secret-token"
-                />
-                <p class="mt-2 text-sm text-gray-500">用于访问 Alist API 的认证令牌</p>
+              <!-- Token Auth -->
+              <div v-if="authMethod === 'token'" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">访问Token</label>
+                  <input
+                    v-model="settings.storage.alist.token"
+                    type="password"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="alist-your-secret-token"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">用于访问 Alist API 的认证令牌</p>
+                </div>
               </div>
               
-              <div>
-                <label class="block text-sm font-medium text-gray-700">上传目录</label>
-                <input
-                  v-model="settings.storage.alist.upload_path"
-                  type="text"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="/_imageStore"
-                />
-                <p class="mt-2 text-sm text-gray-500">在 Alist 中存储文件的目录路径</p>
+              <!-- Credentials Auth -->
+              <div v-if="authMethod === 'credentials'" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">用户名</label>
+                  <input
+                    v-model="settings.storage.alist.username"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="username"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">Alist 登录用户名</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">密码</label>
+                  <input
+                    v-model="settings.storage.alist.password"
+                    type="password"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="password"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">Alist 登录密码</p>
+                </div>
               </div>
               
-              <div>
-                <label class="block text-sm font-medium text-gray-700">自定义访问URL (可选)</label>
-                <input
-                  v-model="settings.storage.alist.custom_url"
-                  type="url"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="留空使用默认URL"
-                />
-                <p class="mt-2 text-sm text-gray-500">自定义文件访问URL，留空则使用 Alist URL</p>
+              <div class="mt-3 p-3 bg-blue-100 rounded-md">
+                <p class="text-sm text-blue-800">
+                  <strong>推荐:</strong> 使用用户名密码方式可以自动获取和刷新Token，更加便捷。
+                  {{ settings.storage.alist.version === 2 ? 'Alist v2 不支持自动刷新。' : '' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Advanced Configuration -->
+            <div class="bg-green-50 p-4 rounded-lg">
+              <h5 class="text-sm font-medium text-gray-900 mb-3">高级配置 (可选)</h5>
+              <div class="grid grid-cols-1 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">访问路径</label>
+                  <input
+                    v-model="settings.storage.alist.access_path"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="留空使用默认路径 (d/上传路径)"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">自定义访问路径，默认为 'd/' + 上传路径</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">访问域名</label>
+                  <input
+                    v-model="settings.storage.alist.access_domain"
+                    type="url"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="留空使用 Alist URL"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">自定义访问域名，留空则与 Alist URL 一致</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">文件名模板</label>
+                  <input
+                    v-model="settings.storage.alist.filename_template"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="例: prefix_${fileName}_suffix"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">用于重映射文件名，使用 ${fileName} 作为占位符</p>
+                </div>
               </div>
             </div>
             
@@ -183,8 +289,13 @@
                     >
                       {{ connectionTestResult.message }}
                     </p>
-                    <div v-if="connectionTestResult.success && connectionTestResult.user_info" class="mt-2 text-sm text-green-700">
-                      <p>用户信息: {{ connectionTestResult.user_info.username || 'N/A' }}</p>
+                    <div v-if="connectionTestResult.success" class="mt-2 text-sm text-green-700">
+                      <p v-if="connectionTestResult.auth_method">
+                        认证方式: {{ connectionTestResult.auth_method === 'token' ? 'Token' : '用户名密码' }}
+                      </p>
+                      <p v-if="connectionTestResult.user_info">
+                        用户信息: {{ connectionTestResult.user_info.username || connectionTestResult.user_info.id || 'N/A' }}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -228,7 +339,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { apiClient } from '@/utils/api';
@@ -242,6 +353,7 @@ const isTestingConnection = ref(false);
 const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
 const connectionTestResult = ref<any>(null);
+const authMethod = ref<'token' | 'credentials'>('token');
 
 const settings = ref({
   storage: {
@@ -251,10 +363,15 @@ const settings = ref({
       base_url: '/static/avatars'
     },
     alist: {
+      version: 3,
       url: '',
+      upload_path: 'assets',
       token: '',
-      upload_path: '/_imageStore',
-      custom_url: ''
+      username: '',
+      password: '',
+      access_path: '',
+      access_domain: '',
+      filename_template: ''
     }
   }
 });
@@ -264,6 +381,14 @@ async function loadSettings() {
   try {
     const data = await apiClient.getSystemSettings();
     settings.value = data;
+    
+    // Determine auth method based on current settings
+    const alistConfig = data.storage.alist;
+    if (alistConfig.token) {
+      authMethod.value = 'token';
+    } else if (alistConfig.username || alistConfig.password) {
+      authMethod.value = 'credentials';
+    }
   } catch (error) {
     console.error('Failed to load settings:', error);
     showMessage('加载设置失败', 'error');
@@ -272,8 +397,28 @@ async function loadSettings() {
   }
 }
 
+// Computed properties
+const canTestConnection = computed(() => {
+  const alistConfig = settings.value.storage.alist;
+  if (!alistConfig.url) return false;
+  
+  if (authMethod.value === 'token') {
+    return Boolean(alistConfig.token);
+  } else {
+    return Boolean(alistConfig.username && alistConfig.password);
+  }
+});
+
 async function saveSettings() {
   if (isSaving.value) return;
+  
+  // Clear unused auth fields based on selected method
+  if (authMethod.value === 'token') {
+    settings.value.storage.alist.username = '';
+    settings.value.storage.alist.password = '';
+  } else {
+    settings.value.storage.alist.token = '';
+  }
   
   isSaving.value = true;
   try {

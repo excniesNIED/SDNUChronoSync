@@ -14,11 +14,28 @@ from config import get_config, reload_config
 
 router = APIRouter(prefix="/api/admin", tags=["admin-settings"])
 
+class AlistConfig(BaseModel):
+    """Alist configuration model."""
+    version: int = 3
+    url: str = ""
+    upload_path: str = "assets"
+    token: str = ""
+    username: str = ""
+    password: str = ""
+    access_path: str = ""
+    access_domain: str = ""
+    filename_template: str = ""
+
+class LocalConfig(BaseModel):
+    """Local storage configuration model."""
+    upload_path: str = "uploads/avatars"
+    base_url: str = "/static/avatars"
+
 class StorageConfig(BaseModel):
     """Storage configuration model."""
     provider: str
-    local: Dict[str, Any] = {}
-    alist: Dict[str, Any] = {}
+    local: LocalConfig = LocalConfig()
+    alist: AlistConfig = AlistConfig()
 
 class SystemConfig(BaseModel):
     """System configuration model."""
@@ -62,18 +79,28 @@ async def update_system_settings(
         # Validate Alist configuration if selected
         if settings.storage.provider == 'alist':
             alist_config = settings.storage.alist
-            if not alist_config.get('url') or not alist_config.get('token'):
+            if not alist_config.url:
                 raise HTTPException(
                     status_code=400,
-                    detail="Alist 配置需要 URL 和 token"
+                    detail="Alist 配置需要 URL"
+                )
+            
+            # Check auth method
+            has_token = bool(alist_config.token)
+            has_username_password = bool(alist_config.username and alist_config.password)
+            
+            if not has_token and not has_username_password:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Alist 配置需要 Token 或者用户名密码"
                 )
         
         # Update configuration
         new_config = {
             "storage": {
                 "provider": settings.storage.provider,
-                "local": settings.storage.local,
-                "alist": settings.storage.alist
+                "local": settings.storage.local.dict(),
+                "alist": settings.storage.alist.dict()
             }
         }
         
@@ -91,7 +118,7 @@ async def update_system_settings(
 
 @router.post("/settings/test-alist")
 async def test_alist_connection(
-    alist_config: Dict[str, Any],
+    alist_config: AlistConfig,
     current_admin: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -99,37 +126,91 @@ async def test_alist_connection(
     try:
         import httpx
         
-        url = alist_config.get('url')
-        token = alist_config.get('token')
+        if not alist_config.url:
+            return {"success": False, "message": "需要提供 URL"}
         
-        if not url or not token:
-            raise HTTPException(status_code=400, detail="需要提供 URL 和 token")
+        # Check auth method
+        has_token = bool(alist_config.token)
+        has_username_password = bool(alist_config.username and alist_config.password)
         
-        # Test connection to Alist
-        headers = {"Authorization": f"Bearer {token}"}
-        test_url = f"{url.rstrip('/')}/api/me"
+        if not has_token and not has_username_password:
+            return {"success": False, "message": "需要提供 Token 或者用户名密码"}
         
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(test_url, headers=headers)
-            
-            if response.status_code == 200:
-                result = response.json()
-                if result.get('code') == 200:
-                    return {
-                        "success": True, 
-                        "message": "连接成功",
-                        "user_info": result.get('data', {})
-                    }
+            # If we have a token, test it directly
+            if has_token:
+                headers = {"Authorization": f"Bearer {alist_config.token}"}
+                test_url = f"{alist_config.url.rstrip('/')}/api/me"
+                
+                response = await client.get(test_url, headers=headers)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('code') == 200:
+                        return {
+                            "success": True, 
+                            "message": "Token连接成功",
+                            "auth_method": "token",
+                            "user_info": result.get('data', {})
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "message": f"Token认证失败: {result.get('message', 'Unknown error')}"
+                        }
                 else:
                     return {
                         "success": False,
-                        "message": f"认证失败: {result.get('message', 'Unknown error')}"
+                        "message": f"Token连接失败: HTTP {response.status_code}"
                     }
-            else:
-                return {
-                    "success": False,
-                    "message": f"连接失败: HTTP {response.status_code}"
-                }
+            
+            # Test username/password login
+            elif has_username_password:
+                login_url = f"{alist_config.url.rstrip('/')}/api/auth/login"
+                
+                # Different payload for different versions
+                if alist_config.version == 2:
+                    login_data = {
+                        "username": alist_config.username,
+                        "password": alist_config.password
+                    }
+                else:  # version 3
+                    login_data = {
+                        "username": alist_config.username,
+                        "password": alist_config.password,
+                        "opt_code": ""
+                    }
+                
+                response = await client.post(login_url, json=login_data)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('code') == 200:
+                        token_data = result.get('data', {})
+                        token = token_data.get('token')
+                        
+                        if token:
+                            return {
+                                "success": True, 
+                                "message": "用户名密码连接成功",
+                                "auth_method": "username_password",
+                                "user_info": token_data
+                            }
+                        else:
+                            return {
+                                "success": False,
+                                "message": "登录成功但未获取到Token"
+                            }
+                    else:
+                        return {
+                            "success": False,
+                            "message": f"登录失败: {result.get('message', 'Unknown error')}"
+                        }
+                else:
+                    return {
+                        "success": False,
+                        "message": f"用户名密码连接失败: HTTP {response.status_code}"
+                    }
                 
     except httpx.TimeoutException:
         return {"success": False, "message": "连接超时"}
