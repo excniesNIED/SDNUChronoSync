@@ -1,0 +1,12 @@
+[storage]
+provider = "local"
+
+[storage.local]
+upload_path = "uploads/avatars"
+base_url = "/static/avatars"
+
+[storage.alist]
+url = "https://your-alist-instance.com"
+token = "alist-your-secret-token"
+upload_path = "/_imageStore"
+custom_url = ""

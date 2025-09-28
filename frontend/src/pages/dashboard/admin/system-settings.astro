@@ -1,0 +1,18 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="系统设置 - SDNUChronoSync">
+  <div id="system-settings-app"></div>
+  
+  <script>
+    import SystemSettings from '../../../components/admin/SystemSettings.vue';
+    import { createApp } from 'vue';
+    import { createPinia } from 'pinia';
+    
+    const app = createApp(SystemSettings);
+    const pinia = createPinia();
+    app.use(pinia);
+    app.mount('#system-settings-app');
+  </script>
+</DashboardLayout>

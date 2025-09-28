@@ -64,17 +64,8 @@
             </ul>
           </li>
 
-          <!-- User info and logout -->
+          <!-- Logout -->
           <li class="mt-auto">
-            <div class="flex items-center gap-x-4 px-2 py-3 text-sm font-semibold leading-6 text-gray-900">
-              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
-                <UserIcon class="h-5 w-5 text-primary-600" />
-              </div>
-              <div class="flex-1">
-                <div class="text-sm font-medium text-gray-900">{{ authStore.currentUser?.full_name }}</div>
-                <div class="text-xs text-gray-500">{{ authStore.currentUser?.class_name }}</div>
-              </div>
-            </div>
             <button
               @click="handleLogout"
               class="group flex w-full gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
@@ -143,8 +134,11 @@ const mobileMenuOpen = ref(false);
 // Get current path to determine active navigation item
 const currentPath = ref('');
 
-onMounted(() => {
+onMounted(async () => {
   currentPath.value = window.location.pathname;
+  
+  // Initialize auth store to ensure user data is loaded
+  await authStore.initialize();
 });
 
 const navigation = computed(() => [
@@ -180,6 +174,12 @@ const adminNavigation = computed(() => [
     href: '/dashboard/admin/schedule-management',
     icon: Cog6ToothIcon,
     current: currentPath.value === '/dashboard/admin/schedule-management',
+  },
+  {
+    name: '系统设置',
+    href: '/dashboard/admin/system-settings',
+    icon: Cog6ToothIcon,
+    current: currentPath.value === '/dashboard/admin/system-settings',
   },
 ]);
 

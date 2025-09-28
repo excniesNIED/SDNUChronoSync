@@ -10,18 +10,35 @@
             <div class="flex items-center space-x-6">
               <!-- Avatar Section -->
               <div class="flex-shrink-0">
-                <div class="relative">
+                <div class="relative group">
                   <img
-                    :src="profileData.avatar_url || defaultAvatar"
+                    :src="getAvatarUrl"
                     :alt="`${profileData.full_name}的头像`"
-                    class="h-24 w-24 rounded-full object-cover border-4 border-gray-200"
+                    class="h-24 w-24 rounded-full object-cover border-4 border-gray-200 transition-opacity group-hover:opacity-80"
+                    @error="handleAvatarError"
                   />
-                  <button
-                    @click="showAvatarModal = true"
-                    class="absolute bottom-0 right-0 bg-primary-600 text-white rounded-full p-2 shadow-lg hover:bg-primary-700 transition-colors"
+                  <!-- Loading overlay -->
+                  <div 
+                    v-if="isUpdatingAvatar" 
+                    class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full"
                   >
-                    <CameraIcon class="h-4 w-4" />
-                  </button>
+                    <svg class="animate-spin h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <!-- Hover overlay -->
+                  <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full transition-all cursor-pointer">
+                    <CameraIcon class="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <!-- Hidden file input -->
+                  <input
+                    ref="fileInput"
+                    type="file"
+                    accept="image/*"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full"
+                    @change="handleAvatarUpload"
+                  />
                 </div>
               </div>
 
@@ -101,34 +118,36 @@
             <div class="px-6 py-4 border-b border-gray-200">
               <h3 class="text-lg font-medium text-gray-900">安全设置</h3>
             </div>
-            <div class="px-6 py-6 space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">当前密码</label>
-                <input
-                  v-model="passwordData.currentPassword"
-                  type="password"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="请输入当前密码"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">新密码</label>
-                <input
-                  v-model="passwordData.newPassword"
-                  type="password"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="请输入新密码"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">确认新密码</label>
-                <input
-                  v-model="passwordData.confirmPassword"
-                  type="password"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="请再次输入新密码"
-                />
-              </div>
+            <div class="px-6 py-6">
+              <form @submit.prevent="changePassword" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">当前密码</label>
+                  <input
+                    v-model="passwordData.currentPassword"
+                    type="password"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="请输入当前密码"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">新密码</label>
+                  <input
+                    v-model="passwordData.newPassword"
+                    type="password"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="请输入新密码"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">确认新密码</label>
+                  <input
+                    v-model="passwordData.confirmPassword"
+                    type="password"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="请再次输入新密码"
+                  />
+                </div>
+              </form>
               <div class="pt-4">
                 <button
                   @click="changePassword"
@@ -332,16 +351,36 @@ const avatarUrl = ref('');
 const isUpdating = ref(false);
 const isChangingPassword = ref(false);
 const isUpdatingAvatar = ref(false);
+const fileInput = ref<HTMLInputElement>();
 const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
 
 // Computed
 const defaultAvatar = computed(() => {
-  const name = profileData.value.full_name;
-  if (!name) return '/default-avatar.png';
+  // Generate a simple avatar based on user's initials
+  return 'data:image/svg+xml,' + encodeURIComponent(`
+    <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#E5E7EB"/>
+      <text x="50" y="50" font-family="Arial" font-size="36" fill="#9CA3AF" text-anchor="middle" dominant-baseline="middle">
+        ${profileData.value?.full_name?.[0] || '用'}
+      </text>
+    </svg>
+  `);
+});
+
+// Helper function to get full avatar URL
+const getAvatarUrl = computed(() => {
+  if (!profileData.value?.avatar_url) {
+    return defaultAvatar.value;
+  }
   
-  // 使用名字生成默认头像（这里使用一个简单的API）
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=200&background=6366f1&color=ffffff`;
+  // If avatar_url starts with '/static/', prepend backend URL
+  if (profileData.value.avatar_url.startsWith('/static/')) {
+    return `http://localhost:8000${profileData.value.avatar_url}`;
+  }
+  
+  // If it's already a full URL or data URL, use as is
+  return profileData.value.avatar_url;
 });
 
 const isPasswordFormValid = computed(() => {
@@ -449,13 +488,51 @@ async function updateAvatar() {
   }
 }
 
+async function handleAvatarUpload(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  
+  // 检查文件大小（5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    showMessage('文件大小不能超过 5MB', 'error');
+    return;
+  }
+  
+  // 检查文件类型
+  if (!file.type.startsWith('image/')) {
+    showMessage('请选择图片文件', 'error');
+    return;
+  }
+  
+  isUpdatingAvatar.value = true;
+  try {
+    const result = await apiClient.uploadAvatar(file);
+    
+    profileData.value.avatar_url = result.avatar_url;
+    
+    // 更新auth store中的用户信息
+    if (authStore.user) {
+      authStore.user.avatar_url = result.avatar_url;
+    }
+    
+    showMessage('头像更新成功', 'success');
+  } catch (error) {
+    console.error('Failed to upload avatar:', error);
+    showMessage('头像上传失败', 'error');
+  } finally {
+    isUpdatingAvatar.value = false;
+    // 清空文件输入
+    (event.target as HTMLInputElement).value = '';
+  }
+}
+
 function handleFileUpload(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
   
-  // 检查文件大小（2MB）
-  if (file.size > 2 * 1024 * 1024) {
-    showMessage('文件大小不能超过 2MB', 'error');
+  // 检查文件大小（5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    showMessage('文件大小不能超过 5MB', 'error');
     return;
   }
   
@@ -477,6 +554,12 @@ function formatJoinDate(dateString: string): string {
   if (!dateString) return '未知';
   const date = new Date(dateString);
   return date.toLocaleDateString('zh-CN');
+}
+
+function handleAvatarError(event: Event) {
+  // If avatar fails to load, fallback to default avatar
+  const target = event.target as HTMLImageElement;
+  target.src = defaultAvatar.value;
 }
 
 function showMessage(text: string, type: 'success' | 'error') {

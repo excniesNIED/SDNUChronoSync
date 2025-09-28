@@ -318,6 +318,22 @@ class ApiClient {
     return response.data;
   }
 
+  // Admin Settings API
+  async getSystemSettings(): Promise<any> {
+    const response = await axios.get('/api/admin/settings');
+    return response.data;
+  }
+
+  async updateSystemSettings(settings: any): Promise<{ message: string }> {
+    const response = await axios.post('/api/admin/settings', settings);
+    return response.data;
+  }
+
+  async testAlistConnection(config: any): Promise<{ success: boolean; message: string; user_info?: any }> {
+    const response = await axios.post('/api/admin/settings/test-alist', config);
+    return response.data;
+  }
+
   async getProfileStatistics(): Promise<{ schedule_count: number; event_count: number; join_date: string }> {
     const response = await axios.get('/api/profile/statistics');
     return response.data;

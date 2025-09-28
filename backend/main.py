@@ -1,12 +1,15 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, get_db
 from models import Base, User
 from auth import get_password_hash
-from routers import auth, schedule, team, admin, import_route, profile, schedules
+from routers import auth, schedule, team, admin, import_route, profile, schedules, admin_settings
+from config import get_config
 import uvicorn
+import os
 
 # Initialize database with default admin user
 def init_db():
@@ -102,8 +105,21 @@ app.include_router(schedule.router)
 app.include_router(schedules.router)
 app.include_router(team.router)
 app.include_router(admin.router)
+app.include_router(admin_settings.router)
 app.include_router(import_route.router)
 app.include_router(profile.router)
+
+# Setup static file serving for local avatars
+config = get_config()
+if config.storage_provider == "local":
+    upload_path = config.get('storage.local.upload_path', 'uploads/avatars')
+    base_url = config.get('storage.local.base_url', '/static/avatars')
+    
+    # Ensure upload directory exists
+    os.makedirs(upload_path, exist_ok=True)
+    
+    # Mount static files
+    app.mount(base_url, StaticFiles(directory=upload_path), name="avatars")
 
 @app.get("/")
 async def root():
