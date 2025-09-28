@@ -66,28 +66,39 @@
                       </div>
 
                       <!-- Course Schedule Information -->
-                      <div v-if="event.weeks_display || event.day_of_week || event.period" class="space-y-2">
+                      <div v-if="event.weeks_display || event.day_of_week || event.period" class="bg-blue-50 rounded-lg p-4 space-y-3">
+                        <h4 class="text-sm font-medium text-blue-800 mb-2">课程安排</h4>
+                        
                         <!-- Week Information -->
-                        <div v-if="event.weeks_display" class="flex items-center text-sm text-gray-600">
-                          <CalendarDaysIcon class="h-4 w-4 mr-2 text-gray-400" />
-                          <span>上课周数: {{ event.weeks_display }}</span>
+                        <div v-if="event.weeks_display" class="flex items-center text-sm text-gray-700">
+                          <CalendarDaysIcon class="h-4 w-4 mr-2 text-blue-500" />
+                          <span class="font-medium">上课周数:</span>
+                          <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                            {{ event.weeks_display }}
+                          </span>
                         </div>
 
                         <!-- Day and Period Information -->
-                        <div v-if="event.day_of_week || event.period" class="flex items-center text-sm text-gray-600">
-                          <BookmarkIcon class="h-4 w-4 mr-2 text-gray-400" />
-                          <span>
+                        <div v-if="event.day_of_week || event.period" class="flex items-center text-sm text-gray-700">
+                          <BookmarkIcon class="h-4 w-4 mr-2 text-blue-500" />
+                          <span class="font-medium">上课时间:</span>
+                          <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                             <span v-if="event.day_of_week">{{ getDayOfWeekText(event.day_of_week) }}</span>
-                            <span v-if="event.day_of_week && event.period"> - </span>
+                            <span v-if="event.day_of_week && event.period"> • </span>
                             <span v-if="event.period">{{ event.period }}</span>
                           </span>
                         </div>
                       </div>
 
                       <!-- Location -->
-                      <div v-if="event.location" class="flex items-center text-sm text-gray-600">
-                        <MapPinIcon class="h-4 w-4 mr-2 text-gray-400" />
-                        <span>{{ event.location }}</span>
+                      <div v-if="event.location" class="bg-green-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-green-800 mb-2">上课地点</h4>
+                        <div class="flex items-center text-sm text-gray-700">
+                          <MapPinIcon class="h-4 w-4 mr-2 text-green-500" />
+                          <span class="font-medium px-3 py-2 bg-green-100 text-green-800 rounded-lg">
+                            📍 {{ event.location }}
+                          </span>
+                        </div>
                       </div>
 
                       <!-- Description -->

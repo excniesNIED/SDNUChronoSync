@@ -56,18 +56,60 @@
 
           <!-- Events -->
           <div
-            v-for="event in getDayEvents(day)"
-            :key="event.id"
-            :style="getEventStyle(event)"
-            class="absolute left-1 right-1 rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow z-10"
-            @click="$emit('event-click', event)"
+            v-for="(eventGroup, groupIndex) in getGroupedDayEvents(day)"
+            :key="`group-${groupIndex}`"
+            :style="getEventGroupStyle(eventGroup, groupIndex)"
+            class="absolute left-1 right-1 z-10"
           >
-            <div class="font-medium truncate">{{ event.title }}</div>
-            <div v-if="event.instructor" class="text-xs opacity-75 truncate">
-              {{ event.instructor }}
+            <!-- Multiple events in same time slot -->
+            <div v-if="eventGroup.length > 1" class="space-y-1">
+              <div
+                v-for="event in eventGroup"
+                :key="event.id"
+                :style="{ backgroundColor: event.color, color: event.textColor }"
+                class="rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                @click="$emit('event-click', event)"
+              >
+                <div class="font-medium truncate">{{ event.title }}</div>
+                <div v-if="event.instructor" class="text-xs opacity-75 truncate">
+                  {{ event.instructor }}
+                </div>
+                <div v-if="event.owner" class="text-xs opacity-60 truncate">
+                  {{ event.owner.full_name }}
+                </div>
+                <!-- 团队视图中显示简化的周数和地址 -->
+                <div v-if="props.isAdminMode && event.weeks_display" class="text-xs opacity-60 truncate">
+                  {{ event.weeks_display }}
+                </div>
+                <div v-if="props.isAdminMode && event.location" class="text-xs opacity-60 truncate">
+                  📍 {{ event.location }}
+                </div>
+              </div>
             </div>
-            <div class="text-xs opacity-75 truncate">
-              {{ formatTime(event.start_time) }} - {{ formatTime(event.end_time) }}
+            <!-- Single event -->
+            <div
+              v-else-if="eventGroup.length === 1"
+              :style="{ backgroundColor: eventGroup[0].color, color: eventGroup[0].textColor }"
+              class="rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow h-full"
+              @click="$emit('event-click', eventGroup[0])"
+            >
+              <div class="font-medium truncate">{{ eventGroup[0].title }}</div>
+              <div v-if="eventGroup[0].instructor" class="text-xs opacity-75 truncate">
+                {{ eventGroup[0].instructor }}
+              </div>
+              <div v-if="eventGroup[0].owner" class="text-xs opacity-60 truncate">
+                {{ eventGroup[0].owner.full_name }}
+              </div>
+              <!-- 个人视图中显示周数和地址 -->
+              <div v-if="!props.isAdminMode && eventGroup[0].weeks_display" class="text-xs opacity-70 truncate">
+                {{ eventGroup[0].weeks_display }}
+              </div>
+              <div v-if="!props.isAdminMode && eventGroup[0].location" class="text-xs opacity-70 truncate">
+                📍 {{ eventGroup[0].location }}
+              </div>
+              <div v-if="props.isAdminMode" class="text-xs opacity-75 truncate">
+                {{ formatTime(eventGroup[0].start_time) }} - {{ formatTime(eventGroup[0].end_time) }}
+              </div>
             </div>
           </div>
         </div>
@@ -119,6 +161,13 @@
               <div class="truncate font-medium">{{ event.title }}</div>
               <div v-if="event.instructor" class="truncate text-xs opacity-80">
                 {{ event.instructor }}
+              </div>
+              <!-- 个人视图中显示周数和地址 -->
+              <div v-if="!props.isAdminMode && event.weeks_display" class="truncate text-xs opacity-70">
+                {{ event.weeks_display }}
+              </div>
+              <div v-if="!props.isAdminMode && event.location" class="truncate text-xs opacity-70">
+                📍 {{ event.location }}
               </div>
             </div>
             <div
@@ -219,6 +268,32 @@ function getDayEvents(day: Date): CalendarEvent[] {
   }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 }
 
+// 新增：将同一天的事件按时间段分组
+function getGroupedDayEvents(day: Date): CalendarEvent[][] {
+  const dayEvents = getDayEvents(day);
+  const groups: Map<string, CalendarEvent[]> = new Map();
+
+  dayEvents.forEach(event => {
+    const startTime = new Date(event.start_time);
+    const endTime = new Date(event.end_time);
+    
+    // 创建时间段标识符
+    const timeKey = `${startTime.getHours()}:${startTime.getMinutes()}-${endTime.getHours()}:${endTime.getMinutes()}`;
+    
+    if (!groups.has(timeKey)) {
+      groups.set(timeKey, []);
+    }
+    groups.get(timeKey)!.push(event);
+  });
+
+  // 按时间顺序返回分组
+  return Array.from(groups.values()).sort((a, b) => {
+    const aStart = new Date(a[0].start_time).getTime();
+    const bStart = new Date(b[0].start_time).getTime();
+    return aStart - bStart;
+  });
+}
+
 function getEventStyle(event: CalendarEvent) {
   const startTime = new Date(event.start_time);
   const endTime = new Date(event.end_time);
@@ -261,6 +336,50 @@ function getEventStyle(event: CalendarEvent) {
     backgroundColor: event.color,
     color: event.textColor,
     borderLeft: `3px solid ${event.textColor}`,
+  };
+}
+
+// 新增：获取事件组的样式
+function getEventGroupStyle(eventGroup: CalendarEvent[], groupIndex: number) {
+  if (eventGroup.length === 0) return {};
+  
+  // 使用第一个事件的时间来计算位置
+  const firstEvent = eventGroup[0];
+  const startTime = new Date(firstEvent.start_time);
+  const endTime = new Date(firstEvent.end_time);
+  
+  // 获取时间对应的时间段索引
+  const startTimeStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`;
+  const endTimeStr = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
+  
+  let timeSlotIndex = -1;
+  let timeSlotHeight = 1;
+  
+  for (let i = 0; i < timeSlots.length; i++) {
+    const slot = timeSlots[i];
+    if (startTimeStr >= slot.start && startTimeStr < slot.end) {
+      timeSlotIndex = i;
+      for (let j = i; j < timeSlots.length; j++) {
+        if (endTimeStr <= timeSlots[j].end) {
+          timeSlotHeight = j - i + 1;
+          break;
+        }
+      }
+      break;
+    }
+  }
+  
+  if (timeSlotIndex === -1) {
+    timeSlotIndex = 0;
+    timeSlotHeight = 1;
+  }
+  
+  const top = (timeSlotIndex / timeSlots.length) * 100;
+  const height = (timeSlotHeight / timeSlots.length) * 100;
+  
+  return {
+    top: `${top}%`,
+    height: `${Math.max(height, 14)}%`,
   };
 }
 </script>

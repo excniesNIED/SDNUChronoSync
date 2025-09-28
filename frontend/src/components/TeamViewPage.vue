@@ -109,6 +109,7 @@
                 :events="calendarEvents"
                 :view-mode="viewMode"
                 :current-date="currentDate"
+                :is-admin-mode="true"
                 @event-click="handleEventClick"
                 @date-click="handleDateClick"
               />
@@ -181,9 +182,10 @@
     </TransitionRoot>
 
     <!-- Event detail modal -->
-    <EventDetailModal
+    <TeamEventDetailModal
       :is-open="isEventDetailOpen"
       :event="selectedEvent"
+      :related-events="relatedEvents"
       @close="closeEventDetail"
     />
   </div>
@@ -197,6 +199,7 @@ import { useScheduleStore } from '@/stores/schedule';
 import FilterSidebar from './FilterSidebar.vue';
 import ScheduleCalendar from './ScheduleCalendar.vue';
 import EventDetailModal from './EventDetailModal.vue';
+import TeamEventDetailModal from './TeamEventDetailModal.vue';
 import {
   Dialog,
   DialogPanel,
@@ -223,6 +226,7 @@ const viewMode = ref<'week' | 'month'>('week');
 const mobileFiltersOpen = ref(false);
 const isEventDetailOpen = ref(false);
 const selectedEvent = ref<Event | null>(null);
+const relatedEvents = ref<Event[]>([]);
 
 // Computed properties
 const currentDateTitle = computed(() => {
@@ -284,7 +288,53 @@ async function handleApplyFilter() {
 
 function handleEventClick(event: Event) {
   selectedEvent.value = event;
+  
+  // 查找同一时间段、同一课程的所有相关事件
+  relatedEvents.value = findRelatedEvents(event);
+  
   isEventDetailOpen.value = true;
+}
+
+// 查找相关事件（同一课程名称、同一时间段）
+function findRelatedEvents(targetEvent: Event): Event[] {
+  if (!scheduleStore.filteredEvents) {
+    return [];
+  }
+
+  return scheduleStore.filteredEvents.filter(event => {
+    // 排除当前事件本身
+    if (event.id === targetEvent.id) {
+      return false;
+    }
+    
+    // 同一课程名称
+    if (event.title !== targetEvent.title) {
+      return false;
+    }
+    
+    // 同一时间段
+    const eventStart = new Date(event.start_time);
+    const eventEnd = new Date(event.end_time);
+    const targetStart = new Date(targetEvent.start_time);
+    const targetEnd = new Date(targetEvent.end_time);
+    
+    // 检查时间是否重叠
+    const timeMatches = (
+      eventStart.getTime() === targetStart.getTime() &&
+      eventEnd.getTime() === targetEnd.getTime()
+    );
+    
+    if (!timeMatches) {
+      return false;
+    }
+    
+    // 可选：同一教师
+    if (targetEvent.instructor && event.instructor !== targetEvent.instructor) {
+      return false;
+    }
+    
+    return true;
+  });
 }
 
 function handleDateClick(date: Date) {
@@ -295,6 +345,7 @@ function handleDateClick(date: Date) {
 function closeEventDetail() {
   isEventDetailOpen.value = false;
   selectedEvent.value = null;
+  relatedEvents.value = [];
 }
 
 // Initialize
