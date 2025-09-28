@@ -336,7 +336,7 @@ async function handleImportSuccess(count: number) {
   closeImportModal();
 }
 
-function handleEventClick(event: Event) {
+function handleEventClick(event: Event, relatedEventsFromCalendar?: Event[]) {
   selectedEvent.value = event;
   isModalOpen.value = true;
 }

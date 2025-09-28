@@ -34,6 +34,7 @@ export interface Event {
   created_at: string;
   updated_at: string;
   owner?: User;
+  schedule?: Schedule;      // 课表信息
   // New fields for detailed course information
   instructor?: string;      // 教师
   weeks_display?: string;   // 周数 (例: "1-16周")

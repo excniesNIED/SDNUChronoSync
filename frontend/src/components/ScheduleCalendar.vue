@@ -61,35 +61,41 @@
             :style="getEventGroupStyle(eventGroup, groupIndex)"
             class="absolute left-1 right-1 z-10"
           >
-            <!-- Multiple events in same time slot -->
+            <!-- Multiple events in same course (merged display) -->
             <div v-if="eventGroup.length > 1" class="space-y-1">
               <div
-                v-for="event in eventGroup"
-                :key="event.id"
                 :class="[
                   'rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow',
                   !props.isAdminMode ? 'border border-opacity-50' : ''
                 ]"
                 :style="{ 
-                  backgroundColor: event.color, 
-                  color: event.textColor,
-                  borderColor: !props.isAdminMode ? event.textColor : 'transparent'
+                  backgroundColor: eventGroup[0].color, 
+                  color: eventGroup[0].textColor,
+                  borderColor: !props.isAdminMode ? eventGroup[0].textColor : 'transparent'
                 }"
-                @click="$emit('event-click', event)"
+                @click="$emit('event-click', eventGroup[0], eventGroup)"
               >
-                <div class="font-medium truncate">{{ event.title }}</div>
-                <div v-if="event.instructor" class="text-xs opacity-75 truncate">
-                  {{ event.instructor }}
+                <div class="font-medium truncate">{{ eventGroup[0].title }}</div>
+                <div v-if="eventGroup[0].instructor" class="text-xs opacity-75 truncate">
+                  {{ eventGroup[0].instructor }}
                 </div>
-                <div v-if="event.owner" class="text-xs opacity-60 truncate">
-                  {{ event.owner.full_name }}
+                
+                <!-- 显示参与人数 -->
+                <div v-if="props.isAdminMode && eventGroup.length > 1" class="text-xs opacity-70 truncate">
+                  {{ eventGroup.length }} 人上课
                 </div>
+                
+                <!-- 个人视图中显示周数和地址 -->
+                <div v-if="!props.isAdminMode && eventGroup[0].weeks_display" class="text-xs opacity-70 truncate">
+                  {{ eventGroup[0].weeks_display }}
+                </div>
+                <div v-if="!props.isAdminMode && eventGroup[0].location" class="text-xs opacity-70 truncate">
+                  📍 {{ eventGroup[0].location }}
+                </div>
+                
                 <!-- 团队视图中显示简化的周数和地址 -->
-                <div v-if="props.isAdminMode && event.weeks_display" class="text-xs opacity-60 truncate">
-                  {{ event.weeks_display }}
-                </div>
-                <div v-if="props.isAdminMode && event.location" class="text-xs opacity-60 truncate">
-                  📍 {{ event.location }}
+                <div v-if="props.isAdminMode && eventGroup[0].location" class="text-xs opacity-60 truncate">
+                  📍 {{ eventGroup[0].location }}
                 </div>
               </div>
             </div>
@@ -105,7 +111,7 @@
                 color: eventGroup[0].textColor,
                 borderColor: !props.isAdminMode ? eventGroup[0].textColor : 'transparent'
               }"
-              @click="$emit('event-click', eventGroup[0])"
+              @click="$emit('event-click', eventGroup[0], eventGroup.length > 1 ? eventGroup : [])"
             >
               <div class="font-medium truncate">{{ eventGroup[0].title }}</div>
               <div v-if="eventGroup[0].instructor" class="text-xs opacity-75 truncate">
@@ -166,36 +172,42 @@
           <!-- Events -->
           <div class="space-y-1">
             <div
-              v-for="event in getDayEvents(day).slice(0, 3)"
-              :key="event.id"
+              v-for="(eventGroup, index) in getGroupedMonthEvents(day).slice(0, 3)"
+              :key="`month-group-${index}`"
               :class="[
                 'text-xs px-2 py-1 rounded cursor-pointer hover:shadow-sm transition-all',
                 !props.isAdminMode ? 'border border-opacity-40 shadow-sm' : ''
               ]"
               :style="{ 
-                backgroundColor: event.color, 
-                color: event.textColor,
-                borderColor: !props.isAdminMode ? event.textColor : 'transparent'
+                backgroundColor: eventGroup[0].color, 
+                color: eventGroup[0].textColor,
+                borderColor: !props.isAdminMode ? eventGroup[0].textColor : 'transparent'
               }"
-              @click.stop="$emit('event-click', event)"
+              @click.stop="$emit('event-click', eventGroup[0], eventGroup.length > 1 ? eventGroup : [])"
             >
-              <div class="truncate font-medium">{{ event.title }}</div>
-              <div v-if="event.instructor" class="truncate text-xs opacity-80">
-                {{ event.instructor }}
+              <div class="truncate font-medium">{{ eventGroup[0].title }}</div>
+              <div v-if="eventGroup[0].instructor" class="truncate text-xs opacity-80">
+                {{ eventGroup[0].instructor }}
               </div>
+              
+              <!-- 显示参与人数 -->
+              <div v-if="props.isAdminMode && eventGroup.length > 1" class="truncate text-xs opacity-70">
+                {{ eventGroup.length }} 人上课
+              </div>
+              
               <!-- 个人视图中显示周数和地址 -->
-              <div v-if="!props.isAdminMode && event.weeks_display" class="truncate text-xs opacity-70">
-                {{ event.weeks_display }}
+              <div v-if="!props.isAdminMode && eventGroup[0].weeks_display" class="truncate text-xs opacity-70">
+                {{ eventGroup[0].weeks_display }}
               </div>
-              <div v-if="!props.isAdminMode && event.location" class="truncate text-xs opacity-70">
-                📍 {{ event.location }}
+              <div v-if="!props.isAdminMode && eventGroup[0].location" class="truncate text-xs opacity-70">
+                📍 {{ eventGroup[0].location }}
               </div>
             </div>
             <div
-              v-if="getDayEvents(day).length > 3"
+              v-if="getGroupedMonthEvents(day).length > 3"
               class="text-xs text-gray-500 px-2"
             >
-              +{{ getDayEvents(day).length - 3 }} 更多
+              +{{ getGroupedMonthEvents(day).length - 3 }} 更多
             </div>
           </div>
         </div>
@@ -229,7 +241,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 defineEmits<{
-  'event-click': [event: CalendarEvent];
+  'event-click': [event: CalendarEvent, relatedEvents?: CalendarEvent[]];
   'date-click': [date: Date];
 }>();
 
@@ -289,7 +301,7 @@ function getDayEvents(day: Date): CalendarEvent[] {
   }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 }
 
-// 新增：将同一天的事件按时间段分组
+// 新增：将同一天的事件按时间段和课程内容分组
 function getGroupedDayEvents(day: Date): CalendarEvent[][] {
   const dayEvents = getDayEvents(day);
   const groups: Map<string, CalendarEvent[]> = new Map();
@@ -298,13 +310,13 @@ function getGroupedDayEvents(day: Date): CalendarEvent[][] {
     const startTime = new Date(event.start_time);
     const endTime = new Date(event.end_time);
     
-    // 创建时间段标识符
-    const timeKey = `${startTime.getHours()}:${startTime.getMinutes()}-${endTime.getHours()}:${endTime.getMinutes()}`;
+    // 创建课程标识符：时间 + 课程名 + 教师 + 地点
+    const courseKey = `${startTime.getHours()}:${startTime.getMinutes()}-${endTime.getHours()}:${endTime.getMinutes()}_${event.title}_${event.instructor || ''}_${event.location || ''}`;
     
-    if (!groups.has(timeKey)) {
-      groups.set(timeKey, []);
+    if (!groups.has(courseKey)) {
+      groups.set(courseKey, []);
     }
-    groups.get(timeKey)!.push(event);
+    groups.get(courseKey)!.push(event);
   });
 
   // 按时间顺序返回分组
@@ -313,6 +325,11 @@ function getGroupedDayEvents(day: Date): CalendarEvent[][] {
     const bStart = new Date(b[0].start_time).getTime();
     return aStart - bStart;
   });
+}
+
+// 新增：为月视图提供分组事件
+function getGroupedMonthEvents(day: Date): CalendarEvent[][] {
+  return getGroupedDayEvents(day);
 }
 
 function getEventStyle(event: CalendarEvent) {

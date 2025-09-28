@@ -279,10 +279,14 @@ function getDayOfWeekText(dayOfWeek: number): string {
   return days[dayOfWeek] || '未知';
 }
 
-// 获取课表名称（这里需要从某个地方获取课表信息）
+// 获取课表名称
 function getScheduleName(event: Event): string {
-  // 这里可能需要从课表store或其他地方获取课表名称
-  // 暂时返回课表ID
+  // 如果事件有 schedule 信息，使用课表名称
+  if (event.schedule?.name) {
+    return event.schedule.name;
+  }
+  
+  // 否则使用默认格式
   return `课表 ${event.schedule_id}`;
 }
 </script>

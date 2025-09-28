@@ -286,11 +286,16 @@ async function handleApplyFilter() {
   await scheduleStore.fetchFilteredEvents();
 }
 
-function handleEventClick(event: Event) {
+function handleEventClick(event: Event, relatedEventsFromCalendar?: Event[]) {
   selectedEvent.value = event;
   
-  // 查找同一时间段、同一课程的所有相关事件
-  relatedEvents.value = findRelatedEvents(event);
+  // 如果日历组件已经提供了相关事件，直接使用；否则查找
+  if (relatedEventsFromCalendar && relatedEventsFromCalendar.length > 0) {
+    relatedEvents.value = relatedEventsFromCalendar.filter(e => e.id !== event.id);
+  } else {
+    // 查找同一时间段、同一课程的所有相关事件
+    relatedEvents.value = findRelatedEvents(event);
+  }
   
   isEventDetailOpen.value = true;
 }
