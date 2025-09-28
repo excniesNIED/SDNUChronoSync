@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, Tuple
 from fastapi import UploadFile, HTTPException
 from pathlib import Path
+from urllib.parse import quote
 
 from config import get_config
 
@@ -119,45 +120,22 @@ class AlistUploader(UploaderBase):
             }
         
         try:
-            # Use longer timeout and add user agent for OpenList compatibility
-            headers = {
-                "Content-Type": "application/json",
-                "User-Agent": "SDNUChronoSync/1.0"
-            }
-            
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                print(f"🔍 Sending login request with headers: {headers}")
-                response = await client.post(login_url, json=login_data, headers=headers)
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                print(f"🔍 Sending login request")
+                response = await client.post(login_url, json=login_data)
                 
                 print(f"🔍 Login response status: {response.status_code}")
-                print(f"🔍 Login response headers: {dict(response.headers)}")
                 
                 if response.status_code != 200:
-                    error_detail = f"Alist login failed: HTTP {response.status_code}\nResponse: {response.text[:500]}..."
+                    error_detail = f"Alist login failed: HTTP {response.status_code}\nResponse: {response.text}"
                     print(f"❌ {error_detail}")
                     raise HTTPException(
                         status_code=500,
                         detail=error_detail
                     )
                 
-                # Check content type to ensure we got JSON
-                content_type = response.headers.get('content-type', '').lower()
-                if 'application/json' not in content_type:
-                    print(f"⚠️ Unexpected content type: {content_type}")
-                    print(f"⚠️ Response content: {response.text[:500]}...")
-                
-                try:
-                    result = response.json()
-                    print(f"🔍 Login successful, extracting token...")
-                    print(f"🔍 Login response data: {result}")
-                except ValueError as e:
-                    print(f"❌ Failed to parse login response as JSON: {e}")
-                    print(f"❌ Raw response: {response.text}")
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Invalid JSON response from Alist login: {response.text[:200]}..."
-                    )
-                
+                result = response.json()
+                print(f"🔍 Login successful, extracting token...")
                 if result.get('code') != 200:
                     error_msg = result.get('message', 'Login failed')
                     print(f"❌ Login API error: {error_msg}")
@@ -166,63 +144,27 @@ class AlistUploader(UploaderBase):
                         detail=f"Alist login error: {error_msg}\nFull response: {result}"
                     )
                 
-                # Extract token from response - handle different response formats
+                # Extract token from response
                 token_data = result.get('data', {})
                 token = token_data.get('token')
                 
-                # Some versions might return token directly in data
-                if not token and isinstance(token_data, str):
-                    token = token_data
-                
                 if not token:
-                    print(f"❌ Token not found in response: {result}")
                     raise HTTPException(
                         status_code=500,
                         detail="Failed to get token from login response"
                     )
                 
-                print(f"✅ Fresh token obtained: {token[:20]}...")
+                # Don't cache token when forcing refresh - let caller decide
+                print(f"✅ Fresh token obtained")
                 return token
                 
         except httpx.HTTPError as e:
-            print(f"❌ Login network error: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Login network error: {str(e)}")
     
-    async def _verify_token(self, token: str) -> bool:
-        """Verify if a token is still valid by making a test API call."""
-        try:
-            # Use the /api/me endpoint to verify token (common in Alist/OpenList)
-            verify_url = f"{self.url.rstrip('/')}/api/me"
-            headers = {
-                "Authorization": f"Bearer {token}",
-                "User-Agent": "SDNUChronoSync/1.0"
-            }
-            
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(verify_url, headers=headers)
-                
-                if response.status_code == 200:
-                    try:
-                        result = response.json()
-                        if result.get('code') == 200:
-                            print("✅ Token verification successful")
-                            return True
-                    except ValueError:
-                        pass
-                
-                print(f"⚠️ Token verification failed: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            print(f"⚠️ Token verification error: {e}")
-            return False
-
     async def _get_cached_or_fresh_token(self, force_refresh: bool = False) -> str:
         """Get token with caching logic."""
-        # If static token is configured, use it (but verify first)
+        # If static token is configured, use it
         if self.token:
-            if force_refresh or not await self._verify_token(self.token):
-                print("⚠️ Static token appears invalid, but continuing with configured token")
             return self.token
         
         # Check if we need to force refresh
@@ -232,7 +174,7 @@ class AlistUploader(UploaderBase):
             # Cache the fresh token
             import time
             self._cached_token = token
-            self._token_expires_at = time.time() + 25 * 60  # 25 minutes (shorter cache)
+            self._token_expires_at = time.time() + 30 * 60  # 30 minutes
             return token
         
         # Check if we have a cached token that's still valid
@@ -242,13 +184,6 @@ class AlistUploader(UploaderBase):
             # Add 5 minute buffer to avoid edge cases
             if current_time < (self._token_expires_at - 5 * 60):
                 print(f"🔍 Using cached token (expires in {int((self._token_expires_at - current_time) / 60)} minutes)")
-                # Optionally verify the cached token
-                if not await self._verify_token(self._cached_token):
-                    print("⚠️ Cached token verification failed, getting fresh token")
-                    token = await self._login_and_get_token()
-                    self._cached_token = token
-                    self._token_expires_at = time.time() + 25 * 60
-                    return token
                 return self._cached_token
             else:
                 print("🔍 Cached token expired or about to expire, getting fresh token")
@@ -257,7 +192,7 @@ class AlistUploader(UploaderBase):
         token = await self._login_and_get_token()
         import time
         self._cached_token = token
-        self._token_expires_at = time.time() + 25 * 60  # 25 minutes
+        self._token_expires_at = time.time() + 30 * 60  # 30 minutes
         return token
     
     def _apply_filename_template(self, filename: str) -> str:
@@ -292,233 +227,102 @@ class AlistUploader(UploaderBase):
         return f"{base_url.rstrip('')}{full_path}"
     
     async def upload(self, file: UploadFile, filename: Optional[str] = None) -> str:
-        """Upload file to Alist/OpenList storage with enhanced retry and method fallback."""
+        """Upload file to Alist storage with a simplified, robust method."""
         if not filename:
-            # Generate unique filename
             file_extension = os.path.splitext(file.filename or '')[1] or '.jpg'
             filename = f"{uuid.uuid4().hex}{file_extension}"
         
-        # Store original file content to avoid multiple reads
-        original_content = await file.read()
+        content = await file.read()
         
-        UPLOAD_AUTH_RETRY_LIMIT_TIMES = 3
-        retry_times = 0
-        
-        while retry_times <= UPLOAD_AUTH_RETRY_LIMIT_TIMES:
+        MAX_RETRIES = 3
+        for attempt in range(MAX_RETRIES + 1):
             try:
-                if retry_times == 0:
-                    print(f"🔍 Starting OpenList/Alist upload for file: {filename}")
+                if attempt == 0:
+                    print(f"🔍 Starting Alist upload for file: {filename}")
                 else:
-                    print(f"🔍 Upload retry #{retry_times} for file: {filename}")
-                
+                    print(f"🔍 Upload retry #{attempt} for file: {filename}")
+
                 print(f"🔍 Alist config - URL: {self.url}, Version: {self.version}")
                 print(f"🔍 Upload path: {self.upload_path}")
-                
-                # Get auth token (force refresh on retries)
-                if retry_times > 0:
+
+                # Force token refresh on retries
+                force_refresh = attempt > 0
+                if force_refresh:
                     print("🔄 Forcing token refresh for retry...")
-                    self._cached_token = None
-                    self._token_expires_at = None
-                
-                auth_token = await self._get_auth_token()
+
+                auth_token = await self._get_cached_or_fresh_token(force_refresh=force_refresh)
                 print(f"🔍 Auth token obtained: {auth_token[:20]}..." if auth_token else "❌ No auth token")
+
+                upload_url = f"{self.url.rstrip('/')}/api/fs/put"
+                full_path = f"/{self.upload_path.strip('/')}/{filename}"
                 
-                # Construct paths - handle both relative and absolute paths
-                clean_path = self.upload_path.strip('/')
-                if clean_path:
-                    full_path = f"/{clean_path}/{filename}"
-                    parent_path = f"/{clean_path}"
-                else:
-                    full_path = f"/{filename}"
-                    parent_path = "/"
-                
+                print(f"🔍 Upload URL: {upload_url}")
                 print(f"🔍 Full path: {full_path}")
-                print(f"🔍 Parent path: {parent_path}")
-                
-                # Try different upload methods in order of preference
-                upload_success = False
-                access_url = None
-                
-                # Common headers for all requests
-                common_headers = {
-                    "Authorization": f"Bearer {auth_token}",
-                    "User-Agent": "SDNUChronoSync/1.0",
+                print(f"🔍 File content size: {len(content)} bytes")
+
+                # Some AList deployments expect raw token (no 'Bearer') and raw File-Path
+                headers = {
+                    "Authorization": auth_token,  # raw token
+                    "File-Path": full_path,       # raw path
+                    "Content-Type": "application/octet-stream",
+                    "Content-Length": str(len(content)),
                     "Accept": "application/json",
-                    "Cache-Control": "no-cache"
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
                 }
                 
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    # Method 1: POST to /api/fs/form (recommended for OpenList/newer Alist)
-                    try:
-                        print("🔍 Trying Method 1: POST to /api/fs/form")
-                        form_url = f"{self.url.rstrip('/')}/api/fs/form"
-                        
-                        headers = common_headers.copy()
-                        # Don't set Content-Type for multipart, let httpx handle it
-                        
-                        files = {"file": (filename, original_content, "application/octet-stream")}
-                        data = {"path": parent_path}
-                        
-                        print(f"🔍 POST form URL: {form_url}")
-                        print(f"🔍 Form data: {data}")
-                        print(f"🔍 Form headers: {dict(headers)}")
-                        
-                        response = await client.post(form_url, headers=headers, files=files, data=data)
-                        print(f"🔍 POST form response: {response.status_code}")
-                        print(f"🔍 Response headers: {dict(response.headers)}")
-                        print(f"🔍 Response content: {response.text[:500]}...")
-                        
-                        # Check if we got JSON response
-                        try:
-                            result = response.json()
-                            print(f"🔍 POST form JSON response: {result}")
-                            
-                            if response.status_code == 200 and result.get('code') == 200:
-                                print("✅ POST form upload successful!")
-                                upload_success = True
-                            elif result.get('code') == 401:
-                                print("🔄 POST form auth failed, will try other methods")
-                            else:
-                                print(f"⚠️ POST form failed: {result.get('message', 'Unknown error')}")
-                                
-                        except ValueError:
-                            # Not JSON response - check if it's HTML (indicating success)
-                            if response.status_code == 200 and 'html' in response.text.lower():
-                                print("✅ POST form upload successful (HTML response indicates redirect to file browser)")
-                                upload_success = True
-                            else:
-                                print(f"⚠️ POST form non-JSON response: {response.text[:200]}...")
-                    
-                    except Exception as e:
-                        print(f"⚠️ POST form method failed: {e}")
-                    
-                    # Method 2: PUT to /api/fs/put with File-Path header
-                    if not upload_success:
-                        try:
-                            print("🔍 Trying Method 2: PUT to /api/fs/put")
-                            put_url = f"{self.url.rstrip('/')}/api/fs/put"
-                            
-                            headers = common_headers.copy()
-                            headers.update({
-                                "File-Path": full_path,
-                                "Content-Type": "application/octet-stream",
-                                "Content-Length": str(len(original_content))
-                            })
-                            
-                            print(f"🔍 PUT URL: {put_url}")
-                            print(f"🔍 PUT headers: {dict(headers)}")
-                            
-                            response = await client.put(put_url, headers=headers, content=original_content)
-                            print(f"🔍 PUT response: {response.status_code}")
-                            print(f"🔍 Response content: {response.text[:500]}...")
-                            
-                            try:
-                                result = response.json()
-                                print(f"🔍 PUT JSON response: {result}")
-                                
-                                if response.status_code == 200 and result.get('code') == 200:
-                                    print("✅ PUT upload successful!")
-                                    upload_success = True
-                                elif result.get('code') == 401:
-                                    print("🔄 PUT auth failed")
-                                else:
-                                    print(f"⚠️ PUT failed: {result.get('message', 'Unknown error')}")
-                                    
-                            except ValueError:
-                                print(f"⚠️ PUT non-JSON response: {response.text[:200]}...")
-                        
-                        except Exception as e:
-                            print(f"⚠️ PUT method failed: {e}")
-                    
-                    # Method 3: POST with multipart/form-data and different endpoint
-                    if not upload_success:
-                        try:
-                            print("🔍 Trying Method 3: POST multipart upload")
-                            # Try common alternative endpoints
-                            alt_endpoints = [
-                                "/api/fs/upload",
-                                "/api/admin/fs/form", 
-                                "/api/public/fs/form"
-                            ]
-                            
-                            for endpoint in alt_endpoints:
-                                upload_url = f"{self.url.rstrip('')}{endpoint}"
-                                print(f"🔍 Trying endpoint: {upload_url}")
-                                
-                                headers = common_headers.copy()
-                                # Remove Accept header for some endpoints that might not like it
-                                if "/admin/" in endpoint or "/public/" in endpoint:
-                                    headers.pop("Accept", None)
-                                
-                                files = {"file": (filename, original_content, "application/octet-stream")}
-                                data = {"path": parent_path}
-                                
-                                print(f"🔍 {endpoint} headers: {dict(headers)}")
-                                
-                                try:
-                                    response = await client.post(upload_url, headers=headers, files=files, data=data)
-                                    print(f"🔍 {endpoint} response: {response.status_code}")
-                                    print(f"🔍 {endpoint} response content: {response.text[:300]}...")
-                                    
-                                    if response.status_code in [200, 201]:
-                                        try:
-                                            result = response.json()
-                                            if result.get('code') in [200, None]:
-                                                print(f"✅ Upload successful via {endpoint}!")
-                                                upload_success = True
-                                                break
-                                        except ValueError:
-                                            # Some endpoints return HTML or plain text on success
-                                            if response.status_code in [200, 201]:
-                                                print(f"✅ Upload successful via {endpoint} (non-JSON response)!")
-                                                upload_success = True
-                                                break
-                                
-                                except Exception as e:
-                                    print(f"⚠️ {endpoint} failed: {e}")
-                                    continue
-                            
-                            # If all alternative endpoints failed, we might need to break
-                            if not upload_success:
-                                print("⚠️ All alternative endpoints failed")
-                        
-                        except Exception as e:
-                            print(f"⚠️ Alternative methods failed: {e}")
-                
-                # If upload was successful, generate access URL
-                if upload_success:
-                    try:
-                        await self._refresh_directory(client, auth_token, self.upload_path)
-                    except Exception as e:
-                        print(f"⚠️ Directory refresh failed (non-critical): {e}")
-                    
+                print(f"🔍 Sending headers: {headers}")
+
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    print("🔍 Making PUT request (stream upload)...")
+                    response = await client.put(upload_url, headers=headers, content=content)
+
+                print(f"🔍 Response status: {response.status_code}")
+                print(f"🔍 Response headers: {dict(response.headers)}")
+                print(f"🔍 Response content: {response.text[:500]}...")
+
+                try:
+                    result = response.json()
+                    print(f"🔍 JSON response: {result}")
+                except ValueError:
+                    # Handle non-JSON responses (like HTML pages)
+                    if 200 <= response.status_code < 300:
+                         print(f"✅ Upload appears successful based on status code {response.status_code}, but response was not JSON.")
+                         access_url = self._get_access_url(filename)
+                         print(f"✅ Access URL: {access_url}")
+                         return access_url
+                    else:
+                        print(f"❌ Upload failed with non-JSON response. Raw response: {response.text}")
+                        raise HTTPException(status_code=500, detail=f"Alist returned a non-JSON response (HTTP {response.status_code})")
+
+                # Check for auth failure (HTTP 401 or HTTP 200 with code 401)
+                is_auth_error = (response.status_code == 401 or (result.get('code') == 401))
+
+                if is_auth_error:
+                    print(f"🔄 Auth error detected: {result.get('message', 'Unauthorized')}")
+                    if attempt < MAX_RETRIES:
+                        continue  # Retry will be triggered by the loop
+                    else:
+                        raise Exception("Authentication failed after multiple retries.")
+
+                if result.get('code') == 200:
+                    print(f"✅ Upload successful after {attempt + 1} attempt(s).")
                     access_url = self._get_access_url(filename)
                     print(f"✅ Access URL: {access_url}")
                     return access_url
-                
-                # If all methods failed, check if it's an auth issue and retry
-                if retry_times < UPLOAD_AUTH_RETRY_LIMIT_TIMES:
-                    print(f"🔄 All upload methods failed, retrying ({retry_times + 1}/{UPLOAD_AUTH_RETRY_LIMIT_TIMES})")
-                    retry_times += 1
-                    continue
                 else:
-                    error_detail = f"OpenList upload failed after {retry_times + 1} attempts:\nAll upload methods (POST form, PUT, alternative endpoints) failed\nURL: {self.url}\nPath: {full_path}"
-                    print(f"❌ {error_detail}")
-                    raise HTTPException(status_code=500, detail=error_detail)
-                        
-            except HTTPException:
-                # Don't retry HTTPExceptions
-                raise
+                    error_message = result.get('message', 'Unknown Alist error')
+                    print(f"❌ Alist API error (code {result.get('code')}): {error_message}")
+                    raise Exception(f"Alist API error: {error_message}")
+
             except Exception as e:
-                print(f"❌ Unexpected error on attempt {retry_times + 1}: {e}")
-                if retry_times >= UPLOAD_AUTH_RETRY_LIMIT_TIMES:
+                print(f"❌ Unexpected error on attempt {attempt + 1}: {e}")
+                if attempt >= MAX_RETRIES:
                     import traceback
                     traceback.print_exc()
-                    raise HTTPException(status_code=500, detail=f"Upload failed after {retry_times + 1} attempts: {str(e)}")
-                retry_times += 1
-                continue
+                    error_detail = f"Alist upload failed after {MAX_RETRIES + 1} attempts. Last error: {str(e)}"
+                    raise HTTPException(status_code=500, detail=error_detail)
         
-        # Should not reach here, but just in case
+        # This part should not be reached
         raise HTTPException(status_code=500, detail="Upload failed: Maximum retries exceeded")
     
     async def _refresh_directory(self, client: httpx.AsyncClient, auth_token: str, path: str):
