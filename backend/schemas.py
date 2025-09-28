@@ -21,10 +21,18 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     password: Optional[str] = None
 
+class UpdateUserRequest(BaseModel):
+    """用于个人中心更新个人信息的请求模型"""
+    full_name: Optional[str] = None
+    class_name: Optional[str] = None
+    grade: Optional[str] = None
+
 class UserPublic(UserBase):
     id: int
     role: str
+    avatar_url: Optional[str] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
