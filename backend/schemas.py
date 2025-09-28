@@ -96,14 +96,10 @@ class EventResponse(EventBase):
     
     # Include schedule and owner information for team views
     schedule: Optional['ScheduleResponse'] = None
+    owner: Optional[UserPublic] = None  # 直接包含 owner 字段
 
     class Config:
         from_attributes = True
-        
-    @property
-    def owner(self) -> Optional[UserPublic]:
-        """Get owner from schedule relationship."""
-        return self.schedule.owner if self.schedule else None
 
 # Auth schemas
 class Token(BaseModel):
