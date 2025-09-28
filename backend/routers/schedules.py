@@ -295,13 +295,13 @@ async def export_schedule_to_ics(
             detail="Schedule not found"
         )
     
-        # 获取所有事件（确保有序，防止结果顺序不稳定）
-        events = (
-            db.query(Event)
-            .filter(Event.schedule_id == schedule_id)
-            .order_by(Event.day_of_week, Event.period, Event.start_time)
-            .all()
-        )
+    # 获取所有事件（确保有序，防止结果顺序不稳定）
+    events = (
+        db.query(Event)
+        .filter(Event.schedule_id == schedule_id)
+        .order_by(Event.day_of_week, Event.period, Event.start_time)
+        .all()
+    )
     
     print(f"\n=== ICS导出调试信息 ===")
     print(f"当前用户ID: {current_user.id} ({current_user.full_name})")

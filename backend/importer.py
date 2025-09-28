@@ -340,15 +340,17 @@ class ZFWImporter:
                     print(f"    计算出的时间: {start_time_str} - {end_time_str}")
                     
                     # 2025年第一学期开始日期（第一周为9月7日）
-                    semester_start = datetime(2025, 9, 7)  # 第一周从9月7日开始
+                    semester_start = datetime(2025, 9, 8)  # 第一周从9月8日开始
                     
                     # 为每个周数创建事件
                     for week_num in week_numbers:
                         try:
                             # 计算具体日期 
-                            # week_num-1: 因为第1周是起始周
-                            # week_day-1: 因为星期一是1，但我们需要0-6的偏移
-                            days_offset = (week_num - 1) * 7 + (week_day - 1)
+                             # 2025年9月8日是周一，所以：
+                            # 周一=1->offset=0, 周二=2->offset=1, ..., 周日=7->offset=6
+                            day_offset_in_week = week_day - 1
+                            
+                            days_offset = (week_num - 1) * 7 + day_offset_in_week
                             target_date = semester_start + timedelta(days=days_offset)
                             print(f"        第{week_num}周 星期{week_day}: {semester_start} + {days_offset}天 = {target_date}")
                             
