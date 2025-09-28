@@ -66,12 +66,12 @@
               <div
                 :class="[
                   'rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow',
-                  !props.isAdminMode ? 'border border-opacity-50 min-h-[4rem]' : 'min-h-[2.5rem]'
+                  !props.isAdminMode ? 'border border-opacity-50 min-h-[4rem]' : 'border border-opacity-25 min-h-[2.5rem]'
                 ]"
                 :style="{ 
                   backgroundColor: eventGroup[0].color, 
                   color: eventGroup[0].textColor,
-                  borderColor: !props.isAdminMode ? eventGroup[0].textColor : 'transparent'
+                  borderColor: eventGroup[0].textColor
                 }"
                 @click="$emit('event-click', eventGroup[0], eventGroup)"
               >
@@ -118,12 +118,12 @@
               v-else-if="eventGroup.length === 1"
               :class="[
                 'rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow h-full',
-                !props.isAdminMode ? 'border-2 border-opacity-30 min-h-[4rem]' : 'min-h-[2.5rem]'
+                !props.isAdminMode ? 'border-2 border-opacity-30 min-h-[4rem]' : 'border border-opacity-25 min-h-[2.5rem]'
               ]"
               :style="{ 
                 backgroundColor: eventGroup[0].color, 
                 color: eventGroup[0].textColor,
-                borderColor: !props.isAdminMode ? eventGroup[0].textColor : 'transparent'
+                borderColor: eventGroup[0].textColor
               }"
               @click="$emit('event-click', eventGroup[0], eventGroup.length > 1 ? eventGroup : [])"
             >
@@ -206,13 +206,13 @@
               v-for="(eventGroup, index) in getGroupedMonthEvents(day).slice(0, 3)"
               :key="`month-group-${index}`"
               :class="[
-                'text-xs px-2 py-1 rounded cursor-pointer hover:shadow-sm transition-all',
-                !props.isAdminMode ? 'border border-opacity-40 shadow-sm' : ''
+                'text-xs px-2 py-1 rounded cursor-pointer hover:shadow-sm transition-all border',
+                !props.isAdminMode ? 'border-opacity-40 shadow-sm' : 'border-opacity-20'
               ]"
               :style="{ 
                 backgroundColor: eventGroup[0].color, 
                 color: eventGroup[0].textColor,
-                borderColor: !props.isAdminMode ? eventGroup[0].textColor : 'transparent'
+                borderColor: eventGroup[0].textColor
               }"
               @click.stop="$emit('event-click', eventGroup[0], eventGroup.length > 1 ? eventGroup : [])"
             >
