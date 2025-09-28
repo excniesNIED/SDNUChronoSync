@@ -13,7 +13,9 @@ class User(Base):
     class_name = Column(String, nullable=False)  # e.g., '计工本2303'
     grade = Column(String, nullable=False)  # e.g., '2023'
     role = Column(String, default="user")  # 'user' or 'admin'
+    avatar_url = Column(String, nullable=True)  # 头像URL
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship with schedules
     schedules = relationship("Schedule", back_populates="owner", cascade="all, delete-orphan")

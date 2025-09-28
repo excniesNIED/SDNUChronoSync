@@ -66,8 +66,15 @@
               <div
                 v-for="event in eventGroup"
                 :key="event.id"
-                :style="{ backgroundColor: event.color, color: event.textColor }"
-                class="rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                :class="[
+                  'rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow',
+                  !props.isAdminMode ? 'border border-opacity-50' : ''
+                ]"
+                :style="{ 
+                  backgroundColor: event.color, 
+                  color: event.textColor,
+                  borderColor: !props.isAdminMode ? event.textColor : 'transparent'
+                }"
                 @click="$emit('event-click', event)"
               >
                 <div class="font-medium truncate">{{ event.title }}</div>
@@ -89,8 +96,15 @@
             <!-- Single event -->
             <div
               v-else-if="eventGroup.length === 1"
-              :style="{ backgroundColor: eventGroup[0].color, color: eventGroup[0].textColor }"
-              class="rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow h-full"
+              :class="[
+                'rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow h-full',
+                !props.isAdminMode ? 'border-2 border-opacity-30' : ''
+              ]"
+              :style="{ 
+                backgroundColor: eventGroup[0].color, 
+                color: eventGroup[0].textColor,
+                borderColor: !props.isAdminMode ? eventGroup[0].textColor : 'transparent'
+              }"
               @click="$emit('event-click', eventGroup[0])"
             >
               <div class="font-medium truncate">{{ eventGroup[0].title }}</div>
@@ -154,8 +168,15 @@
             <div
               v-for="event in getDayEvents(day).slice(0, 3)"
               :key="event.id"
-              :style="{ backgroundColor: event.color, color: event.textColor }"
-              class="text-xs px-2 py-1 rounded cursor-pointer hover:shadow-sm"
+              :class="[
+                'text-xs px-2 py-1 rounded cursor-pointer hover:shadow-sm transition-all',
+                !props.isAdminMode ? 'border border-opacity-40 shadow-sm' : ''
+              ]"
+              :style="{ 
+                backgroundColor: event.color, 
+                color: event.textColor,
+                borderColor: !props.isAdminMode ? event.textColor : 'transparent'
+              }"
               @click.stop="$emit('event-click', event)"
             >
               <div class="truncate font-medium">{{ event.title }}</div>

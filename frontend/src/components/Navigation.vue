@@ -160,6 +160,12 @@ const navigation = computed(() => [
     icon: UserGroupIcon,
     current: currentPath.value === '/dashboard/team-view',
   },
+  {
+    name: '个人中心',
+    href: '/dashboard/profile',
+    icon: UserIcon,
+    current: currentPath.value === '/dashboard/profile',
+  },
 ]);
 
 const adminNavigation = computed(() => [

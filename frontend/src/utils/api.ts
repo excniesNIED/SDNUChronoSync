@@ -285,6 +285,44 @@ class ApiClient {
     return response.data;
   }
 
+  // Profile API methods
+  async getProfile(): Promise<User> {
+    const response = await axios.get('/api/profile/');
+    return response.data;
+  }
+
+  async updateProfile(data: { full_name?: string; class_name?: string; grade?: string }): Promise<User> {
+    const response = await axios.put('/api/profile/', data);
+    return response.data;
+  }
+
+  async changePassword(data: { current_password: string; new_password: string }): Promise<{ message: string }> {
+    const response = await axios.post('/api/profile/change-password', data);
+    return response.data;
+  }
+
+  async updateAvatar(data: { avatar_url: string }): Promise<{ message: string; avatar_url: string }> {
+    const response = await axios.post('/api/profile/avatar', data);
+    return response.data;
+  }
+
+  async uploadAvatar(file: File): Promise<{ message: string; avatar_url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axios.post('/api/profile/upload-avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
+  async getProfileStatistics(): Promise<{ schedule_count: number; event_count: number; join_date: string }> {
+    const response = await axios.get('/api/profile/statistics');
+    return response.data;
+  }
+
   // Utility methods
   isAuthenticated(): boolean {
     return this.getToken() !== null;

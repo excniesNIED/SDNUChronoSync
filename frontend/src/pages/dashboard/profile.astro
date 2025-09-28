@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="个人中心 - SDNUChronoSync">
+  <div id="profile-app"></div>
+  
+  <script>
+    import ProfilePage from '../../components/ProfilePage.vue';
+    import { createApp } from 'vue';
+    
+    const app = createApp(ProfilePage);
+    app.mount('#profile-app');
+  </script>
+</BaseLayout>

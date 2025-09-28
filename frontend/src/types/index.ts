@@ -6,7 +6,9 @@ export interface User {
   class_name: string;
   grade: string;
   role: 'user' | 'admin';
+  avatar_url?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Schedule {

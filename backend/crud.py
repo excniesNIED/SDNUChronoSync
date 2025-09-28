@@ -173,4 +173,12 @@ def get_filtered_events(
     if event_title_contains:
         query = query.filter(Event.title.ilike(f"%{event_title_contains}%"))
     
-    return query.all()
+    # 获取事件并手动设置owner字段
+    events = query.all()
+    
+    # 为每个事件设置 owner 字段
+    for event in events:
+        if event.schedule and event.schedule.owner:
+            event.owner = event.schedule.owner
+    
+    return events
