@@ -143,6 +143,7 @@ class ImportResponse(BaseModel):
     success: bool
     message: str
     imported_count: Optional[int] = None
+    user_info: Optional[Dict[str, str]] = None  # 用户信息（姓名、学号等）
 
 # Filter schemas
 class ScheduleFilter(BaseModel):

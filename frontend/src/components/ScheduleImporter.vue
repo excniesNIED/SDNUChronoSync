@@ -245,16 +245,17 @@
                   </div>
                 </div>
 
-                <!-- Test Results -->
-                <div v-if="testResults.length > 0" class="mt-4 rounded-md bg-blue-50 p-4">
+                <!-- User Welcome Info -->
+                <div v-if="userWelcomeInfo" class="mt-4 rounded-md bg-blue-50 p-4">
                   <div class="flex">
-                    <ExclamationCircleIcon class="h-5 w-5 text-blue-400" />
+                    <CheckCircleIcon class="h-5 w-5 text-blue-400" />
                     <div class="ml-3">
-                      <h4 class="text-sm font-medium text-blue-800 mb-2">测试结果详情：</h4>
-                      <div class="text-xs text-blue-700 space-y-1 font-mono">
-                        <div v-for="(detail, index) in testResults" :key="index" class="whitespace-pre-wrap">
-                          {{ detail }}
-                        </div>
+                      <h4 class="text-sm font-medium text-blue-800 mb-2">登录成功，欢迎您！</h4>
+                      <div class="text-sm text-blue-700 space-y-1">
+                        <div><strong>姓名：</strong>{{ userWelcomeInfo.fullName }}</div>
+                        <div><strong>学号：</strong>{{ userWelcomeInfo.studentId }}</div>
+                        <div v-if="userWelcomeInfo.className"><strong>班级：</strong>{{ userWelcomeInfo.className }}</div>
+                        <div v-if="userWelcomeInfo.grade"><strong>年级：</strong>{{ userWelcomeInfo.grade }}</div>
                       </div>
                     </div>
                   </div>
@@ -300,18 +301,7 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="mt-5 sm:mt-6 space-y-3">
-                  <!-- Test login button -->
-                  <button
-                    @click="handleTestLogin"
-                    :disabled="isTesting || !form.username || !form.password || !form.captcha || !sessionData || isLoadingCaptcha"
-                    type="button"
-                    class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ExclamationCircleIcon v-if="!isTesting" class="h-4 w-4 mr-2" />
-                    {{ isTesting ? '测试中...' : '测试登录' }}
-                  </button>
-                  
+                <div class="mt-5 sm:mt-6">
                   <div class="sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                     <button
                       type="submit"
@@ -347,7 +337,6 @@ import {
   CloudArrowDownIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon,
 } from '@heroicons/vue/24/outline';
 import { apiClient } from '@/utils/api';
 
@@ -377,8 +366,12 @@ const importStatus = ref('');
 const importProgress = ref(0);
 const successMessage = ref('');
 const errorMessage = ref('');
-const isTesting = ref(false);
-const testResults = ref<string[]>([]);
+const userWelcomeInfo = ref<{
+  fullName: string;
+  studentId: string;
+  className?: string;
+  grade?: string;
+} | null>(null);
 const userSchedules = ref<any[]>([]);
 const isLoadingSchedules = ref(false);
 const sessionData = ref<{
@@ -452,12 +445,17 @@ async function handleImport() {
     if (response.success) {
       successMessage.value = response.message;
       
+      // 显示用户欢迎信息
+      if (response.user_info) {
+        userWelcomeInfo.value = response.user_info;
+      }
+      
       // 延迟关闭并触发成功回调
       setTimeout(() => {
         emit('success', response.imported_count || 0);
         emit('close');
         resetForm();
-      }, 2000);
+      }, 3000); // 延长显示时间以便用户看到欢迎信息
     } else {
       errorMessage.value = response.message;
     }
@@ -472,43 +470,6 @@ async function handleImport() {
   }
 }
 
-async function handleTestLogin() {
-  if (!sessionData.value) {
-    errorMessage.value = '请先获取验证码';
-    return;
-  }
-
-  isTesting.value = true;
-  testResults.value = [];
-  successMessage.value = '';
-  errorMessage.value = '';
-
-  try {
-    const response = await apiClient.testLogin({
-      session_id: sessionData.value.session_id,
-      username: form.value.username,
-      password: form.value.password,
-      captcha: form.value.captcha,
-    });
-
-    testResults.value = response.details;
-
-    if (response.success) {
-      successMessage.value = `✅ ${response.message}`;
-      if (response.working_url) {
-        successMessage.value += `\n可用的课表URL: ${response.working_url}`;
-      }
-    } else {
-      errorMessage.value = `❌ ${response.message}`;
-    }
-
-  } catch (error: any) {
-    console.error('Test login failed:', error);
-    errorMessage.value = error.response?.data?.detail || error.response?.data?.message || '测试失败，请检查网络连接';
-  } finally {
-    isTesting.value = false;
-  }
-}
 
 const isLoadingCaptcha = ref(false);
 
@@ -590,6 +551,7 @@ function resetForm() {
   };
   successMessage.value = '';
   errorMessage.value = '';
+  userWelcomeInfo.value = null;
   sessionData.value = null;
   userSchedules.value = [];
 }

@@ -217,6 +217,12 @@ class ApiClient {
     success: boolean;
     message: string;
     imported_count: number;
+    user_info?: {
+      fullName: string;
+      studentId: string;
+      className?: string;
+      grade?: string;
+    };
   }> {
     const response = await axios.post('/api/import/zfw', importData);
     return response.data;
@@ -231,20 +237,6 @@ class ApiClient {
     return response.data;
   }
 
-  async testLogin(importData: { 
-    session_id: string; 
-    username: string; 
-    password: string; 
-    captcha: string; 
-  }): Promise<{
-    success: boolean;
-    message: string;
-    details: string[];
-    working_url?: string;
-  }> {
-    const response = await axios.post('/api/import/test-login', importData);
-    return response.data;
-  }
 
   async testImportConnection(): Promise<{
     status: string;

@@ -168,10 +168,19 @@ async def import_from_zfw(
         saved_events = db.query(Event).filter(Event.schedule_id == user_schedule.id).count()
         print(f"数据库中该课表的总事件数: {saved_events}")
         
+        # 构建用户信息
+        user_info = {
+            "fullName": current_user.full_name,
+            "studentId": current_user.student_id,
+            "className": current_user.class_name,
+            "grade": current_user.grade
+        }
+        
         return ImportResponse(
             success=True,
             message=f"导入成功！共导入 {imported_count} 门课程",
-            imported_count=imported_count
+            imported_count=imported_count,
+            user_info=user_info
         )
         
     except Exception as e:
