@@ -41,6 +41,7 @@ class Schedule(Base):
     # Relationships
     owner = relationship("User", back_populates="schedules")
     events = relationship("Event", back_populates="schedule", cascade="all, delete-orphan")
+    adjustments = relationship("ScheduleAdjustment", back_populates="schedule", cascade="all, delete-orphan")
 
 class Event(Base):
     __tablename__ = "events"
@@ -62,6 +63,35 @@ class Event(Base):
     period = Column(String, nullable=True)          # 节次 (例: "3-4节")
     weeks_input = Column(String, nullable=True)     # 新增: 用于存储原始输入的周数，如 "1,4-6"
     color = Column(String, nullable=True)           # 课程颜色 (例: "#3B82F6")
+    
+    # Fields for schedule adjustment
+    is_override = Column(Boolean, default=False)    # 是否为调休覆盖事件
+    is_active = Column(Boolean, default=True)       # 是否激活（用于逻辑删除）
+    adjustment_id = Column(Integer, ForeignKey('schedule_adjustments.id'), nullable=True)  # 关联调整操作
 
     # Relationship with schedule
     schedule = relationship("Schedule", back_populates="events")
+    # Relationship with adjustment
+    adjustment = relationship("ScheduleAdjustment", back_populates="override_events")
+
+
+class ScheduleAdjustment(Base):
+    __tablename__ = 'schedule_adjustments'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    schedule_id = Column(Integer, ForeignKey('schedules.id'), nullable=False)
+    
+    # 操作类型: 'HOLIDAY' (放假), 'SWAP' (交换)
+    adjustment_type = Column(String, nullable=False)
+    
+    # 原始日期 (被操作的日期)
+    original_date = Column(Date, nullable=False)
+    
+    # 目标日期 (课程被移动到的日期, 'HOLIDAY'类型下此字段为空)
+    target_date = Column(Date, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    schedule = relationship("Schedule", back_populates="adjustments")
+    override_events = relationship("Event", back_populates="adjustment")

@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Union
 from datetime import date, datetime, timedelta
 import ics
 
 from database import get_db
 from auth import get_current_user, get_current_admin_user
-from models import User, Schedule, Event
-from schemas import ScheduleCreate, ScheduleUpdate, ScheduleResponse, EventCreate, EventUpdate, EventResponse
+from models import User, Schedule, Event, ScheduleAdjustment
+from schemas import (
+    ScheduleCreate, ScheduleUpdate, ScheduleResponse, EventCreate, EventUpdate, EventResponse,
+    HolidayAdjustmentRequest, SwapAdjustmentRequest, AdjustmentOperationResponse, ScheduleAdjustmentResponse
+)
 from utils import get_default_class_times, parse_weeks, parse_period_to_class_numbers
 import crud
 
@@ -146,7 +149,8 @@ async def get_schedule_events(
         )
     
     events = db.query(Event).filter(
-        Event.schedule_id == schedule_id
+        Event.schedule_id == schedule_id,
+        Event.is_active == True  # 只返回活跃的事件
     ).offset(skip).limit(limit).all()
     
     return events
@@ -503,3 +507,171 @@ async def export_schedule_to_ics(
     }
     
     return Response(content=ics_content, headers=headers)
+
+
+@router.post("/{schedule_id}/adjustments", response_model=AdjustmentOperationResponse, status_code=status.HTTP_201_CREATED)
+async def create_schedule_adjustment(
+    schedule_id: int,
+    adjustment_data: Union[HolidayAdjustmentRequest, SwapAdjustmentRequest],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """创建课表调休调整"""
+    # 验证课表所有权
+    schedule = db.query(Schedule).filter(
+        Schedule.id == schedule_id,
+        Schedule.owner_id == current_user.id
+    ).first()
+    
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schedule not found"
+        )
+    
+    try:
+        if adjustment_data.adjustment_type == "HOLIDAY":
+            return _handle_holiday_adjustment(db, schedule, adjustment_data)
+        elif adjustment_data.adjustment_type == "SWAP":
+            return _handle_swap_adjustment(db, schedule, adjustment_data)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid adjustment type. Must be 'HOLIDAY' or 'SWAP'"
+            )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process adjustment: {str(e)}"
+        )
+
+
+def _handle_holiday_adjustment(db: Session, schedule: Schedule, data: HolidayAdjustmentRequest) -> AdjustmentOperationResponse:
+    """处理放假调整"""
+    # 1. 记录调整操作
+    adjustment = ScheduleAdjustment(
+        schedule_id=schedule.id,
+        adjustment_type="HOLIDAY",
+        original_date=data.holiday_date,
+        target_date=None
+    )
+    db.add(adjustment)
+    db.flush()  # 获取 adjustment.id
+    
+    # 2. 找出指定日期的所有活跃非覆盖事件
+    target_events = db.query(Event).filter(
+        Event.schedule_id == schedule.id,
+        Event.is_active == True,
+        Event.is_override == False,
+        db.func.date(Event.start_time) == data.holiday_date
+    ).all()
+    
+    # 3. 逻辑删除这些事件
+    affected_count = 0
+    for event in target_events:
+        event.is_active = False
+        affected_count += 1
+    
+    db.commit()
+    
+    return AdjustmentOperationResponse(
+        success=True,
+        message=f"Successfully set {data.holiday_date} as holiday. {affected_count} events deactivated.",
+        adjustment_id=adjustment.id,
+        affected_events=affected_count
+    )
+
+
+def _handle_swap_adjustment(db: Session, schedule: Schedule, data: SwapAdjustmentRequest) -> AdjustmentOperationResponse:
+    """处理课程对调"""
+    # 1. 记录调整操作
+    adjustment = ScheduleAdjustment(
+        schedule_id=schedule.id,
+        adjustment_type="SWAP",
+        original_date=data.source_date,
+        target_date=data.target_date
+    )
+    db.add(adjustment)
+    db.flush()  # 获取 adjustment.id
+    
+    # 2. 找出原始日期的所有活跃非覆盖事件
+    from_events = db.query(Event).filter(
+        Event.schedule_id == schedule.id,
+        Event.is_active == True,
+        Event.is_override == False,
+        db.func.date(Event.start_time) == data.source_date
+    ).all()
+    
+    # 3. 逻辑删除原始事件
+    affected_count = 0
+    for event in from_events:
+        event.is_active = False
+        affected_count += 1
+    
+    # 4. 为每个原始事件创建覆盖事件
+    created_count = 0
+    for original_event in from_events:
+        # 计算新的时间
+        original_start = original_event.start_time
+        original_end = original_event.end_time
+        
+        # 保持时间部分，只改变日期部分
+        new_start = datetime.combine(data.target_date, original_start.time())
+        new_end = datetime.combine(data.target_date, original_end.time())
+        
+        # 创建覆盖事件
+        override_event = Event(
+            schedule_id=schedule.id,
+            title=original_event.title,
+            description=original_event.description,
+            location=original_event.location,
+            start_time=new_start,
+            end_time=new_end,
+            instructor=original_event.instructor,
+            weeks_display=original_event.weeks_display,
+            day_of_week=data.target_date.weekday() + 1,  # Python weekday: Monday=0, 我们的系统: Monday=1
+            period=original_event.period,
+            weeks_input=original_event.weeks_input,
+            color=original_event.color,
+            is_override=True,
+            is_active=True,
+            adjustment_id=adjustment.id
+        )
+        db.add(override_event)
+        created_count += 1
+    
+    db.commit()
+    
+    return AdjustmentOperationResponse(
+        success=True,
+        message=f"Successfully swapped {affected_count} events from {data.source_date} to {data.target_date}. {created_count} override events created.",
+        adjustment_id=adjustment.id,
+        affected_events=affected_count
+    )
+
+
+@router.get("/{schedule_id}/adjustments", response_model=List[ScheduleAdjustmentResponse])
+async def get_schedule_adjustments(
+    schedule_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取课表的所有调休记录"""
+    # 验证课表所有权
+    schedule = db.query(Schedule).filter(
+        Schedule.id == schedule_id,
+        Schedule.owner_id == current_user.id
+    ).first()
+    
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schedule not found"
+        )
+    
+    adjustments = db.query(ScheduleAdjustment).filter(
+        ScheduleAdjustment.schedule_id == schedule_id
+    ).order_by(ScheduleAdjustment.created_at.desc()).all()
+    
+    return adjustments

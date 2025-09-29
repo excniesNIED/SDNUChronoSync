@@ -41,6 +41,10 @@ export interface Event {
   day_of_week?: number;     // 星期几 (1-7)
   period?: string;          // 节次 (例: "3-4节")
   weeks_input?: string;     // 原始输入的周数，如 "1,4-6"
+  // Schedule adjustment fields
+  is_override?: boolean;    // 是否为调休覆盖事件
+  is_active?: boolean;      // 是否激活（用于逻辑删除）
+  adjustment_id?: number;   // 关联调整操作ID
 }
 
 export interface LoginRequest {
@@ -189,6 +193,34 @@ export interface EventModalProps {
 export interface CalendarEvent extends Event {
   color: string;
   textColor: string;
+}
+
+// Schedule Adjustment Types
+export interface ScheduleAdjustment {
+  id: number;
+  schedule_id: number;
+  adjustment_type: 'HOLIDAY' | 'SWAP';
+  original_date: string;
+  target_date?: string;
+  created_at: string;
+}
+
+export interface HolidayAdjustmentRequest {
+  adjustment_type: 'HOLIDAY';
+  holiday_date: string;
+}
+
+export interface SwapAdjustmentRequest {
+  adjustment_type: 'SWAP';
+  source_date: string;
+  target_date: string;
+}
+
+export interface AdjustmentOperationResponse {
+  success: boolean;
+  message: string;
+  adjustment_id?: number;
+  affected_events: number;
 }
 
 // Error Types

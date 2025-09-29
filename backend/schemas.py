@@ -102,6 +102,11 @@ class EventResponse(EventBase):
     created_at: datetime
     updated_at: datetime
     
+    # Include adjustment fields
+    is_override: Optional[bool] = False
+    is_active: Optional[bool] = True
+    adjustment_id: Optional[int] = None
+    
     # Include schedule and owner information for team views
     schedule: Optional['ScheduleResponse'] = None
     owner: Optional[UserPublic] = None  # 直接包含 owner 字段
@@ -159,3 +164,32 @@ class ScheduleFilter(BaseModel):
     grade: Optional[str] = None
     full_name_contains: Optional[str] = None
     event_title_contains: Optional[str] = None
+
+# Schedule Adjustment schemas
+class ScheduleAdjustmentBase(BaseModel):
+    adjustment_type: str = Field(..., description="Type of adjustment: 'HOLIDAY' or 'SWAP'")
+    original_date: date = Field(..., description="Original date to be adjusted")
+    target_date: Optional[date] = Field(None, description="Target date for SWAP operations")
+
+class HolidayAdjustmentRequest(BaseModel):
+    adjustment_type: str = Field("HOLIDAY", description="Must be 'HOLIDAY'")
+    holiday_date: date = Field(..., description="Date to set as holiday")
+
+class SwapAdjustmentRequest(BaseModel):
+    adjustment_type: str = Field("SWAP", description="Must be 'SWAP'")
+    source_date: date = Field(..., description="Date to move events from")
+    target_date: date = Field(..., description="Date to move events to")
+
+class ScheduleAdjustmentResponse(ScheduleAdjustmentBase):
+    id: int
+    schedule_id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class AdjustmentOperationResponse(BaseModel):
+    success: bool
+    message: str
+    adjustment_id: Optional[int] = None
+    affected_events: int = 0

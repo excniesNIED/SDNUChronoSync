@@ -143,6 +143,16 @@
 
         <!-- Action buttons -->
         <div class="flex items-center gap-3">
+          <!-- Schedule Adjustment button -->
+          <button
+            v-if="scheduleStore.activeSchedule"
+            @click="openAdjustmentModal"
+            class="inline-flex items-center gap-x-2 rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"
+          >
+            <CalendarDaysIcon class="h-4 w-4" />
+            调休
+          </button>
+
           <!-- Import button -->
           <button
             @click="openImportModal"
@@ -233,6 +243,14 @@
       @close="closeScheduleEditor"
       @save="handleScheduleSave"
     />
+
+    <!-- Schedule Adjuster Modal -->
+    <ScheduleAdjuster
+      :is-visible="isAdjustmentModalOpen"
+      :schedule-id="scheduleStore.activeScheduleId || 0"
+      @close="closeAdjustmentModal"
+      @adjustment-applied="handleAdjustmentApplied"
+    />
   </div>
 </template>
 
@@ -245,6 +263,7 @@ import ScheduleCalendar from './ScheduleCalendar.vue';
 import EventModal from './EventModal.vue';
 import ScheduleImporter from './ScheduleImporter.vue';
 import ScheduleEditor from './ScheduleEditor.vue';
+import ScheduleAdjuster from './ScheduleAdjuster.vue';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -254,6 +273,7 @@ import {
   CloudArrowDownIcon,
   ExclamationTriangleIcon,
   CalendarIcon,
+  CalendarDaysIcon,
   PencilIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDate, formatDisplayDateTime, addWeeks, addMonths } from '@/utils/date';
@@ -268,6 +288,7 @@ const viewMode = ref<'week' | 'month'>('week');
 const isModalOpen = ref(false);
 const isImportModalOpen = ref(false);
 const isScheduleEditorOpen = ref(false);
+const isAdjustmentModalOpen = ref(false);
 const selectedEvent = ref<Event | null>(null);
 const selectedScheduleData = ref<ScheduleResponse | null>(null);
 
@@ -430,6 +451,23 @@ function formatScheduleInfo(schedule: ScheduleResponse): string {
   }
   
   return parts.join(' • ') || '无信息';
+}
+
+// Schedule adjustment methods
+function openAdjustmentModal() {
+  isAdjustmentModalOpen.value = true;
+}
+
+function closeAdjustmentModal() {
+  isAdjustmentModalOpen.value = false;
+}
+
+async function handleAdjustmentApplied() {
+  // 调休操作成功后，重新加载当前课表的事件数据
+  if (scheduleStore.activeScheduleId) {
+    await scheduleStore.loadScheduleEvents(scheduleStore.activeScheduleId);
+  }
+  closeAdjustmentModal();
 }
 
 // Initialize
