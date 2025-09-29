@@ -143,8 +143,9 @@ def get_filtered_events(
     start_date: datetime,
     end_date: datetime,
     user_ids: Optional[List[int]] = None,
-    class_name: Optional[str] = None,
-    grade: Optional[str] = None,
+    team_ids: Optional[List[int]] = None,
+    class_names: Optional[List[str]] = None,
+    grades: Optional[List[str]] = None,
     full_name_contains: Optional[str] = None,
     event_title_contains: Optional[str] = None
 ) -> List[Event]:
@@ -170,13 +171,32 @@ def get_filtered_events(
     if user_ids:
         query = query.filter(User.id.in_(user_ids))
     
-    # Filter by class name
-    if class_name:
-        query = query.filter(User.class_name.ilike(f"%{class_name}%"))
+    # Filter by team IDs - get users from selected teams
+    if team_ids:
+        # Get all user IDs from the selected teams
+        team_users = db.query(User).join(User.teams).filter(Team.id.in_(team_ids)).all()
+        team_user_ids = [user.id for user in team_users]
+        if team_user_ids:
+            if user_ids:
+                # If both user_ids and team_ids are provided, use intersection
+                combined_ids = list(set(user_ids) & set(team_user_ids))
+                query = query.filter(User.id.in_(combined_ids))
+            else:
+                # If only team_ids provided, use team member IDs
+                query = query.filter(User.id.in_(team_user_ids))
+        else:
+            # No users found in selected teams, return empty result
+            return []
     
-    # Filter by grade
-    if grade:
-        query = query.filter(User.grade.ilike(f"%{grade}%"))
+    # Filter by class names
+    if class_names:
+        class_conditions = [User.class_name.ilike(f"%{cn}%") for cn in class_names]
+        query = query.filter(or_(*class_conditions))
+    
+    # Filter by grades
+    if grades:
+        grade_conditions = [User.grade.ilike(f"%{g}%") for g in grades]
+        query = query.filter(or_(*grade_conditions))
     
     # Filter by full name
     if full_name_contains:

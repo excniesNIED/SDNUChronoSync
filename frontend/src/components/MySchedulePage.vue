@@ -607,7 +607,9 @@ const currentDateTitle = computed(() => {
   if (viewMode.value === 'week') {
     return `${formatDisplayDate(currentDate.value)} 周`;
   } else {
-    return `${currentDate.value.getFullYear()}年${currentDate.value.getMonth() + 1}月`;
+    const year = currentDate.value.getFullYear();
+    const month = String(currentDate.value.getMonth() + 1).padStart(2, '0');
+    return `${year}年${month}月`;
   }
 });
 

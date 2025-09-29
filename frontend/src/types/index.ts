@@ -155,6 +155,7 @@ export interface ScheduleFilter {
   start_date: string;
   end_date: string;
   user_ids?: string;
+  team_ids?: string;
   class_name?: string;
   grade?: string;
   full_name_contains?: string;
@@ -168,8 +169,9 @@ export interface FilterState {
     end: string;
   };
   selectedUserIds: number[];
-  className: string;
-  grade: string;
+  selectedTeamIds: number[];  // 新增团队筛选
+  selectedClassNames: string[];  // 改为多选班级
+  selectedGrades: string[];      // 改为多选年级
   nameKeyword: string;
   eventKeyword: string;
 }

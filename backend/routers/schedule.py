@@ -147,8 +147,9 @@ async def get_filtered_schedule(
     start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
     end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
     user_ids: Optional[str] = Query(None, description="Comma-separated user IDs"),
-    class_name: Optional[str] = Query(None, description="Class name filter"),
-    grade: Optional[str] = Query(None, description="Grade filter"),
+    team_ids: Optional[str] = Query(None, description="Comma-separated team IDs"),
+    class_name: Optional[str] = Query(None, description="Comma-separated class names"),
+    grade: Optional[str] = Query(None, description="Comma-separated grades"),
     full_name_contains: Optional[str] = Query(None, description="Full name contains filter"),
     event_title_contains: Optional[str] = Query(None, description="Event title contains filter"),
     current_user: User = Depends(get_current_user),
@@ -180,14 +181,36 @@ async def get_filtered_schedule(
                     detail="Invalid user IDs format"
                 )
         
+        # Parse team IDs if provided
+        team_id_list = None
+        if team_ids:
+            try:
+                team_id_list = [int(tid.strip()) for tid in team_ids.split(',') if tid.strip()]
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid team IDs format"
+                )
+        
+        # Parse class names if provided
+        class_name_list = None
+        if class_name:
+            class_name_list = [cn.strip() for cn in class_name.split(',') if cn.strip()]
+        
+        # Parse grades if provided
+        grade_list = None
+        if grade:
+            grade_list = [g.strip() for g in grade.split(',') if g.strip()]
+        
         # Get filtered events
         events = crud.get_filtered_events(
             db=db,
             start_date=start_dt,
             end_date=end_dt,
             user_ids=user_id_list,
-            class_name=class_name,
-            grade=grade,
+            team_ids=team_id_list,
+            class_names=class_name_list,
+            grades=grade_list,
             full_name_contains=full_name_contains,
             event_title_contains=event_title_contains
         )

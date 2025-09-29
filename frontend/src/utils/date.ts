@@ -15,11 +15,11 @@ export function formatDateChinese(date: Date | string): string {
   if (isNaN(d.getTime())) {
     return '无效日期';
   }
-  return d.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).replace(/\//g, '-'); // 将 / 替换为 -，格式为 YYYY-MM-DD
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 }
 
 export function formatDateTime(date: Date | string): string {
@@ -35,11 +35,11 @@ export function formatDisplayDate(date: Date | string): string {
   if (isNaN(d.getTime())) {
     return '无效日期';
   }
-  return d.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}年${month}月${day}日`;
 }
 
 export function formatDisplayDateShort(date: Date | string): string {
@@ -47,11 +47,11 @@ export function formatDisplayDateShort(date: Date | string): string {
   if (isNaN(d.getTime())) {
     return '无效日期';
   }
-  return d.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 }
 
 export function formatDisplayTime(date: Date | string): string {
@@ -70,13 +70,13 @@ export function formatDisplayDateTime(date: Date | string): string {
   if (isNaN(d.getTime())) {
     return '无效日期时间';
   }
-  return d.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hour = String(d.getHours()).padStart(2, '0');
+  const minute = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${year}年${month}月${day}日 ${hour}:${minute}`;
 }
 
 export function formatDisplayDateTimeShort(date: Date | string): string {
@@ -84,13 +84,13 @@ export function formatDisplayDateTimeShort(date: Date | string): string {
   if (isNaN(d.getTime())) {
     return '无效日期时间';
   }
-  return d.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hour = String(d.getHours()).padStart(2, '0');
+  const minute = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
 export function getWeekStart(date: Date): Date {

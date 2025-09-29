@@ -552,8 +552,15 @@ function handleFileUpload(event: Event) {
 
 function formatJoinDate(dateString: string): string {
   if (!dateString) return '未知';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('zh-CN');
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) {
+    return '无效日期';
+  }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 }
 
 function handleAvatarError(event: Event) {

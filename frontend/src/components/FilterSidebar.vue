@@ -110,38 +110,208 @@
       </div>
     </div>
 
+    <!-- Team Filter -->
+    <div v-if="teams && teams.length > 0">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        按团队筛选
+      </label>
+      <div class="relative">
+        <button
+          @click="teamDropdownOpen = !teamDropdownOpen"
+          class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm"
+        >
+          <span class="block truncate">
+            {{ selectedTeamsText }}
+          </span>
+          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+            <ChevronUpDownIcon class="h-5 w-5 text-gray-400" />
+          </span>
+        </button>
+
+        <transition
+          leave-active-class="transition ease-in duration-100"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="teamDropdownOpen"
+            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+          >
+            <div class="p-2">
+              <button
+                @click="selectAllTeams"
+                class="w-full text-left px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded"
+              >
+                全选团队
+              </button>
+              <button
+                @click="clearAllTeams"
+                class="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+              >
+                清空团队
+              </button>
+            </div>
+
+            <div
+              v-for="team in teams"
+              :key="team.id"
+              @click="toggleTeam(team.id)"
+              class="relative cursor-pointer select-none py-2 pl-8 pr-4 hover:bg-gray-50"
+            >
+              <span class="block truncate font-normal">
+                {{ team.name }}
+              </span>
+              <span class="block truncate text-xs text-gray-500">
+                {{ team.members?.length || 0 }} 名成员 · {{ team.team_code }}
+              </span>
+              <span
+                v-if="filterState.selectedTeamIds.includes(team.id)"
+                class="absolute inset-y-0 left-0 flex items-center pl-2 text-primary-600"
+              >
+                <CheckIcon class="h-4 w-4" />
+              </span>
+            </div>
+
+            <div v-if="teams.length === 0" class="py-4 px-4 text-sm text-gray-500 text-center">
+              没有找到团队
+            </div>
+          </div>
+        </transition>
+      </div>
+    </div>
+
     <!-- Class Filter -->
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-2">
-        班级
+        选择班级
       </label>
-      <select
-        :value="filterState.className"
-        @change="updateFilter({ className: $event.target.value })"
-        class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm"
-      >
-        <option value="">全部班级</option>
-        <option v-for="className in allClasses" :key="className" :value="className">
-          {{ className }}
-        </option>
-      </select>
+      <div class="relative">
+        <button
+          @click="classDropdownOpen = !classDropdownOpen"
+          class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm"
+        >
+          <span class="block truncate">
+            {{ selectedClassesText }}
+          </span>
+          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+            <ChevronUpDownIcon class="h-5 w-5 text-gray-400" />
+          </span>
+        </button>
+
+        <transition
+          leave-active-class="transition ease-in duration-100"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="classDropdownOpen"
+            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+          >
+            <div class="p-2">
+              <button
+                @click="selectAllClasses"
+                class="w-full text-left px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded"
+              >
+                全选班级
+              </button>
+              <button
+                @click="clearAllClasses"
+                class="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+              >
+                清空班级
+              </button>
+            </div>
+
+            <div
+              v-for="className in allClasses"
+              :key="className"
+              @click="toggleClass(className)"
+              class="relative cursor-pointer select-none py-2 pl-8 pr-4 hover:bg-gray-50"
+            >
+              <span class="block truncate font-normal">
+                {{ className }}
+              </span>
+              <span
+                v-if="filterState.selectedClassNames.includes(className)"
+                class="absolute inset-y-0 left-0 flex items-center pl-2 text-primary-600"
+              >
+                <CheckIcon class="h-4 w-4" />
+              </span>
+            </div>
+
+            <div v-if="allClasses.length === 0" class="py-4 px-4 text-sm text-gray-500 text-center">
+              没有找到班级
+            </div>
+          </div>
+        </transition>
+      </div>
     </div>
 
     <!-- Grade Filter -->
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-2">
-        年级
+        选择年级
       </label>
-      <select
-        :value="filterState.grade"
-        @change="updateFilter({ grade: $event.target.value })"
-        class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm"
-      >
-        <option value="">全部年级</option>
-        <option v-for="grade in allGrades" :key="grade" :value="grade">
-          {{ grade }}级
-        </option>
-      </select>
+      <div class="relative">
+        <button
+          @click="gradeDropdownOpen = !gradeDropdownOpen"
+          class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm"
+        >
+          <span class="block truncate">
+            {{ selectedGradesText }}
+          </span>
+          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+            <ChevronUpDownIcon class="h-5 w-5 text-gray-400" />
+          </span>
+        </button>
+
+        <transition
+          leave-active-class="transition ease-in duration-100"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="gradeDropdownOpen"
+            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+          >
+            <div class="p-2">
+              <button
+                @click="selectAllGrades"
+                class="w-full text-left px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded"
+              >
+                全选年级
+              </button>
+              <button
+                @click="clearAllGrades"
+                class="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+              >
+                清空年级
+              </button>
+            </div>
+
+            <div
+              v-for="grade in allGrades"
+              :key="grade"
+              @click="toggleGrade(grade)"
+              class="relative cursor-pointer select-none py-2 pl-8 pr-4 hover:bg-gray-50"
+            >
+              <span class="block truncate font-normal">
+                {{ grade }}级
+              </span>
+              <span
+                v-if="filterState.selectedGrades.includes(grade)"
+                class="absolute inset-y-0 left-0 flex items-center pl-2 text-primary-600"
+              >
+                <CheckIcon class="h-4 w-4" />
+              </span>
+            </div>
+
+            <div v-if="allGrades.length === 0" class="py-4 px-4 text-sm text-gray-500 text-center">
+              没有找到年级
+            </div>
+          </div>
+        </transition>
+      </div>
     </div>
 
     <!-- Name Search -->
@@ -197,10 +367,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/outline';
-import type { User, FilterState } from '@/types';
+import type { User, FilterState, Team } from '@/types';
 
 interface Props {
   users: User[];
+  teams?: Team[];  // 新增团队数据
   filterState: FilterState;
   allClasses: string[];
   allGrades: string[];
@@ -215,6 +386,9 @@ const emit = defineEmits<{
 
 const userDropdownOpen = ref(false);
 const userSearchQuery = ref('');
+const teamDropdownOpen = ref(false);
+const classDropdownOpen = ref(false);
+const gradeDropdownOpen = ref(false);
 
 const selectedUsersText = computed(() => {
   const count = props.filterState.selectedUserIds.length;
@@ -224,6 +398,34 @@ const selectedUsersText = computed(() => {
     return user?.full_name || '1个成员';
   }
   return `${count}个成员`;
+});
+
+const selectedTeamsText = computed(() => {
+  const count = props.filterState.selectedTeamIds.length;
+  if (count === 0) return '选择团队';
+  if (count === 1) {
+    const team = props.teams?.find(t => t.id === props.filterState.selectedTeamIds[0]);
+    return team?.name || '1个团队';
+  }
+  return `${count}个团队`;
+});
+
+const selectedClassesText = computed(() => {
+  const count = props.filterState.selectedClassNames.length;
+  if (count === 0) return '选择班级';
+  if (count === 1) {
+    return props.filterState.selectedClassNames[0];
+  }
+  return `${count}个班级`;
+});
+
+const selectedGradesText = computed(() => {
+  const count = props.filterState.selectedGrades.length;
+  if (count === 0) return '选择年级';
+  if (count === 1) {
+    return `${props.filterState.selectedGrades[0]}级`;
+  }
+  return `${count}个年级`;
 });
 
 const filteredUsers = computed(() => {
@@ -271,6 +473,70 @@ function clearAllUsers() {
   updateFilter({ selectedUserIds: [] });
 }
 
+function toggleTeam(teamId: number) {
+  const currentIds = [...props.filterState.selectedTeamIds];
+  const index = currentIds.indexOf(teamId);
+  
+  if (index > -1) {
+    currentIds.splice(index, 1);
+  } else {
+    currentIds.push(teamId);
+  }
+  
+  updateFilter({ selectedTeamIds: currentIds });
+}
+
+function selectAllTeams() {
+  const allTeamIds = props.teams?.map(team => team.id) || [];
+  updateFilter({ selectedTeamIds: allTeamIds });
+}
+
+function clearAllTeams() {
+  updateFilter({ selectedTeamIds: [] });
+}
+
+function toggleClass(className: string) {
+  const currentClasses = [...props.filterState.selectedClassNames];
+  const index = currentClasses.indexOf(className);
+  
+  if (index > -1) {
+    currentClasses.splice(index, 1);
+  } else {
+    currentClasses.push(className);
+  }
+  
+  updateFilter({ selectedClassNames: currentClasses });
+}
+
+function selectAllClasses() {
+  updateFilter({ selectedClassNames: [...props.allClasses] });
+}
+
+function clearAllClasses() {
+  updateFilter({ selectedClassNames: [] });
+}
+
+function toggleGrade(grade: string) {
+  const currentGrades = [...props.filterState.selectedGrades];
+  const index = currentGrades.indexOf(grade);
+  
+  if (index > -1) {
+    currentGrades.splice(index, 1);
+  } else {
+    currentGrades.push(grade);
+  }
+  
+  updateFilter({ selectedGrades: currentGrades });
+}
+
+function selectAllGrades() {
+  updateFilter({ selectedGrades: [...props.allGrades] });
+}
+
+function clearAllGrades() {
+  updateFilter({ selectedGrades: [] });
+}
+
 function clearAllFilters() {
   const today = new Date();
   const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -281,8 +547,9 @@ function clearAllFilters() {
       end: nextWeek.toISOString().split('T')[0],
     },
     selectedUserIds: [],
-    className: '',
-    grade: '',
+    selectedTeamIds: [],
+    selectedClassNames: [],
+    selectedGrades: [],
     nameKeyword: '',
     eventKeyword: '',
   });
@@ -293,6 +560,9 @@ function handleClickOutside(event: Event) {
   const target = event.target as Element;
   if (!target.closest('.relative')) {
     userDropdownOpen.value = false;
+    teamDropdownOpen.value = false;
+    classDropdownOpen.value = false;
+    gradeDropdownOpen.value = false;
   }
 }
 

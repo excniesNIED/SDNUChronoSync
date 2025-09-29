@@ -310,7 +310,15 @@ const deleteTeam = async (team: Team) => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('zh-CN');
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) {
+    return '无效日期';
+  }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 };
 
 // Lifecycle

@@ -160,8 +160,9 @@ class ScheduleFilter(BaseModel):
     start_date: str = Field(..., description="Start date in YYYY-MM-DD format")
     end_date: str = Field(..., description="End date in YYYY-MM-DD format")
     user_ids: Optional[str] = Field(None, description="Comma-separated user IDs, e.g., '1,5,12'")
-    class_name: Optional[str] = None
-    grade: Optional[str] = None
+    team_ids: Optional[str] = Field(None, description="Comma-separated team IDs, e.g., '1,3,5'")
+    class_name: Optional[str] = Field(None, description="Comma-separated class names, e.g., '计工本2301,计工本2302'")
+    grade: Optional[str] = Field(None, description="Comma-separated grades, e.g., '2023,2024'")
     full_name_contains: Optional[str] = None
     event_title_contains: Optional[str] = None
 

@@ -30,8 +30,9 @@ export const useScheduleStore = defineStore('schedule', () => {
       end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     },
     selectedUserIds: [],
-    className: '',
-    grade: '',
+    selectedTeamIds: [],
+    selectedClassNames: [],
+    selectedGrades: [],
     nameKeyword: '',
     eventKeyword: ''
   })
@@ -272,8 +273,9 @@ export const useScheduleStore = defineStore('schedule', () => {
         start_date: filterState.value.dateRange.start,
         end_date: filterState.value.dateRange.end,
         user_ids: filterState.value.selectedUserIds.length > 0 ? filterState.value.selectedUserIds.join(',') : undefined,
-        class_name: filterState.value.className || undefined,
-        grade: filterState.value.grade || undefined,
+        team_ids: filterState.value.selectedTeamIds.length > 0 ? filterState.value.selectedTeamIds.join(',') : undefined,
+        class_name: filterState.value.selectedClassNames.length > 0 ? filterState.value.selectedClassNames.join(',') : undefined,
+        grade: filterState.value.selectedGrades.length > 0 ? filterState.value.selectedGrades.join(',') : undefined,
         full_name_contains: filterState.value.nameKeyword || undefined,
         event_title_contains: filterState.value.eventKeyword || undefined
       }

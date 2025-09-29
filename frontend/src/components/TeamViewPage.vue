@@ -5,6 +5,7 @@
       <aside class="hidden w-96 overflow-y-auto border-r border-gray-200 bg-white lg:block">
         <FilterSidebar
           :users="teamMembers"
+          :teams="currentTeam ? [currentTeam] : []"
           :filter-state="scheduleStore.filterState"
           :all-classes="allClasses"
           :all-grades="allGrades"
@@ -149,9 +150,20 @@
                 </div>
               </div>
 
-              <!-- Team info -->
-              <div v-if="currentTeam" class="text-sm text-gray-600">
-                {{ currentTeam.name }} - {{ teamMembers.length }} 名成员
+              <!-- Team info and filter status -->
+              <div v-if="currentTeam" class="text-sm text-gray-600 space-y-1">
+                <div>{{ currentTeam.name }} - {{ teamMembers.length }} 名成员</div>
+                <div v-if="hasActiveFilters" class="text-xs">
+                  <span v-if="scheduleStore.filterState.selectedUserIds.length > 0">
+                    已筛选 {{ scheduleStore.filterState.selectedUserIds.length }} 个成员
+                  </span>
+                  <span v-if="scheduleStore.filterState.selectedClassNames.length > 0" class="ml-2">
+                    {{ scheduleStore.filterState.selectedClassNames.length }} 个班级
+                  </span>
+                  <span v-if="scheduleStore.filterState.selectedGrades.length > 0" class="ml-2">
+                    {{ scheduleStore.filterState.selectedGrades.length }} 个年级
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -242,6 +254,7 @@
                 </div>
                 <FilterSidebar
                   :users="teamMembers"
+                  :teams="currentTeam ? [currentTeam] : []"
                   :filter-state="scheduleStore.filterState"
                   :all-classes="allClasses"
                   :all-grades="allGrades"
@@ -324,7 +337,9 @@ const currentDateTitle = computed(() => {
   if (viewMode.value === 'week') {
     return `${formatDisplayDate(currentDate.value)} 周`;
   } else {
-    return `${currentDate.value.getFullYear()}年${currentDate.value.getMonth() + 1}月`;
+    const year = currentDate.value.getFullYear();
+    const month = String(currentDate.value.getMonth() + 1).padStart(2, '0');
+    return `${year}年${month}月`;
   }
 });
 
@@ -365,6 +380,15 @@ const allGrades = computed(() => {
     }
   });
   return Array.from(grades);
+});
+
+const hasActiveFilters = computed(() => {
+  const fs = scheduleStore.filterState;
+  return fs.selectedUserIds.length > 0 || 
+         fs.selectedClassNames.length > 0 || 
+         fs.selectedGrades.length > 0 ||
+         fs.nameKeyword.trim() !== '' ||
+         fs.eventKeyword.trim() !== '';
 });
 
 // Methods

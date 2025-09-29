@@ -5,6 +5,7 @@
       <aside class="hidden w-96 overflow-y-auto border-r border-gray-200 bg-white lg:block">
         <FilterSidebar
           :users="teamStore.userList"
+          :teams="teamStore.allTeams"
           :filter-state="scheduleStore.filterState"
           :all-classes="teamStore.allClasses"
           :all-grades="teamStore.allGrades"
@@ -87,9 +88,20 @@
               </div>
             </div>
 
-            <!-- Selected users info -->
-            <div v-if="scheduleStore.filterState.selectedUserIds.length > 0" class="mt-2 text-sm text-gray-600">
-              已选择 {{ scheduleStore.filterState.selectedUserIds.length }} 个成员
+            <!-- Selected filters info -->
+            <div v-if="hasActiveFilters" class="mt-2 text-sm text-gray-600 space-y-1">
+              <div v-if="scheduleStore.filterState.selectedUserIds.length > 0">
+                已选择 {{ scheduleStore.filterState.selectedUserIds.length }} 个成员
+              </div>
+              <div v-if="scheduleStore.filterState.selectedTeamIds.length > 0">
+                已选择 {{ scheduleStore.filterState.selectedTeamIds.length }} 个团队
+              </div>
+              <div v-if="scheduleStore.filterState.selectedClassNames.length > 0">
+                已选择 {{ scheduleStore.filterState.selectedClassNames.length }} 个班级
+              </div>
+              <div v-if="scheduleStore.filterState.selectedGrades.length > 0">
+                已选择 {{ scheduleStore.filterState.selectedGrades.length }} 个年级
+              </div>
             </div>
           </div>
 
@@ -179,6 +191,7 @@
                 </div>
                 <FilterSidebar
                   :users="teamStore.userList"
+                  :teams="teamStore.allTeams"
                   :filter-state="scheduleStore.filterState"
                   :all-classes="teamStore.allClasses"
                   :all-grades="teamStore.allGrades"
@@ -247,7 +260,9 @@ const currentDateTitle = computed(() => {
   if (viewMode.value === 'week') {
     return `${formatDisplayDate(currentDate.value)} 周`;
   } else {
-    return `${currentDate.value.getFullYear()}年${currentDate.value.getMonth() + 1}月`;
+    const year = currentDate.value.getFullYear();
+    const month = String(currentDate.value.getMonth() + 1).padStart(2, '0');
+    return `${year}年${month}月`;
   }
 });
 
@@ -260,6 +275,16 @@ const calendarEvents = computed((): CalendarEvent[] => {
       textColor: userColor.text,
     };
   });
+});
+
+const hasActiveFilters = computed(() => {
+  const fs = scheduleStore.filterState;
+  return fs.selectedUserIds.length > 0 || 
+         fs.selectedTeamIds.length > 0 || 
+         fs.selectedClassNames.length > 0 || 
+         fs.selectedGrades.length > 0 ||
+         fs.nameKeyword.trim() !== '' ||
+         fs.eventKeyword.trim() !== '';
 });
 
 // Methods
@@ -373,8 +398,9 @@ onMounted(async () => {
     return;
   }
 
-  // Load users for filtering
+  // Load users and teams for filtering
   await teamStore.fetchUsers();
+  await teamStore.fetchAllTeams();
   
   // Set initial date range and fetch events
   scheduleStore.updateDateRangeFromView();

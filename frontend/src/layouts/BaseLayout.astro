@@ -42,4 +42,25 @@ const { title, description = "多用户课表与日程管理工具" } = Astro.pr
   * {
     box-sizing: border-box;
   }
+  
+  /* 确保日期时间输入框使用中国格式 */
+  input[type="date"], input[type="datetime-local"] {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  /* 强制浏览器使用中国日期格式 */
+  :lang(zh-CN) input[type="date"]::-webkit-datetime-edit-year-field,
+  :lang(zh-CN) input[type="datetime-local"]::-webkit-datetime-edit-year-field {
+    order: 1;
+  }
+  
+  :lang(zh-CN) input[type="date"]::-webkit-datetime-edit-month-field,
+  :lang(zh-CN) input[type="datetime-local"]::-webkit-datetime-edit-month-field {
+    order: 2;
+  }
+  
+  :lang(zh-CN) input[type="date"]::-webkit-datetime-edit-day-field,
+  :lang(zh-CN) input[type="datetime-local"]::-webkit-datetime-edit-day-field {
+    order: 3;
+  }
 </style>

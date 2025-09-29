@@ -152,6 +152,7 @@ class ApiClient {
     params.append('end_date', filter.end_date);
     
     if (filter.user_ids) params.append('user_ids', filter.user_ids);
+    if (filter.team_ids) params.append('team_ids', filter.team_ids);
     if (filter.class_name) params.append('class_name', filter.class_name);
     if (filter.grade) params.append('grade', filter.grade);
     if (filter.full_name_contains) params.append('full_name_contains', filter.full_name_contains);
