@@ -411,11 +411,14 @@
               </template>
               
               <template v-else>
-                <!-- Member: 退出团队 spans 2 columns -->
+                <!-- Member: 课表查看按钮 (第二个位置，与课表按钮并排) -->
+                <div></div> <!-- 占位符，保持布局对齐 -->
+                
+                <!-- Member: 退出团队按钮 -->
                 <button
                   @click="confirmLeaveTeam(team)"
                   :disabled="leavingTeamId === team.id"
-                  class="col-span-2 inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                  class="inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
                 >
                   <svg v-if="leavingTeamId === team.id" class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
