@@ -1,187 +1,120 @@
 ---
-const title = '我的团队 - SDNUChronoSync';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+const title = '我的团队';
 const description = '管理和查看团队课表';
 ---
 
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
-    <meta name="description" content={description}>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  </head>
-  
-  <body class="bg-gray-50">
-    <div id="app" class="min-h-screen">
-      <!-- We'll use the DashboardLayout here -->
-      <div class="dashboard-layout">
-        <nav class="bg-white shadow-sm border-b border-gray-200">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <h1 class="text-xl font-semibold text-gray-900">SDNUChronoSync</h1>
-                </div>
-                <div class="hidden md:ml-6 md:flex md:space-x-8">
-                  <a href="/dashboard/my-schedule" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                    我的课表
-                  </a>
-                  <a href="/dashboard/my-teams" class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
-                    我的团队
-                  </a>
-                  <a href="/dashboard/team-view" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                    团队视图
-                  </a>
-                  <a href="/dashboard/profile" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                    个人中心
-                  </a>
-                </div>
-              </div>
-              <div class="flex items-center">
-                <button id="logout-btn" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  退出登录
-                </button>
-              </div>
-            </div>
-          </div>
-        </nav>
-
-        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div class="px-4 py-6 sm:px-0">
-            <div class="space-y-8">
-              <!-- Page Header -->
-              <div>
-                <h1 class="text-3xl font-bold text-gray-900">我的团队</h1>
-                <p class="mt-2 text-sm text-gray-600">创建团队、加入团队或管理现有团队</p>
-              </div>
-
-              <!-- Team Management Section -->
-              <div class="grid gap-8 lg:grid-cols-2">
-                <!-- Create Team -->
-                <div id="create-team-section"></div>
-                
-                <!-- Join Team -->
-                <div id="join-team-section"></div>
-              </div>
-
-              <!-- Team List -->
-              <div id="team-list-section"></div>
-            </div>
-          </div>
-        </main>
-      </div>
+<DashboardLayout title={title} description={description}>
+  <div class="space-y-8">
+    <!-- Page Header -->
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">我的团队</h1>
+      <p class="mt-2 text-sm text-gray-600">创建团队、加入团队或管理现有团队</p>
     </div>
 
-    <script>
-      import { createApp } from 'vue';
-      import { createPinia } from 'pinia';
-      import CreateTeam from '@/components/CreateTeam.vue';
-      import JoinTeam from '@/components/JoinTeam.vue';
-      import TeamList from '@/components/TeamList.vue';
-      import { useAuthStore } from '@/stores/auth';
-      import { apiClient } from '@/utils/api';
-
-      // Create the Vue app
-      const pinia = createPinia();
-      const app = createApp({});
-      app.use(pinia);
-
-      // Initialize auth store
-      const authStore = useAuthStore();
+    <!-- Team Management Section -->
+    <div class="grid gap-8 lg:grid-cols-2">
+      <!-- Create Team -->
+      <div id="create-team-section"></div>
       
-      // Simple auth check - redirect if no token
-      if (!apiClient.isAuthenticated()) {
-        window.location.href = '/login';
-      }
+      <!-- Join Team -->
+      <div id="join-team-section"></div>
+    </div>
 
-      // Create team component
-      app.component('create-team', CreateTeam);
-      const createTeamApp = createApp({
-        components: { CreateTeam },
-        setup() {
-          const refreshTrigger = Vue.ref(0);
-          
-          const handleTeamCreated = () => {
-            refreshTrigger.value++;
-          };
-          
-          return {
-            refreshTrigger,
-            handleTeamCreated
-          };
-        },
-        template: `
-          <CreateTeam @team-created="handleTeamCreated" />
-        `
-      });
-      createTeamApp.use(pinia);
-      createTeamApp.mount('#create-team-section');
+    <!-- Team List -->
+    <div id="team-list-section"></div>
+  </div>
 
-      // Join team component
-      const joinTeamApp = createApp({
-        components: { JoinTeam },
-        setup() {
-          const refreshTrigger = Vue.ref(0);
-          
-          const handleTeamJoined = () => {
-            refreshTrigger.value++;
-          };
-          
-          return {
-            refreshTrigger,
-            handleTeamJoined
-          };
-        },
-        template: `
-          <JoinTeam @team-joined="handleTeamJoined" />
-        `
-      });
-      joinTeamApp.use(pinia);
-      joinTeamApp.mount('#join-team-section');
+  <script>
+    import { createApp, ref } from 'vue';
+    import { createPinia } from 'pinia';
+    import CreateTeam from '@/components/CreateTeam.vue';
+    import JoinTeam from '@/components/JoinTeam.vue';
+    import TeamList from '@/components/TeamList.vue';
 
-      // Team list component
-      const teamListApp = createApp({
-        components: { TeamList },
-        setup() {
-          const refreshTrigger = Vue.ref(0);
-          
-          const handleViewTeam = (teamId) => {
-            window.location.href = `/dashboard/team-view/${teamId}`;
-          };
-          
-          const handleTeamLeft = () => {
-            refreshTrigger.value++;
-          };
-          
-          return {
-            refreshTrigger,
-            handleViewTeam,
-            handleTeamLeft
-          };
-        },
-        template: `
-          <TeamList 
-            :refresh-trigger="refreshTrigger"
-            @view-team="handleViewTeam"
-            @team-left="handleTeamLeft"
-          />
-        `
-      });
-      teamListApp.use(pinia);
-      teamListApp.mount('#team-list-section');
+    // Create the Vue app with Pinia
+    const pinia = createPinia();
+    
+    // Shared refresh trigger
+    let refreshTrigger = 0;
+    
+    const refreshAllTeams = () => {
+      refreshTrigger++;
+      // Trigger refresh for team list
+      window.dispatchEvent(new CustomEvent('refreshTeams'));
+    };
 
-      // Logout functionality
-      document.getElementById('logout-btn').addEventListener('click', async () => {
-        await authStore.logout();
-        window.location.href = '/login';
-      });
+    // Create team component
+    const createTeamApp = createApp({
+      components: { CreateTeam },
+      setup() {
+        const handleTeamCreated = (team) => {
+          console.log('Team created:', team);
+          refreshAllTeams();
+        };
+        
+        return {
+          handleTeamCreated
+        };
+      },
+      template: `<CreateTeam @team-created="handleTeamCreated" />`
+    });
+    createTeamApp.use(pinia);
+    createTeamApp.mount('#create-team-section');
 
-      // Update refresh triggers when teams are created/joined
-      window.addEventListener('teamUpdate', () => {
-        // Trigger refresh for all components
-        document.dispatchEvent(new CustomEvent('refreshTeams'));
-      });
-    </script>
-  </body>
-</html>
+    // Join team component
+    const joinTeamApp = createApp({
+      components: { JoinTeam },
+      setup() {
+        const handleTeamJoined = (team) => {
+          console.log('Team joined:', team);
+          refreshAllTeams();
+        };
+        
+        return {
+          handleTeamJoined
+        };
+      },
+      template: `<JoinTeam @team-joined="handleTeamJoined" />`
+    });
+    joinTeamApp.use(pinia);
+    joinTeamApp.mount('#join-team-section');
+
+    // Team list component
+    const teamListApp = createApp({
+      components: { TeamList },
+      setup() {
+        const currentRefreshTrigger = ref(refreshTrigger);
+        
+        const handleViewTeam = (teamId) => {
+          window.location.href = `/dashboard/team-view/${teamId}`;
+        };
+        
+        const handleTeamLeft = (teamId) => {
+          console.log('Team left:', teamId);
+          refreshAllTeams();
+        };
+        
+        // Listen for refresh events
+        window.addEventListener('refreshTeams', () => {
+          currentRefreshTrigger.value = refreshTrigger;
+        });
+        
+        return {
+          refreshTrigger: currentRefreshTrigger,
+          handleViewTeam,
+          handleTeamLeft
+        };
+      },
+      template: `
+        <TeamList 
+          :refresh-trigger="refreshTrigger"
+          @view-team="handleViewTeam"
+          @team-left="handleTeamLeft"
+        />
+      `
+    });
+    teamListApp.use(pinia);
+    teamListApp.mount('#team-list-section');
+  </script>
+</DashboardLayout>

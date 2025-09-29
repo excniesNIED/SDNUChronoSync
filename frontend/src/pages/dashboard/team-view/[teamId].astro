@@ -1,52 +1,10 @@
 ---
-const title = `团队课表视图 - SDNUChronoSync`;
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+const title = `团队课表视图`;
 const description = '查看团队成员的聚合课表';
 ---
 
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
-    <meta name="description" content={description}>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  </head>
-  
-  <body class="bg-gray-50">
-    <div id="app" class="min-h-screen">
-      <nav class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between h-16">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <h1 class="text-xl font-semibold text-gray-900">SDNUChronoSync</h1>
-              </div>
-              <div class="hidden md:ml-6 md:flex md:space-x-8">
-                <a href="/dashboard/my-schedule" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  我的课表
-                </a>
-                <a href="/dashboard/my-teams" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  我的团队
-                </a>
-                <a href="/dashboard/team-view" class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
-                  团队视图
-                </a>
-                <a href="/dashboard/profile" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  个人中心
-                </a>
-              </div>
-            </div>
-            <div class="flex items-center">
-              <button id="logout-btn" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                退出登录
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
+<DashboardLayout title={title} description={description}>
           <!-- Loading State -->
           <div id="loading-state" class="text-center py-12">
             <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -154,112 +112,108 @@ const description = '查看团队成员的聚合课表';
               </div>
             </div>
           </div>
-        </div>
-      </main>
+  <!-- Copy Success Toast -->
+  <div
+    id="copy-success-toast"
+    class="hidden fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50"
+  >
+    团队代码已复制到剪贴板
+  </div>
 
-      <!-- Copy Success Toast -->
-      <div
-        id="copy-success-toast"
-        class="hidden fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50"
-      >
-        团队代码已复制到剪贴板
-      </div>
-    </div>
+  <script>
+    import { createApp } from 'vue';
+    import { createPinia } from 'pinia';
+    import ScheduleCalendar from '@/components/ScheduleCalendar.vue';
+    import { useAuthStore } from '@/stores/auth';
+    import { useTeamStore } from '@/stores/team';
+    import { generateEventColor } from '@/utils/colors';
 
-    <script>
-      import { createApp } from 'vue';
-      import { createPinia } from 'pinia';
-      import ScheduleCalendar from '@/components/ScheduleCalendar.vue';
-      import { useAuthStore } from '@/stores/auth';
-      import { useTeamStore } from '@/stores/team';
-      import { generateEventColor } from '@/utils/colors';
-      import { apiClient } from '@/utils/api';
+    // Get team ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const teamId = parseInt(pathParts[pathParts.length - 1]);
 
-      // Get team ID from URL
-      const pathParts = window.location.pathname.split('/');
-      const teamId = parseInt(pathParts[pathParts.length - 1]);
+    if (isNaN(teamId)) {
+      window.location.href = '/dashboard/my-teams';
+    }
 
-      if (isNaN(teamId)) {
-        window.location.href = '/dashboard/my-teams';
-        return;
-      }
+    // Create Vue app
+    const pinia = createPinia();
+    const app = createApp({});
+    app.use(pinia);
 
-      // Create Vue app
-      const pinia = createPinia();
-      const app = createApp({});
-      app.use(pinia);
+    // Initialize stores
+    const authStore = useAuthStore();
+    const teamStore = useTeamStore();
 
-      // Initialize stores
-      const authStore = useAuthStore();
-      const teamStore = useTeamStore();
-      
-      // DOM elements
-      const loadingState = document.getElementById('loading-state');
-      const errorState = document.getElementById('error-state');
-      const mainContent = document.getElementById('main-content');
-      const errorMessage = document.getElementById('error-message');
-      const backToTeamsBtn = document.getElementById('back-to-teams');
-      const refreshBtn = document.getElementById('refresh-btn');
-      const logoutBtn = document.getElementById('logout-btn');
-      const copyTeamCodeBtn = document.getElementById('copy-team-code');
-      const copyToast = document.getElementById('copy-success-toast');
+    // DOM elements
+    const loadingState = document.getElementById('loading-state');
+    const errorState = document.getElementById('error-state');
+    const mainContent = document.getElementById('main-content');
+    const errorMessage = document.getElementById('error-message');
+    const backToTeamsBtn = document.getElementById('back-to-teams');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const copyTeamCodeBtn = document.getElementById('copy-team-code');
+    const copyToast = document.getElementById('copy-success-toast');
 
-      // State
-      let currentTeam = null;
-      let teamEvents = [];
+    // State
+    let currentTeam = null;
+    let teamEvents = [];
 
-      // Simple auth check
-      if (!apiClient.isAuthenticated()) {
-        window.location.href = '/login';
-      }
+    // Load data
+    async function loadData() {
+      try {
+        // Show loading state
+        if (loadingState) loadingState.style.display = 'block';
+        if (errorState) errorState.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'none';
 
-      // Load data
-      async function loadData() {
-        try {
-          // Show loading state
-          loadingState.style.display = 'block';
-          errorState.style.display = 'none';
-          mainContent.style.display = 'none';
+        // Load team data
+        currentTeam = await teamStore.fetchTeam(teamId);
+        teamEvents = await teamStore.fetchTeamSchedules(teamId);
 
-          // Load team data
-          currentTeam = await teamStore.fetchTeam(teamId);
-          teamEvents = await teamStore.fetchTeamSchedules(teamId);
+        // Update UI
+        updateTeamInfo(currentTeam);
+        renderCalendar();
 
-          // Update UI
-          updateTeamInfo(currentTeam);
-          renderCalendar();
+        // Show main content
+        if (loadingState) loadingState.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'block';
 
-          // Show main content
-          loadingState.style.display = 'none';
-          mainContent.style.display = 'block';
-
-        } catch (error) {
-          console.error('Failed to load team data:', error);
-          
-          // Show error state
-          loadingState.style.display = 'none';
-          errorState.style.display = 'block';
-          
-          if (error.response?.status === 403) {
-            errorMessage.textContent = '您没有权限查看此团队的课表';
-          } else if (error.response?.status === 404) {
-            errorMessage.textContent = '团队不存在或已被删除';
-          } else {
-            errorMessage.textContent = error.message || '加载团队数据失败';
-          }
+      } catch (error) {
+        console.error('Failed to load team data:', error);
+        
+        // Show error state
+        if (loadingState) loadingState.style.display = 'none';
+        if (errorState) errorState.style.display = 'block';
+        
+        if (error.response?.status === 403) {
+          if (errorMessage) errorMessage.textContent = '您没有权限查看此团队的课表';
+        } else if (error.response?.status === 404) {
+          if (errorMessage) errorMessage.textContent = '团队不存在或已被删除';
+        } else {
+          if (errorMessage) errorMessage.textContent = error.message || '加载团队数据失败';
         }
       }
+    }
 
-      function updateTeamInfo(team) {
-        document.getElementById('team-name-breadcrumb').textContent = team.name;
-        document.getElementById('team-name-title').textContent = team.name;
-        document.getElementById('team-description').textContent = `查看"${team.name}"团队成员的所有课表`;
-        document.getElementById('team-info-name').textContent = team.name;
-        document.getElementById('team-code').textContent = team.team_code;
-        document.getElementById('member-count').textContent = team.members?.length || 0;
+    function updateTeamInfo(team) {
+      const elements = {
+        'team-name-breadcrumb': team.name,
+        'team-name-title': team.name,
+        'team-description': `查看"${team.name}"团队成员的所有课表`,
+        'team-info-name': team.name,
+        'team-code': team.team_code,
+        'member-count': team.members?.length || 0
+      };
 
-        // Render team members
-        const membersContainer = document.getElementById('team-members');
+      Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+      });
+
+      // Render team members
+      const membersContainer = document.getElementById('team-members');
+      if (membersContainer) {
         membersContainer.innerHTML = '';
         
         if (team.members && team.members.length > 0) {
@@ -282,16 +236,19 @@ const description = '查看团队成员的聚合课表';
           });
         }
       }
+    }
 
-      function renderCalendar() {
-        // Process events for calendar
-        const calendarEvents = teamEvents.map(event => ({
-          ...event,
-          color: generateEventColor(event.owner?.full_name || 'Unknown'),
-          textColor: '#ffffff'
-        }));
+    function renderCalendar() {
+      // Process events for calendar
+      const calendarEvents = teamEvents.map(event => ({
+        ...event,
+        color: generateEventColor(event.owner?.full_name || 'Unknown'),
+        textColor: '#ffffff'
+      }));
 
-        // Create calendar app
+      // Create calendar app
+      const calendarContainer = document.getElementById('schedule-calendar');
+      if (calendarContainer) {
         const calendarApp = createApp({
           components: { ScheduleCalendar },
           setup() {
@@ -319,35 +276,40 @@ const description = '查看团队成员的聚合课表';
         calendarApp.use(pinia);
         calendarApp.mount('#schedule-calendar');
       }
+    }
 
-      // Event handlers
+    // Event handlers
+    if (refreshBtn) {
       refreshBtn.addEventListener('click', loadData);
-      
+    }
+    
+    if (backToTeamsBtn) {
       backToTeamsBtn.addEventListener('click', () => {
         window.location.href = '/dashboard/my-teams';
       });
+    }
 
-      logoutBtn.addEventListener('click', async () => {
-        await authStore.logout();
-        window.location.href = '/login';
-      });
-
+    if (copyTeamCodeBtn) {
       copyTeamCodeBtn.addEventListener('click', async () => {
         if (currentTeam) {
           try {
             await navigator.clipboard.writeText(currentTeam.team_code);
-            copyToast.style.display = 'block';
-            setTimeout(() => {
-              copyToast.style.display = 'none';
-            }, 2000);
+            if (copyToast) {
+              copyToast.style.display = 'block';
+              setTimeout(() => {
+                copyToast.style.display = 'none';
+              }, 2000);
+            }
           } catch (err) {
             console.error('Failed to copy team code:', err);
           }
         }
       });
+    }
 
-      // Initialize
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
       loadData();
-    </script>
-  </body>
-</html>
+    });
+  </script>
+</DashboardLayout>

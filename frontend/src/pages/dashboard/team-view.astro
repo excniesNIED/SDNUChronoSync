@@ -1,58 +1,16 @@
 ---
-const title = '团队视图 - SDNUChronoSync';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+const title = '团队视图';
 const description = '选择要查看的团队课表';
 ---
 
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
-    <meta name="description" content={description}>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  </head>
-  
-  <body class="bg-gray-50">
-    <div id="app" class="min-h-screen">
-      <nav class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between h-16">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <h1 class="text-xl font-semibold text-gray-900">SDNUChronoSync</h1>
-              </div>
-              <div class="hidden md:ml-6 md:flex md:space-x-8">
-                <a href="/dashboard/my-schedule" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  我的课表
-                </a>
-                <a href="/dashboard/my-teams" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  我的团队
-                </a>
-                <a href="/dashboard/team-view" class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
-                  团队视图
-                </a>
-                <a href="/dashboard/profile" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  个人中心
-                </a>
-              </div>
-            </div>
-            <div class="flex items-center">
-              <button id="logout-btn" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                退出登录
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-          <div class="space-y-8">
-            <!-- Page Header -->
-            <div>
-              <h1 class="text-3xl font-bold text-gray-900">团队视图</h1>
-              <p class="mt-2 text-sm text-gray-600">选择一个团队查看其成员的聚合课表</p>
-            </div>
+<DashboardLayout title={title} description={description}>
+  <div class="space-y-8">
+    <!-- Page Header -->
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">团队视图</h1>
+      <p class="mt-2 text-sm text-gray-600">选择一个团队查看其成员的聚合课表</p>
+    </div>
 
             <!-- Loading State -->
             <div id="loading-state" class="text-center py-12">
@@ -85,137 +43,124 @@ const description = '选择要查看的团队课表';
               <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3" id="teams-container">
                 <!-- Teams will be dynamically inserted here -->
               </div>
-            </div>
-          </div>
-        </div>
-      </main>
     </div>
+  </div>
 
-    <script>
-      import { createApp } from 'vue';
-      import { createPinia } from 'pinia';
-      import { useAuthStore } from '@/stores/auth';
-      import { useTeamStore } from '@/stores/team';
-      import { apiClient } from '@/utils/api';
+  <script>
+    import { createApp } from 'vue';
+    import { createPinia } from 'pinia';
+    import { useAuthStore } from '@/stores/auth';
+    import { useTeamStore } from '@/stores/team';
 
-      // Create Vue app
-      const pinia = createPinia();
-      const app = createApp({});
-      app.use(pinia);
+    // Create Vue app
+    const pinia = createPinia();
+    const app = createApp({});
+    app.use(pinia);
 
-      // Initialize stores
-      const authStore = useAuthStore();
-      const teamStore = useTeamStore();
+    // Initialize stores
+    const authStore = useAuthStore();
+    const teamStore = useTeamStore();
 
-      // DOM elements
-      const loadingState = document.getElementById('loading-state');
-      const emptyState = document.getElementById('empty-state');
-      const teamsGrid = document.getElementById('teams-grid');
-      const teamsContainer = document.getElementById('teams-container');
-      const logoutBtn = document.getElementById('logout-btn');
+    // DOM elements
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    const teamsGrid = document.getElementById('teams-grid');
+    const teamsContainer = document.getElementById('teams-container');
 
-      // Simple auth check
-      if (!apiClient.isAuthenticated()) {
-        window.location.href = '/login';
-      }
+    // Load teams
+    async function loadTeams() {
+      try {
+        // Show loading state
+        if (loadingState) loadingState.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+        if (teamsGrid) teamsGrid.style.display = 'none';
 
-      // Load teams
-      async function loadTeams() {
-        try {
-          // Show loading state
-          loadingState.style.display = 'block';
-          emptyState.style.display = 'none';
-          teamsGrid.style.display = 'none';
+        // Fetch user's teams
+        await teamStore.fetchMyTeams();
+        const teams = teamStore.teams;
 
-          // Fetch user's teams
-          await teamStore.fetchMyTeams();
-          const teams = teamStore.teams;
+        // Hide loading
+        if (loadingState) loadingState.style.display = 'none';
 
-          // Hide loading
-          loadingState.style.display = 'none';
+        if (teams.length === 0) {
+          if (emptyState) emptyState.style.display = 'block';
+        } else {
+          renderTeams(teams);
+          if (teamsGrid) teamsGrid.style.display = 'block';
+        }
 
-          if (teams.length === 0) {
-            emptyState.style.display = 'block';
-          } else {
-            renderTeams(teams);
-            teamsGrid.style.display = 'block';
-          }
-
-        } catch (error) {
-          console.error('Failed to load teams:', error);
-          loadingState.style.display = 'none';
-          
-          if (error.response?.status === 401) {
-            window.location.href = '/login';
-          } else {
-            emptyState.style.display = 'block';
-          }
+      } catch (error) {
+        console.error('Failed to load teams:', error);
+        if (loadingState) loadingState.style.display = 'none';
+        
+        if (error.response?.status === 401) {
+          window.location.href = '/login';
+        } else {
+          if (emptyState) emptyState.style.display = 'block';
         }
       }
+    }
 
-      function renderTeams(teams) {
-        teamsContainer.innerHTML = '';
+    function renderTeams(teams) {
+      if (!teamsContainer) return;
+      
+      teamsContainer.innerHTML = '';
+      
+      teams.forEach(team => {
+        const teamCard = document.createElement('div');
+        teamCard.className = 'bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer';
         
-        teams.forEach(team => {
-          const teamCard = document.createElement('div');
-          teamCard.className = 'bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer';
-          
-          teamCard.innerHTML = `
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <h3 class="text-lg font-medium text-gray-900">${team.name}</h3>
-                  <p class="text-sm text-gray-500">${team.members?.length || 0} 名成员</p>
-                </div>
-                <div class="flex-shrink-0">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    team.creator_id === authStore.user?.id 
-                      ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }">
-                    ${team.creator_id === authStore.user?.id ? '创建者' : '成员'}
-                  </span>
-                </div>
+        teamCard.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-lg font-medium text-gray-900">${team.name}</h3>
+                <p class="text-sm text-gray-500">${team.members?.length || 0} 名成员</p>
               </div>
-
-              <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                <p class="text-xs text-gray-500 mb-1">团队代码</p>
-                <p class="text-sm font-mono font-semibold text-gray-900 tracking-wider">
-                  ${team.team_code}
-                </p>
-              </div>
-
-              <div class="flex justify-center">
-                <button
-                  onclick="viewTeam(${team.id})"
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                >
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a4 4 0 118 0v4m-4 1v0a8 8 0 00-7.864 9.746l.349 2.083A2 2 0 006.464 17h11.072a2 2 0 001.979-1.669l.349-2.083A8 8 0 0012 8v0z" />
-                  </svg>
-                  查看团队课表
-                </button>
+              <div class="flex-shrink-0">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  team.creator_id === authStore.user?.id 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }">
+                  ${team.creator_id === authStore.user?.id ? '创建者' : '成员'}
+                </span>
               </div>
             </div>
-          `;
 
-          teamsContainer.appendChild(teamCard);
-        });
-      }
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-xs text-gray-500 mb-1">团队代码</p>
+              <p class="text-sm font-mono font-semibold text-gray-900 tracking-wider">
+                ${team.team_code}
+              </p>
+            </div>
 
-      // Global function to view team
-      window.viewTeam = function(teamId) {
-        window.location.href = `/dashboard/team-view/${teamId}`;
-      };
+            <div class="flex justify-center">
+              <button
+                onclick="viewTeam(${team.id})"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a4 4 0 118 0v4m-4 1v0a8 8 0 00-7.864 9.746l.349 2.083A2 2 0 006.464 17h11.072a2 2 0 001.979-1.669l.349-2.083A8 8 0 0012 8v0z" />
+                </svg>
+                查看团队课表
+              </button>
+            </div>
+          </div>
+        `;
 
-      // Event handlers
-      logoutBtn.addEventListener('click', async () => {
-        await authStore.logout();
-        window.location.href = '/login';
+        teamsContainer.appendChild(teamCard);
       });
+    }
 
-      // Initialize
+    // Global function to view team
+    window.viewTeam = function(teamId) {
+      window.location.href = `/dashboard/team-view/${teamId}`;
+    };
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
       loadTeams();
-    </script>
-  </body>
-</html>
+    });
+  </script>
+</DashboardLayout>
