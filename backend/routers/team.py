@@ -243,12 +243,6 @@ async def get_my_teams(
 ):
     """Get all teams the current user belongs to."""
     teams = crud.get_user_teams(db, current_user.id)
-    
-    # 临时调试信息
-    print(f"用户 {current_user.id} ({current_user.full_name}) 的团队:")
-    for team in teams:
-        print(f"  团队: {team.name}, 创建者ID: {team.creator_id}, 是否为创建者: {team.creator_id == current_user.id}")
-    
     return teams
 
 @router.post("/me/teams/join", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)

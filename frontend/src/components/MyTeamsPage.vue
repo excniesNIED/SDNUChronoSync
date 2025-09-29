@@ -332,104 +332,49 @@
               </div>
             </div>
 
-            <!-- 2x2 Button Layout -->
-            <div class="grid grid-cols-2 gap-2">
-              <!-- First Row: 课表 + 管理 -->
+            <!-- Button Layout: 2 rows, 1 column -->
+            <div class="space-y-2">
+              <!-- First Row: 查看课表 -->
               <button
                 @click="viewTeam(team.id)"
-                class="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a4 4 0 118 0v4m-4 1v0a8 8 0 00-7.864 9.746l.349 2.083A2 2 0 006.464 17h11.072a2 2 0 001.979-1.669l.349-2.083A8 8 0 0012 8v0z" />
                 </svg>
-                课表
+                查看课表
               </button>
               
-              <!-- 管理按钮：创建者显示高级管理，管理员显示基础管理 -->
+              <!-- Second Row: 根据用户角色显示不同按钮 -->
+              <!-- 创建者：管理团队 -->
               <button
                 v-if="isCreator(team)"
                 @click="openCreatorManagement"
-                class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                title="高级团队管理"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.5 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                管理
-              </button>
-              
-              <!-- 管理员显示基础管理 -->
-              <button
-                v-else-if="user?.role === 'admin'"
-                @click="openManageModal(team)"
-                class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                title="基础团队管理"
-              >
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                管理
+                管理团队
               </button>
               
-              <!-- 非创建者和非管理员：占位符保持布局 -->
-              <div
+              <!-- 非创建者：退出团队 -->
+              <button
                 v-else
-                class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-400"
+                @click="confirmLeaveTeam(team)"
+                :disabled="leavingTeamId === team.id"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
               >
-                <!-- 占位，保持布局一致 -->
-              </div>
-
-              <!-- Second Row: Creator options vs Member options -->
-              <template v-if="isCreator(team)">
-                <!-- Creator: 解散 + 转让 -->
-                <button
-                  @click="confirmDissolveTeam(team)"
-                  :disabled="deletingTeamId === team.id"
-                  class="inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-                >
-                  <svg v-if="deletingTeamId === team.id" class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  解散
-                </button>
-                
-                <button
-                  @click="openTransferModal(team)"
-                  class="inline-flex items-center justify-center px-3 py-2 border border-orange-300 shadow-sm text-sm font-medium rounded-md text-orange-700 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-                >
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                  转让
-                </button>
-              </template>
-              
-              <template v-else>
-                <!-- Member: 课表查看按钮 (第二个位置，与课表按钮并排) -->
-                <div></div> <!-- 占位符，保持布局对齐 -->
-                
-                <!-- Member: 退出团队按钮 -->
-                <button
-                  @click="confirmLeaveTeam(team)"
-                  :disabled="leavingTeamId === team.id"
-                  class="inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-                >
-                  <svg v-if="leavingTeamId === team.id" class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  退出团队
-                </button>
-              </template>
+                <svg v-if="leavingTeamId === team.id" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                退出团队
+              </button>
             </div>
           </div>
         </div>
@@ -480,7 +425,6 @@ const newTeamName = ref('');
 const teamCode = ref('');
 const creating = ref(false);
 const joining = ref(false);
-const deletingTeamId = ref<number | null>(null);
 const leavingTeamId = ref<number | null>(null);
 const showCopySuccess = ref(false);
 const showManageModal = ref(false);
@@ -508,14 +452,7 @@ const isValidTeamCode = computed(() => {
 
 // Methods
 const isCreator = (team: Team): boolean => {
-  const result = user.value?.id === team.creator_id;
-  // 临时调试信息
-  console.log(`团队 "${team.name}" 创建者检查:`, {
-    userId: user.value?.id,
-    creatorId: team.creator_id,
-    isCreator: result
-  });
-  return result;
+  return user.value?.id === team.creator_id;
 };
 
 const canManage = (team: Team): boolean => {
@@ -613,35 +550,7 @@ const handleCreatorManagementUpdated = () => {
   showSuccess('团队管理操作完成！');
 };
 
-const confirmDissolveTeam = (team: Team) => {
-  const confirmed = confirm(
-    `确定要解散团队"${team.name}"吗？这将会删除团队的所有信息，此操作不可撤销！`
-  );
-  if (confirmed) {
-    deleteTeam(team);
-  }
-};
-
-const openTransferModal = (team: Team) => {
-  // TODO: 实现转让功能
-  alert(`转让功能即将开放，敬请期待！团队：${team.name}`);
-};
-
-// Debug methods removed for production
-
-const deleteTeam = async (team: Team) => {
-  try {
-    deletingTeamId.value = team.id;
-    await teamStore.deleteTeam(team.id);
-    showSuccess(`团队"${team.name}"已删除`);
-    await refreshTeams();
-  } catch (error: any) {
-    console.error('Failed to delete team:', error);
-    showError(error.response?.data?.detail || '删除团队失败，请重试');
-  } finally {
-    deletingTeamId.value = null;
-  }
-};
+// 解散和转让功能已移至CreatorTeamManagement弹窗中
 
 const confirmLeaveTeam = (team: Team) => {
   const confirmed = confirm(`确定要退出团队"${team.name}"吗？`);
@@ -694,9 +603,7 @@ onMounted(async () => {
       return;
     }
     
-    console.log('当前用户信息:', authStore.user);
     await refreshTeams();
-    console.log('团队列表:', teamStore.teams);
   } catch (error) {
     console.error('初始化失败:', error);
   }
