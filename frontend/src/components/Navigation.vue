@@ -104,7 +104,7 @@
   <!-- Mobile menu -->
   <div class="lg:hidden">
     <!-- Mobile menu button -->
-    <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6">
+    <div class="fixed top-0 left-0 right-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6">
       <button
         @click="mobileMenuOpen = true"
         type="button"
