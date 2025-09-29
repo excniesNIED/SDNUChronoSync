@@ -340,10 +340,12 @@ class AlistUploader(UploaderBase):
                                     meta = get_resp.json()
                                     if meta.get("code") == 200:
                                         data = meta.get("data") or {}
-                                        raw_url = data.get("raw_url") or data.get("url")
-                                        if raw_url:
-                                            print(f"✅ Returning raw URL from AList: {raw_url}")
-                                            return raw_url
+                                        # Use the server's actual stored name if present
+                                        actual_name = data.get("name") or filename
+                                        base_url = (self.access_domain or self.url).rstrip('/')
+                                        access_url_actual = f"{base_url}/d/{self.upload_path.strip('/')}/{actual_name}"
+                                        print(f"✅ Returning domain URL: {access_url_actual}")
+                                        return access_url_actual
                             except Exception as e:
                                 print(f"⚠️ Fetching raw URL failed: {e}")
 
