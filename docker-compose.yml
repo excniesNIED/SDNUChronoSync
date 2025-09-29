@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  sdnu-chronosync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sdnu-chronosync
+    ports:
+      - "1145:1145"
+    volumes:
+      # 数据库持久化
+      - ./data/database:/app/schedule_app.db
+      # 用户上传文件持久化
+      - ./data/uploads:/app/uploads
+      # 配置文件持久化
+      - ./data/config:/app/config.toml
+      # 日志持久化
+      - ./data/logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1145/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  # 定义命名卷用于数据持久化
+  database_data:
+  uploads_data:
+  config_data:
+  logs_data:
+
+networks:
+  default:
+    name: sdnu-chronosync-network
