@@ -177,16 +177,11 @@
                     转让
                   </button>
                   <button
-                    @click="confirmDeleteTeam(team)"
-                    :disabled="deletingTeamId === team.id"
-                    class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                    @click="openDissolveModal(team)"
+                    class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     title="解散团队"
                   >
-                    <svg v-if="deletingTeamId === team.id" class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     解散
@@ -237,6 +232,14 @@
       @close="closeTransferModal"
       @transferred="handleTeamTransferred"
     />
+
+    <!-- Dissolve Modal -->
+    <DissolveTeamModal
+      v-if="showDissolveModal && selectedTeam"
+      :team="selectedTeam"
+      @close="closeDissolveModal"
+      @dissolved="handleTeamDissolved"
+    />
   </div>
 </template>
 
@@ -246,6 +249,7 @@ import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
 import TeamEditorModal from './TeamEditorModal.vue';
 import TransferTeamModal from './TransferTeamModal.vue';
+import DissolveTeamModal from './DissolveTeamModal.vue';
 import type { Team, User } from '@/types';
 
 // Props
@@ -263,8 +267,9 @@ const authStore = useAuthStore();
 const searchQuery = ref('');
 const showManageModal = ref(false);
 const showTransferModal = ref(false);
+const showDissolveModal = ref(false);
 const selectedTeam = ref<Team | null>(null);
-const deletingTeamId = ref<number | null>(null);
+// deletingTeamId 已移除，解散功能在模态框中处理
 const successMessage = ref('');
 const errorMessage = ref('');
 
@@ -359,30 +364,24 @@ const handleTeamTransferred = async () => {
   showSuccess('团队转让成功');
 };
 
-const confirmDeleteTeam = (team: Team) => {
-  const confirmed = confirm(
-    `确定要解散团队"${team.name}"吗？这将会删除团队的所有信息，此操作不可撤销！`
-  );
-  if (confirmed) {
-    deleteTeam(team);
-  }
+const openDissolveModal = (team: Team) => {
+  selectedTeam.value = team;
+  showDissolveModal.value = true;
 };
 
-const deleteTeam = async (team: Team) => {
-  try {
-    deletingTeamId.value = team.id;
-    clearMessages();
-    await teamStore.deleteTeam(team.id);
-    await refreshTeams();
-    emit('updated');
-    showSuccess(`团队"${team.name}"已解散`);
-  } catch (error: any) {
-    console.error('Failed to delete team:', error);
-    showError(error.response?.data?.detail || '解散团队失败，请重试');
-  } finally {
-    deletingTeamId.value = null;
-  }
+const closeDissolveModal = () => {
+  showDissolveModal.value = false;
+  selectedTeam.value = null;
 };
+
+const handleTeamDissolved = async () => {
+  await refreshTeams();
+  closeDissolveModal();
+  emit('updated');
+  showSuccess('团队已解散');
+};
+
+// 解散团队功能已移至DissolveTeamModal中
 
 const formatDate = (dateString: string) => {
   try {

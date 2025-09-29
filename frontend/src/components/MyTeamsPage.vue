@@ -362,15 +362,10 @@
               <!-- 非创建者：退出团队 -->
               <button
                 v-else
-                @click="confirmLeaveTeam(team)"
-                :disabled="leavingTeamId === team.id"
-                class="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                @click="openLeaveModal(team)"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
-                <svg v-if="leavingTeamId === team.id" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 退出团队
@@ -405,6 +400,14 @@
       @close="closeCreatorManagement"
       @updated="handleCreatorManagementUpdated"
     />
+
+    <!-- Leave Team Modal -->
+    <LeaveTeamModal
+      v-if="showLeaveModal && selectedTeam"
+      :team="selectedTeam"
+      @close="closeLeaveModal"
+      @left="handleTeamLeft"
+    />
   </div>
 </template>
 
@@ -414,6 +417,7 @@ import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
 import TeamEditorModal from './TeamEditorModal.vue';
 import CreatorTeamManagement from './CreatorTeamManagement.vue';
+import LeaveTeamModal from './LeaveTeamModal.vue';
 import type { Team } from '@/types';
 
 // Stores
@@ -425,10 +429,11 @@ const newTeamName = ref('');
 const teamCode = ref('');
 const creating = ref(false);
 const joining = ref(false);
-const leavingTeamId = ref<number | null>(null);
+// leavingTeamId 已移除，退出功能在模态框中处理
 const showCopySuccess = ref(false);
 const showManageModal = ref(false);
 const showCreatorManagement = ref(false);
+const showLeaveModal = ref(false);
 const selectedTeam = ref<Team | null>(null);
 const successMessage = ref('');
 const errorMessage = ref('');
@@ -550,27 +555,20 @@ const handleCreatorManagementUpdated = () => {
   showSuccess('团队管理操作完成！');
 };
 
-// 解散和转让功能已移至CreatorTeamManagement弹窗中
-
-const confirmLeaveTeam = (team: Team) => {
-  const confirmed = confirm(`确定要退出团队"${team.name}"吗？`);
-  if (confirmed) {
-    leaveTeam(team);
-  }
+const openLeaveModal = (team: Team) => {
+  selectedTeam.value = team;
+  showLeaveModal.value = true;
 };
 
-const leaveTeam = async (team: Team) => {
-  try {
-    leavingTeamId.value = team.id;
-    await teamStore.leaveTeam(team.id);
-    showSuccess(`已退出团队"${team.name}"`);
-    await refreshTeams();
-  } catch (error: any) {
-    console.error('Failed to leave team:', error);
-    showError(error.response?.data?.detail || '退出团队失败，请重试');
-  } finally {
-    leavingTeamId.value = null;
-  }
+const closeLeaveModal = () => {
+  showLeaveModal.value = false;
+  selectedTeam.value = null;
+};
+
+const handleTeamLeft = async () => {
+  await refreshTeams();
+  closeLeaveModal();
+  showSuccess('已退出团队');
 };
 
 const scrollToManagement = () => {
