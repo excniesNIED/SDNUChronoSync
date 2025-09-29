@@ -306,6 +306,83 @@ class AlistUploader(UploaderBase):
 
                 if result.get('code') == 200:
                     print(f"✅ Upload successful after {attempt + 1} attempt(s).")
+
+                    # After upload, try to refresh directory and fetch a direct/actual URL
+                    try:
+                        async with httpx.AsyncClient(timeout=30.0) as client:
+                            json_headers = {
+                                "Authorization": auth_token,
+                                "Content-Type": "application/json",
+                                "Accept": "application/json"
+                            }
+
+                            # 1) Refresh the directory so new file becomes visible immediately
+                            try:
+                                list_url = f"{self.url.rstrip('/')}/api/fs/list"
+                                list_payload_refresh = {
+                                    "path": f"/{self.upload_path.strip('/')}",
+                                    "refresh": True
+                                }
+                                print(f"🔄 Refreshing directory via {list_url} with payload {list_payload_refresh}")
+                                list_resp = await client.post(list_url, headers=json_headers, json=list_payload_refresh)
+                                print(f"🔄 Refresh HTTP {list_resp.status_code} -> {list_resp.text[:200]}")
+                            except Exception as e:
+                                print(f"⚠️ Directory refresh failed: {e}")
+
+                            # 2) Try fetching file meta for the intended path
+                            try:
+                                get_url = f"{self.url.rstrip('/')}/api/fs/get"
+                                get_payload = {"path": full_path}
+                                print(f"🔍 Fetching file meta via {get_url} with payload {get_payload}")
+                                get_resp = await client.post(get_url, headers=json_headers, json=get_payload)
+                                print(f"🔍 /api/fs/get HTTP {get_resp.status_code} -> {get_resp.text[:300]}")
+                                if get_resp.status_code == 200:
+                                    meta = get_resp.json()
+                                    if meta.get("code") == 200:
+                                        data = meta.get("data") or {}
+                                        raw_url = data.get("raw_url") or data.get("url")
+                                        if raw_url:
+                                            print(f"✅ Returning raw URL from AList: {raw_url}")
+                                            return raw_url
+                            except Exception as e:
+                                print(f"⚠️ Fetching raw URL failed: {e}")
+
+                            # 3) If the server saved with original filename, find the actual stored name by listing
+                            try:
+                                list_payload = {
+                                    "path": f"/{self.upload_path.strip('/')}",
+                                    "refresh": False
+                                }
+                                list_resp2 = await client.post(list_url, headers=json_headers, json=list_payload)
+                                if list_resp2.status_code == 200:
+                                    body = list_resp2.json()
+                                    entries = ((body or {}).get("data") or {}).get("content") or []
+                                    # Match by size and extension, choose the newest
+                                    desired_ext = (os.path.splitext(filename)[1] or "").lower()
+                                    candidates = [
+                                        e for e in entries
+                                        if not e.get("is_dir")
+                                        and int(e.get("size") or 0) == len(content)
+                                        and str(e.get("name") or "").lower().endswith(desired_ext)
+                                    ]
+                                    # Sort by modified fields if present
+                                    def _modified_key(item):
+                                        return str(item.get("modified") or item.get("modified_time") or item.get("mtime") or "")
+                                    candidates.sort(key=_modified_key, reverse=True)
+                                    if candidates:
+                                        actual_name = candidates[0].get("name")
+                                        if actual_name:
+                                            # Build a working access URL with actual stored name (bypass template)
+                                            base_url = (self.access_domain or self.url).rstrip('/')
+                                            access_url_actual = f"{base_url}/d/{self.upload_path.strip('/')}/{actual_name}"
+                                            print(f"✅ Found stored file name '{actual_name}', returning: {access_url_actual}")
+                                            return access_url_actual
+                            except Exception as e:
+                                print(f"⚠️ Listing to detect actual file name failed: {e}")
+                    except Exception as e:
+                        print(f"⚠️ Post-upload URL resolution failed: {e}")
+
+                    # Fallback to configured access URL using intended filename
                     access_url = self._get_access_url(filename)
                     print(f"✅ Access URL: {access_url}")
                     return access_url
