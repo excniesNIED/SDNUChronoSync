@@ -30,17 +30,18 @@
 - ✅ **课表导出**：支持ICS格式导出，兼容各大日历应用
 
 ### 🆕 高级调休功能
-- ✅ **节假日设置**：标记特定日期为假日，自动隐藏当天课程
-- ✅ **智能换课**：将某天的课程移动到另一天，支持复杂调休场景
-- ✅ **调休记录管理**：查看所有调休记录，支持撤销操作
-- ✅ **实时预览**：调休设置立即生效，日历视图实时更新
+- ✅ **节假日设置**：HOLIDAY类型调整，逻辑隐藏指定日期的所有课程
+- ✅ **智能换课系统**：SWAP类型调整，将源日期课程完整移动到目标日期
+- ✅ **服务器端逻辑**：调休计算在后端处理，确保数据一致性和完整性
+- ✅ **调休记录追踪**：完整记录所有调休操作的历史和影响范围
+- ✅ **实时生效机制**：调休设置立即在课表视图中反映，无需刷新
 
 ### 🆕 团队协作系统
-- ✅ **团队创建与管理**：创建团队并获得唯一邀请码
-- ✅ **便捷加入机制**：通过8位邀请码快速加入团队
-- ✅ **分层权限管理**：团队管理员和普通成员的权限控制
-- ✅ **团队课表聚合**：查看团队所有成员的课程安排
-- ✅ **成员管理**：添加/移除团队成员，调整成员角色
+- ✅ **智能邀请机制**：8位随机邀请码（大写字母+数字，避免易混淆字符）
+- ✅ **灵活团队管理**：团队创建者自动成为管理员，支持添加/移除成员
+- ✅ **分层权限控制**：系统管理员 > 团队创建者 > 普通成员的权限分级
+- ✅ **团队课表聚合**：实时查看团队所有成员的课程安排和时间冲突
+- ✅ **便捷成员操作**：通过学号添加成员，一键退出/删除团队功能
 
 ### 管理员功能
 - ✅ **用户管理**：创建、编辑、删除用户账户
@@ -58,16 +59,18 @@
 ## 核心特色
 
 ### 🎯 智能调休系统
-- **服务器端逻辑处理**：调休计算在后端完成，确保数据一致性
-- **灵活的调休类型**：支持节假日标记和日期交换两种模式
-- **实时预览效果**：调休设置立即在日历视图中生效
-- **完整的操作记录**：支持查看、编辑和撤销调休记录
+- **双模式调休架构**：HOLIDAY类型（节假日隐藏）+ SWAP类型（课程对调）
+- **服务器端事务处理**：调休操作原子性执行，确保数据完整性
+- **事件状态管理**：通过is_active标记实现逻辑删除，保留历史数据
+- **覆盖事件机制**：智能创建调整后的新事件，保持原有事件关联
+- **操作记录追溯**：ScheduleAdjustment表记录所有调休历史
 
 ### 🤝 企业级团队协作
-- **简洁的加入机制**：8位邀请码快速加入团队
-- **分层权限管理**：系统管理员 > 团队管理员 > 普通成员
-- **实时数据聚合**：团队成员课表实时汇总显示
-- **灵活的成员管理**：支持动态添加、移除和角色调整
+- **安全邀请码生成**：8位大写字母+数字组合，避免易混淆字符(0,O,1,I)
+- **多对多关系管理**：用户-团队关联表支持灵活的成员关系
+- **权限分层控制**：系统管理员 > 团队创建者 > 普通成员的三级权限
+- **课表数据聚合**：跨用户课表查询，支持团队视角的时间安排
+- **成员动态管理**：通过学号精确添加，支持实时成员进出
 
 ### 📱 现代化用户体验
 - **响应式设计**：完美适配桌面、平板和手机
@@ -139,11 +142,11 @@
 SDNUChronoSync/
 ├── backend/                 # 后端代码
 │   ├── main.py             # 应用入口
-│   ├── models.py           # 数据模型 (User, Schedule, Event, ScheduleAdjustment, Team, TeamMembership)
-│   ├── schemas.py          # Pydantic 模式
-│   ├── crud.py             # 数据库操作
+│   ├── models.py           # 数据模型 (User, Schedule, Event, ScheduleAdjustment, Team)
+│   ├── schemas.py          # Pydantic 模式 (包含团队和调休相关模式)
+│   ├── crud.py             # 数据库操作 (团队CRUD + 调休记录管理)
 │   ├── auth.py             # 认证逻辑
-│   ├── database.py         # 数据库配置
+│   ├── database.py         # 数据库配置 (含user_teams_table关联表)
 │   ├── config.py           # 系统配置
 │   ├── utils.py            # 工具函数
 │   ├── importer.py         # 教务系统导入
@@ -152,10 +155,8 @@ SDNUChronoSync/
 │   └── routers/            # API 路由
 │       ├── auth.py         # 认证路由
 │       ├── schedule.py     # 个人日程路由 (废弃)
-│       ├── schedules.py    # 多课表管理路由
-│       ├── adjustments.py  # 🆕 调休管理路由
-│       ├── teams.py        # 🆕 团队管理路由
-│       ├── team.py         # 团队查看路由 (兼容)
+│       ├── schedules.py    # 🆕 多课表+调休管理路由
+│       ├── team.py         # 🆕 完整团队管理路由
 │       ├── admin.py        # 管理员路由
 │       ├── admin_settings.py # 系统设置路由
 │       ├── import_route.py # 教务系统导入路由
@@ -163,16 +164,21 @@ SDNUChronoSync/
 ├── frontend/               # 前端代码
 │   ├── src/
 │   │   ├── components/     # Vue 组件
-│   │   │   ├── ScheduleAdjuster.vue      # 🆕 调休管理组件
-│   │   │   ├── ScheduleCalendar.vue      # 日历视图组件
+│   │   │   ├── ScheduleAdjuster.vue      # 🆕 调休管理组件（节假日+换课）
+│   │   │   ├── ScheduleCalendar.vue      # 日历视图组件（支持调休显示）
 │   │   │   ├── ScheduleEditor.vue        # 课表编辑器
 │   │   │   ├── ScheduleImporter.vue      # 教务系统导入
-│   │   │   ├── MySchedulePage.vue        # 个人课表页面
-│   │   │   ├── TeamViewPage.vue          # 团队视图页面
-│   │   │   ├── Navigation.vue            # 导航栏
+│   │   │   ├── MySchedulePage.vue        # 个人课表页面（含调休功能）
+│   │   │   ├── MyTeamsPage.vue           # 🆕 我的团队管理页面
+│   │   │   ├── TeamViewPage.vue          # 🆕 团队课表聚合视图
+│   │   │   ├── CreateTeam.vue            # 🆕 创建团队组件
+│   │   │   ├── JoinTeam.vue              # 🆕 加入团队组件
+│   │   │   ├── TeamEditorModal.vue       # 🆕 团队编辑模态框
+│   │   │   ├── Navigation.vue            # 导航栏（含团队入口）
 │   │   │   ├── MobileDrawer.vue          # 移动端菜单
 │   │   │   ├── EventModal.vue            # 事件编辑弹窗
 │   │   │   └── admin/                    # 管理员组件
+│   │   │       └── AdminTeamManagement.vue # 🆕 团队管理组件
 │   │   ├── layouts/        # Astro 布局
 │   │   │   ├── BaseLayout.astro          # 基础布局
 │   │   │   └── DashboardLayout.astro     # 仪表板布局
@@ -181,19 +187,20 @@ SDNUChronoSync/
 │   │   │   ├── login.astro               # 登录页
 │   │   │   ├── register.astro            # 注册页
 │   │   │   └── dashboard/                # 仪表板页面
-│   │   │       ├── my-schedule.astro     # 个人课表
-│   │   │       ├── teams.astro           # 🆕 团队管理
-│   │   │       ├── teams/                # 🆕 团队相关页面
+│   │   │       ├── my-schedule.astro     # 个人课表（含调休管理）
+│   │   │       ├── my-teams.astro        # 🆕 我的团队管理
+│   │   │       ├── team-view/            # 🆕 团队视图页面
 │   │   │       │   └── [teamId].astro    # 团队详情页
 │   │   │       ├── team-view.astro       # 团队视图 (兼容)
 │   │   │       ├── profile.astro         # 个人资料
 │   │   │       └── admin/                # 管理员页面
+│   │   │           └── team-management.astro # 🆕 团队管理页面
 │   │   ├── stores/         # Pinia 状态管理
 │   │   │   ├── auth.ts                   # 认证状态
-│   │   │   ├── schedule.ts               # 课表状态
-│   │   │   └── team.ts                   # 团队状态
+│   │   │   ├── schedule.ts               # 课表状态（含调休逻辑）
+│   │   │   └── team.ts                   # 🆕 团队状态管理
 │   │   ├── types/          # TypeScript 类型定义
-│   │   │   └── index.ts                  # 包含所有新增类型
+│   │   │   └── index.ts                  # 包含Team、ScheduleAdjustment等类型
 │   │   └── utils/          # 工具函数
 │   │       ├── api.ts                    # API 客户端 (已扩展)
 │   │       ├── colors.ts                 # 颜色工具
@@ -226,22 +233,23 @@ SDNUChronoSync/
 - `GET /api/schedules/{id}/export.ics` - 导出课表为ICS文件
 
 ### 🆕 调休管理接口
-- `GET /api/schedules/{id}/adjustments` - 获取课表的所有调休记录
-- `POST /api/schedules/{id}/adjustments` - 创建调休记录
-- `PUT /api/schedules/{id}/adjustments/{adj_id}` - 更新调休记录
-- `DELETE /api/schedules/{id}/adjustments/{adj_id}` - 删除调休记录（撤销）
+- `GET /api/schedules/{id}/adjustments` - 获取课表的所有调休历史记录
+- `POST /api/schedules/{id}/adjustments` - 创建调休调整（HOLIDAY/SWAP类型）
+  - **HOLIDAY类型**：`{ "adjustment_type": "HOLIDAY", "holiday_date": "2024-10-01" }`
+  - **SWAP类型**：`{ "adjustment_type": "SWAP", "source_date": "2024-10-01", "target_date": "2024-10-02" }`
 
 ### 🆕 团队管理接口
-- `POST /api/teams/` - 创建新团队
-- `POST /api/teams/join` - 通过邀请码加入团队
-- `GET /api/teams/my-teams` - 获取我加入的团队列表
-- `GET /api/teams/{id}` - 获取团队详细信息
-- `POST /api/teams/{id}/leave` - 退出团队
-- `GET /api/teams/{id}/members` - 获取团队成员列表（管理员）
-- `POST /api/teams/{id}/members` - 添加团队成员（管理员）
-- `DELETE /api/teams/{id}/members/{user_id}` - 移除团队成员（管理员）
-- `GET /api/teams/{id}/schedules` - 获取团队聚合课表
-- `DELETE /api/teams/{id}` - 删除团队（系统管理员）
+- `POST /api/team/` - 创建新团队（自动生成8位邀请码）
+- `POST /api/team/me/teams/join` - 通过邀请码加入团队
+- `GET /api/team/me/teams` - 获取我参与的所有团队列表
+- `GET /api/team/{id}` - 获取团队详细信息（包含成员列表）
+- `PUT /api/team/{id}` - 更新团队信息（创建者/管理员）
+- `DELETE /api/team/{id}` - 删除团队（创建者/系统管理员）
+- `POST /api/team/me/teams/{id}/leave` - 退出团队
+- `POST /api/team/{id}/members` - 添加团队成员（通过学号）
+- `DELETE /api/team/{id}/members/{user_id}` - 移除团队成员
+- `GET /api/team/{id}/schedules` - 获取团队聚合课表视图
+- `GET /api/team/all` - 获取所有团队（系统管理员）
 
 ### 兼容性接口（团队视图）
 - `GET /api/team/users` - 获取所有用户列表
@@ -335,44 +343,48 @@ SDNUChronoSync/
 
 ### 🎯 高级调休功能
 
-1. **设置节假日**：
-   - 点击"日程调整"按钮打开调休管理
-   - 在"设置假日"区域选择日期
-   - 输入假日描述（如"国庆节"）
-   - 点击"设为假日"，该日期的所有课程将自动隐藏
+1. **节假日设置（HOLIDAY类型）**：
+   - 在"我的课表"页面点击"日程调整"按钮
+   - 选择"设置假期"模式
+   - 选择需要放假的日期
+   - 点击"确认放假"，系统将逻辑隐藏该日期的所有课程
 
-2. **智能换课**：
-   - 在"交换日期"区域设置源日期和目标日期
-   - 输入换课描述（如"周一课程移至周三"）
-   - 点击"交换日期"，系统自动处理课程移动
+2. **智能换课（SWAP类型）**：
+   - 选择"对调工作日"模式
+   - 设置源日期（需要移动的课程日期）
+   - 设置目标日期（课程移动到的日期）
+   - 系统自动创建覆盖事件，保持原有课程信息
 
-3. **管理调休记录**：
-   - 查看所有已设置的调休记录
-   - 支持一键撤销任何调休设置
-   - 调休效果实时在日历中显示
+3. **调休记录管理**：
+   - 所有调休操作记录在ScheduleAdjustment表中
+   - 支持查看调休历史和影响的事件数量
+   - 调休效果立即在课表视图中生效
 
 ### 🎯 团队协作系统
 
 1. **创建团队**：
    - 访问"我的团队"页面
-   - 输入团队名称创建团队
-   - 系统自动生成8位邀请码
-   - 创建者自动成为团队管理员
+   - 输入团队名称点击"创建团队"
+   - 系统自动生成8位安全邀请码（避免0O1I等易混淆字符）
+   - 创建者自动成为团队管理员并加入成员列表
 
 2. **加入团队**：
-   - 获取团队邀请码（8位字符）
+   - 获取团队8位邀请码
    - 在"加入团队"区域输入邀请码
-   - 点击"加入团队"成为团队成员
+   - 系统验证邀请码有效性后自动加入团队
+   - 支持快速复制邀请码功能
 
 3. **团队管理**：
-   - 团队管理员可以添加/移除成员
-   - 调整成员角色（普通成员/团队管理员）
-   - 查看团队所有成员的课表聚合视图
+   - **添加成员**：通过学号精确添加新成员到团队
+   - **移除成员**：团队创建者可移除任意成员
+   - **权限控制**：系统管理员 > 团队创建者 > 普通成员
+   - **团队删除**：仅创建者和系统管理员可删除团队
 
-4. **团队协作**：
-   - 在团队详情页查看所有成员的课程安排
-   - 便于协调团队会议和活动时间
-   - 支持按成员筛选和查看
+4. **团队课表聚合**：
+   - 查看团队所有成员的课程时间安排
+   - 便于协调团队会议和避免时间冲突
+   - 支持按成员筛选显示特定用户的课程
+   - 实时同步成员的课表变更
 
 ### 🎯 管理员功能
 
