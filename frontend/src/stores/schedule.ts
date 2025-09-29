@@ -179,16 +179,12 @@ export const useScheduleStore = defineStore('schedule', () => {
   
   // Event management functions
   async function fetchMyEvents() {
-    if (!activeScheduleId.value) {
-      currentMyEvents.value = []
-      return
-    }
-
     eventsLoading.value = true
     eventsError.value = null
 
     try {
-      const events = await apiClient.getScheduleEvents(activeScheduleId.value)
+      // 使用个人课表API而不是多课表API
+      const events = await apiClient.getMyEvents()
       currentMyEvents.value = events
     } catch (err: any) {
       eventsError.value = err.response?.data?.detail || '获取事件失败'
@@ -199,12 +195,9 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   async function createEvent(eventData: CreateEventRequest) {
-    if (!activeScheduleId.value) {
-      throw new Error('没有选择活跃的课表')
-    }
-
     try {
-      const newEvent = await apiClient.createScheduleEvent(activeScheduleId.value, eventData)
+      // 使用个人课表API创建事件
+      const newEvent = await apiClient.createMyEvent(eventData)
       currentMyEvents.value.push(newEvent)
       return newEvent
     } catch (err: any) {
@@ -215,12 +208,9 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   async function updateEvent(eventId: number, eventData: UpdateEventRequest) {
-    if (!activeScheduleId.value) {
-      throw new Error('没有选择活跃的课表')
-    }
-
     try {
-      const updatedEvent = await apiClient.updateScheduleEvent(activeScheduleId.value, eventId, eventData)
+      // 使用个人课表API更新事件
+      const updatedEvent = await apiClient.updateMyEvent(eventId, eventData)
       
       const index = currentMyEvents.value.findIndex(e => e.id === eventId)
       if (index !== -1) {
@@ -236,12 +226,9 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   async function deleteEvent(eventId: number) {
-    if (!activeScheduleId.value) {
-      throw new Error('没有选择活跃的课表')
-    }
-
     try {
-      await apiClient.deleteScheduleEvent(activeScheduleId.value, eventId)
+      // 使用个人课表API删除事件
+      await apiClient.deleteMyEvent(eventId)
       currentMyEvents.value = currentMyEvents.value.filter(e => e.id !== eventId)
     } catch (err: any) {
       eventsError.value = err.response?.data?.detail || '删除事件失败'
@@ -251,18 +238,15 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   async function exportSchedule() {
-    if (!activeScheduleId.value) {
-      throw new Error('没有选择活跃的课表')
-    }
-
     try {
-      const blob = await apiClient.exportScheduleToICS(activeScheduleId.value)
+      // 使用个人课表导出API
+      const blob = await apiClient.exportMySchedule()
       
       // Create download link
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `schedule-${activeSchedule.value?.name || 'export'}.ics`
+      a.download = `my-schedule-${new Date().toISOString().split('T')[0]}.ics`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas import EventCreate, EventUpdate, EventResponse
@@ -141,3 +141,66 @@ async def export_my_schedule_ics(
             "Content-Disposition": f"attachment; filename={current_user.student_id}_schedule.ics"
         }
     )
+
+@router.get("/filtered", response_model=List[EventResponse])
+async def get_filtered_schedule(
+    start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
+    end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
+    user_ids: Optional[str] = Query(None, description="Comma-separated user IDs"),
+    class_name: Optional[str] = Query(None, description="Class name filter"),
+    grade: Optional[str] = Query(None, description="Grade filter"),
+    full_name_contains: Optional[str] = Query(None, description="Full name contains filter"),
+    event_title_contains: Optional[str] = Query(None, description="Event title contains filter"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get filtered events. Only accessible by admin users."""
+    # Check if user is admin
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin users can access filtered schedules"
+        )
+    
+    try:
+        # Parse date strings
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        # Set end time to end of day
+        end_dt = end_dt.replace(hour=23, minute=59, second=59)
+        
+        # Parse user IDs if provided
+        user_id_list = None
+        if user_ids:
+            try:
+                user_id_list = [int(uid.strip()) for uid in user_ids.split(',') if uid.strip()]
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid user IDs format"
+                )
+        
+        # Get filtered events
+        events = crud.get_filtered_events(
+            db=db,
+            start_date=start_dt,
+            end_date=end_dt,
+            user_ids=user_id_list,
+            class_name=class_name,
+            grade=grade,
+            full_name_contains=full_name_contains,
+            event_title_contains=event_title_contains
+        )
+        
+        return events
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid date format: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching filtered events: {str(e)}"
+        )

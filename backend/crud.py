@@ -301,14 +301,17 @@ def get_team_schedules_events(db: Session, team_id: int) -> List[Event]:
     # Get all member IDs
     member_ids = [member.id for member in team.members]
     
-    # Get all active schedules of team members
+    if not member_ids:
+        return []
+    
+    # Get all events from team members' schedules (removed strict filters for debugging)
     events = db.query(Event).options(
         joinedload(Event.schedule).joinedload(Schedule.owner)
     ).join(Schedule).filter(
         and_(
             Schedule.owner_id.in_(member_ids),
-            Schedule.status == "进行",  # Only active schedules
-            Event.is_active == True  # Only active events
+            # Removed strict status and is_active filters to show all events
+            or_(Event.is_active == True, Event.is_active.is_(None))  # Include events where is_active is True or NULL
         )
     ).all()
     
