@@ -29,8 +29,8 @@
                   筛选
                 </button>
 
-                <!-- View mode toggle -->
-                <div class="flex rounded-md shadow-sm">
+                <!-- View mode toggle (button style for larger screens, dropdown for smaller) -->
+                <div class="hidden lg:flex rounded-md shadow-sm">
                   <button
                     @click="setViewMode('week')"
                     :class="[
@@ -40,7 +40,8 @@
                       'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
                     ]"
                   >
-                    周视图
+                    <span class="hidden xl:inline">周视图</span>
+                    <span class="xl:hidden">周</span>
                   </button>
                   <button
                     @click="setViewMode('month')"
@@ -51,8 +52,58 @@
                       'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
                     ]"
                   >
-                    月视图
+                    <span class="hidden xl:inline">月视图</span>
+                    <span class="xl:hidden">月</span>
                   </button>
+                </div>
+
+                <!-- View mode dropdown for smaller screens -->
+                <div class="lg:hidden">
+                  <Menu as="div" class="relative inline-block text-left">
+                    <div>
+                      <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        {{ viewMode === 'week' ? '周' : '月' }}
+                        <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
+                      </MenuButton>
+                    </div>
+                    <transition
+                      enter-active-class="transition ease-out duration-100"
+                      enter-from-class="transform opacity-0 scale-95"
+                      enter-to-class="transform opacity-100 scale-100"
+                      leave-active-class="transition ease-in duration-75"
+                      leave-from-class="transform opacity-100 scale-100"
+                      leave-to-class="transform opacity-0 scale-95"
+                    >
+                      <MenuItems class="absolute left-0 z-10 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div class="py-1">
+                          <MenuItem v-slot="{ active }">
+                            <button
+                              @click="setViewMode('week')"
+                              :class="[
+                                active ? 'bg-gray-100' : '',
+                                viewMode === 'week' ? 'font-semibold' : '',
+                                'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                              ]"
+                            >
+                              周视图
+                            </button>
+                          </MenuItem>
+                          <MenuItem v-slot="{ active }">
+                            <button
+                              @click="setViewMode('month')"
+                              :class="[
+                                active ? 'bg-gray-100' : '',
+                                viewMode === 'month' ? 'font-semibold' : '',
+                                'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                              ]"
+                            >
+                              月视图
+                            </button>
+                          </MenuItem>
+                        </div>
+                      </MenuItems>
+                    </transition>
+                  </Menu>
                 </div>
 
                 <!-- Date navigation -->
@@ -71,6 +122,29 @@
                     class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
                   >
                     <ChevronRightIcon class="h-5 w-5" />
+                  </button>
+                </div>
+
+                <!-- Navigation buttons -->
+                <div class="flex items-center gap-2">
+                  <!-- Jump to today button -->
+                  <button
+                    @click="jumpToToday"
+                    class="px-3 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
+                    title="跳转到今天"
+                  >
+                    <span class="hidden xl:inline">今天</span>
+                    <span class="xl:hidden">今天</span>
+                  </button>
+                  
+                  <!-- Force refresh events button -->
+                  <button
+                    @click="forceRefreshEvents"
+                    class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
+                    title="强制刷新数据"
+                  >
+                    <span class="hidden xl:inline">刷新</span>
+                    <span class="xl:hidden">刷新</span>
                   </button>
                 </div>
               </div>
@@ -203,10 +277,15 @@ import TeamEventDetailModal from './TeamEventDetailModal.vue';
 import {
   Dialog,
   DialogPanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
   TransitionChild,
   TransitionRoot,
 } from '@headlessui/vue';
 import {
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   FunnelIcon,
@@ -276,6 +355,39 @@ function navigateDate(direction: number) {
   // Update date range and fetch new data
   scheduleStore.updateDateRangeFromView();
   handleApplyFilter();
+}
+
+function jumpToToday() {
+  currentDate.value = new Date();
+  console.log(`跳转到今天: ${currentDate.value.toLocaleDateString()}`);
+  
+  scheduleStore.setViewMode({
+    type: viewMode.value,
+    date: currentDate.value,
+  });
+  
+  // Update date range and fetch new data
+  scheduleStore.updateDateRangeFromView();
+  handleApplyFilter();
+}
+
+async function forceRefreshEvents() {
+  try {
+    console.log('强制刷新团队数据...');
+    
+    // 显示加载状态
+    scheduleStore.filteredEventsLoading = true;
+    
+    // 强制重新获取事件数据
+    await scheduleStore.fetchFilteredEvents();
+    
+    console.log('团队数据刷新完成');
+    
+  } catch (error) {
+    console.error('刷新团队数据失败:', error);
+  } finally {
+    scheduleStore.filteredEventsLoading = false;
+  }
 }
 
 function handleFilterUpdate(newFilter: Partial<FilterState>) {

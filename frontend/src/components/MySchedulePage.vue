@@ -2,12 +2,12 @@
   <div class="space-y-6">
     <!-- Header with schedule selector -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <!-- Schedule selector and title -->
-        <div class="flex items-center gap-4">
-          <!-- Schedule dropdown -->
-          <div class="relative">
-            <Menu as="div" class="relative inline-block text-left">
+      <!-- Mobile layout (3 rows for < 640px) -->
+      <div class="sm:hidden space-y-4">
+        <!-- Row 1: Schedule selector -->
+        <div class="flex items-center">
+          <div class="relative flex-1">
+            <Menu as="div" class="relative inline-block text-left w-full">
               <div>
                 <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                   <CalendarIcon class="h-5 w-5 text-gray-400" />
@@ -15,7 +15,7 @@
                   <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
                 </MenuButton>
               </div>
-
+              <!-- Schedule dropdown content same as before -->
               <transition
                 enter-active-class="transition ease-out duration-100"
                 enter-from-class="transform opacity-0 scale-95"
@@ -25,7 +25,6 @@
                 leave-to-class="transform opacity-0 scale-95"
               >
                 <MenuItems class="absolute left-0 z-10 mt-2 w-80 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                  <!-- Current Schedules -->
                   <div class="px-4 py-3">
                     <p class="text-sm font-medium text-gray-900">我的课表</p>
                   </div>
@@ -74,8 +73,227 @@
                       </div>
                     </MenuItem>
                   </div>
-                  
-                  <!-- Actions -->
+                  <div class="py-1">
+                    <MenuItem v-slot="{ active }">
+                      <button
+                        @click="openCreateScheduleModal"
+                        :class="[
+                          active ? 'bg-gray-100' : '',
+                          'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                        ]"
+                      >
+                        <PlusIcon class="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+                        新建课表
+                      </button>
+                    </MenuItem>
+                  </div>
+                </MenuItems>
+              </transition>
+            </Menu>
+          </div>
+        </div>
+
+        <!-- Row 2: View mode and navigation buttons -->
+        <div class="flex items-center justify-between">
+          <!-- View mode dropdown for mobile -->
+          <div class="flex items-center gap-3">
+            <Menu as="div" class="relative inline-block text-left">
+              <div>
+                <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  {{ viewMode === 'week' ? '周' : '月' }}
+                  <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
+                </MenuButton>
+              </div>
+              <transition
+                enter-active-class="transition ease-out duration-100"
+                enter-from-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-active-class="transition ease-in duration-75"
+                leave-from-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
+              >
+                <MenuItems class="absolute left-0 z-10 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div class="py-1">
+                    <MenuItem v-slot="{ active }">
+                      <button
+                        @click="setViewMode('week')"
+                        :class="[
+                          active ? 'bg-gray-100' : '',
+                          viewMode === 'week' ? 'font-semibold' : '',
+                          'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                        ]"
+                      >
+                        周视图
+                      </button>
+                    </MenuItem>
+                    <MenuItem v-slot="{ active }">
+                      <button
+                        @click="setViewMode('month')"
+                        :class="[
+                          active ? 'bg-gray-100' : '',
+                          viewMode === 'month' ? 'font-semibold' : '',
+                          'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                        ]"
+                      >
+                        月视图
+                      </button>
+                    </MenuItem>
+                  </div>
+                </MenuItems>
+              </transition>
+            </Menu>
+
+            <!-- Navigation buttons -->
+            <button
+              v-if="scheduleStore.activeSchedule?.start_date"
+              @click="jumpToScheduleStart"
+              class="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
+              title="跳转到开学时间"
+            >
+              开学
+            </button>
+            
+            <button
+              @click="jumpToToday"
+              class="px-3 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
+              title="跳转到今天"
+            >
+              今天
+            </button>
+            
+            <button
+              @click="forceRefreshEvents"
+              class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
+              title="强制刷新课程数据"
+            >
+              刷新
+            </button>
+          </div>
+
+          <!-- Date navigation for mobile -->
+          <div class="flex items-center gap-2">
+            <button
+              @click="navigateDate(-1)"
+              class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            >
+              <ChevronLeftIcon class="h-5 w-5" />
+            </button>
+            <h2 class="text-sm font-semibold text-gray-900 min-w-[120px] text-center">
+              {{ currentDateTitle }}
+            </h2>
+            <button
+              @click="navigateDate(1)"
+              class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            >
+              <ChevronRightIcon class="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 3: Action buttons (icons only for mobile) -->
+        <div class="flex items-center justify-center gap-4">
+          <!-- Schedule Adjustment button -->
+          <button
+            v-if="scheduleStore.activeSchedule"
+            @click="openAdjustmentModal"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-yellow-600 text-white shadow-sm hover:bg-yellow-500"
+            title="调休"
+          >
+            <CalendarDaysIcon class="h-5 w-5" />
+          </button>
+
+          <!-- Import button -->
+          <button
+            @click="openImportModal"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-blue-600 text-white shadow-sm hover:bg-blue-500"
+            title="导入"
+          >
+            <CloudArrowDownIcon class="h-5 w-5" />
+          </button>
+
+          <!-- Add event button -->
+          <button
+            @click="openCreateModal"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-primary-600 text-white shadow-sm hover:bg-primary-500"
+            title="添加"
+          >
+            <PlusIcon class="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop layout (>= 640px) -->
+      <div class="hidden sm:flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <!-- Top row for medium screens, left side for large screens -->
+        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+          <!-- Schedule selector -->
+          <div class="relative">
+            <Menu as="div" class="relative inline-block text-left">
+              <div>
+                <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  <CalendarIcon class="h-5 w-5 text-gray-400" />
+                  {{ scheduleStore.activeSchedule?.name || '选择课表' }}
+                  <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
+                </MenuButton>
+              </div>
+              <!-- Same dropdown content as mobile -->
+              <transition
+                enter-active-class="transition ease-out duration-100"
+                enter-from-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-active-class="transition ease-in duration-75"
+                leave-from-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
+              >
+                <MenuItems class="absolute left-0 z-10 mt-2 w-80 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div class="px-4 py-3">
+                    <p class="text-sm font-medium text-gray-900">我的课表</p>
+                  </div>
+                  <div class="py-1">
+                    <MenuItem
+                      v-for="schedule in scheduleStore.schedules"
+                      :key="schedule.id"
+                      v-slot="{ active }"
+                    >
+                      <div
+                        @click="selectSchedule(schedule.id)"
+                        :class="[
+                          active ? 'bg-gray-100' : '',
+                          'group flex items-center justify-between px-4 py-2 text-sm cursor-pointer'
+                        ]"
+                      >
+                        <div class="flex items-center gap-3">
+                          <div 
+                            :class="[
+                              'w-2 h-2 rounded-full flex-shrink-0',
+                              schedule.status === '进行' ? 'bg-green-500' : 
+                              schedule.status === '结束' ? 'bg-gray-400' : 'bg-yellow-500'
+                            ]"
+                          ></div>
+                          <div>
+                            <p class="font-medium text-gray-900">{{ schedule.name }}</p>
+                            <p class="text-xs text-gray-500">{{ formatScheduleInfo(schedule) }}</p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                          <button
+                            @click.stop="exportSchedule(schedule.id)"
+                            class="p-1 text-gray-400 hover:text-blue-600 rounded"
+                            title="导出"
+                          >
+                            <ArrowDownTrayIcon class="h-4 w-4" />
+                          </button>
+                          <button
+                            @click.stop="openEditScheduleModal(schedule)"
+                            class="p-1 text-gray-400 hover:text-gray-600 rounded"
+                            title="编辑"
+                          >
+                            <PencilIcon class="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </MenuItem>
+                  </div>
                   <div class="py-1">
                     <MenuItem v-slot="{ active }">
                       <button
@@ -112,92 +330,155 @@
             >
               <ChevronRightIcon class="h-5 w-5" />
             </button>
-            
-            <!-- Jump to schedule start date button -->
-            <button
-              v-if="scheduleStore.activeSchedule?.start_date"
-              @click="jumpToScheduleStart"
-              class="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
-              title="跳转到开学时间"
-            >
-              开学
-            </button>
-            
-            <!-- Jump to today button -->
-            <button
-              @click="jumpToToday"
-              class="px-3 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
-              title="跳转到今天"
-            >
-              今天
-            </button>
-            
-            <!-- Force refresh events button -->
-            <button
-              @click="forceRefreshEvents"
-              class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
-              title="强制刷新课程数据"
-            >
-              刷新
-            </button>
           </div>
         </div>
 
-        <!-- View mode toggle -->
-        <div class="flex rounded-md shadow-sm">
-          <button
-            @click="setViewMode('week')"
-            :class="[
-              viewMode === 'week'
-                ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50',
-              'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
-            ]"
-          >
-            周视图
-          </button>
-          <button
-            @click="setViewMode('month')"
-            :class="[
-              viewMode === 'month'
-                ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50',
-              'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
-            ]"
-          >
-            月视图
-          </button>
-        </div>
+        <!-- Bottom row for medium screens, right side for large screens -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between lg:justify-end gap-4">
+          <!-- View mode toggle and navigation buttons -->
+          <div class="flex items-center gap-4">
+            <!-- View mode toggle (button style for larger screens, dropdown for smaller) -->
+            <div class="hidden lg:flex rounded-md shadow-sm">
+              <button
+                @click="setViewMode('week')"
+                :class="[
+                  viewMode === 'week'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50',
+                  'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
+                ]"
+              >
+                <span class="hidden xl:inline">周视图</span>
+                <span class="xl:hidden">周</span>
+              </button>
+              <button
+                @click="setViewMode('month')"
+                :class="[
+                  viewMode === 'month'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50',
+                  'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
+                ]"
+              >
+                <span class="hidden xl:inline">月视图</span>
+                <span class="xl:hidden">月</span>
+              </button>
+            </div>
 
-        <!-- Action buttons -->
-        <div class="flex items-center gap-3">
-          <!-- Schedule Adjustment button -->
-          <button
-            v-if="scheduleStore.activeSchedule"
-            @click="openAdjustmentModal"
-            class="inline-flex items-center gap-x-2 rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"
-          >
-            <CalendarDaysIcon class="h-4 w-4" />
-            调休
-          </button>
+            <!-- View mode dropdown for medium screens -->
+            <div class="lg:hidden">
+              <Menu as="div" class="relative inline-block text-left">
+                <div>
+                  <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    {{ viewMode === 'week' ? '周' : '月' }}
+                    <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
+                  </MenuButton>
+                </div>
+                <transition
+                  enter-active-class="transition ease-out duration-100"
+                  enter-from-class="transform opacity-0 scale-95"
+                  enter-to-class="transform opacity-100 scale-100"
+                  leave-active-class="transition ease-in duration-75"
+                  leave-from-class="transform opacity-100 scale-100"
+                  leave-to-class="transform opacity-0 scale-95"
+                >
+                  <MenuItems class="absolute left-0 z-10 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div class="py-1">
+                      <MenuItem v-slot="{ active }">
+                        <button
+                          @click="setViewMode('week')"
+                          :class="[
+                            active ? 'bg-gray-100' : '',
+                            viewMode === 'week' ? 'font-semibold' : '',
+                            'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                          ]"
+                        >
+                          周视图
+                        </button>
+                      </MenuItem>
+                      <MenuItem v-slot="{ active }">
+                        <button
+                          @click="setViewMode('month')"
+                          :class="[
+                            active ? 'bg-gray-100' : '',
+                            viewMode === 'month' ? 'font-semibold' : '',
+                            'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                          ]"
+                        >
+                          月视图
+                        </button>
+                      </MenuItem>
+                    </div>
+                  </MenuItems>
+                </transition>
+              </Menu>
+            </div>
 
-          <!-- Import button -->
-          <button
-            @click="openImportModal"
-            class="inline-flex items-center gap-x-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-          >
-            <CloudArrowDownIcon class="h-4 w-4" />
-            导入
-          </button>
+            <!-- Navigation buttons -->
+            <div class="flex items-center gap-2">
+              <button
+                v-if="scheduleStore.activeSchedule?.start_date"
+                @click="jumpToScheduleStart"
+                class="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
+                title="跳转到开学时间"
+              >
+                <span class="hidden xl:inline">开学</span>
+                <span class="xl:hidden">开学</span>
+              </button>
+              
+              <button
+                @click="jumpToToday"
+                class="px-3 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
+                title="跳转到今天"
+              >
+                <span class="hidden xl:inline">今天</span>
+                <span class="xl:hidden">今天</span>
+              </button>
+              
+              <button
+                @click="forceRefreshEvents"
+                class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
+                title="强制刷新课程数据"
+              >
+                <span class="hidden xl:inline">刷新</span>
+                <span class="xl:hidden">刷新</span>
+              </button>
+            </div>
+          </div>
 
-          <!-- Add event button -->
-          <button
-            @click="openCreateModal"
-            class="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-          >
-            <PlusIcon class="h-4 w-4" />
-            添加日程
-          </button>
+          <!-- Action buttons -->
+          <div class="flex items-center gap-3">
+            <!-- Schedule Adjustment button -->
+            <button
+              v-if="scheduleStore.activeSchedule"
+              @click="openAdjustmentModal"
+              class="inline-flex items-center gap-x-2 rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"
+              title="调休"
+            >
+              <CalendarDaysIcon class="h-4 w-4" />
+              <span class="hidden 2xl:inline">调休</span>
+            </button>
+
+            <!-- Import button -->
+            <button
+              @click="openImportModal"
+              class="inline-flex items-center gap-x-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              title="导入"
+            >
+              <CloudArrowDownIcon class="h-4 w-4" />
+              <span class="hidden 2xl:inline">导入</span>
+            </button>
+
+            <!-- Add event button -->
+            <button
+              @click="openCreateModal"
+              class="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              title="添加"
+            >
+              <PlusIcon class="h-4 w-4" />
+              <span class="hidden 2xl:inline">添加</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
