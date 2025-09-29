@@ -370,6 +370,8 @@ class ApiClient {
     await axios.delete(`/api/teams/${teamId}/members/${userId}`);
   }
 
+  // Debug method removed - only add when needed for troubleshooting
+
   // User team operations
   async getMyTeams(): Promise<Team[]> {
     const response = await axios.get('/api/me/teams');
@@ -389,6 +391,13 @@ class ApiClient {
   async getTeamSchedules(teamId: number): Promise<Event[]> {
     const response = await axios.get(`/api/teams/${teamId}/schedules`);
     return response.data;
+  }
+
+  // Team transfer
+  async transferTeam(teamId: number, newCreatorId: number): Promise<void> {
+    await axios.post(`/api/teams/${teamId}/transfer`, {
+      new_creator_id: newCreatorId
+    });
   }
 
   // Admin team management

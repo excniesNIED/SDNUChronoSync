@@ -209,7 +209,10 @@ class TeamMemberAdd(BaseModel):
     student_id: str = Field(..., description="Student ID of the user to add")
 
 class TeamJoinRequest(BaseModel):
-    team_code: str = Field(..., description="Team code to join")
+    team_code: str
+
+class TeamTransferRequest(BaseModel):
+    new_creator_id: int = Field(..., description="ID of the user who will become the new team creator")
 
 class TeamResponse(TeamBase):
     id: int

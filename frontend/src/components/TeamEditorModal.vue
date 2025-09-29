@@ -98,11 +98,10 @@
             >
               <div class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <span class="text-sm font-medium text-indigo-800">
-                      {{ member.full_name.charAt(0) }}
-                    </span>
-                  </div>
+                  <UserAvatar 
+                    :user="member" 
+                    size="sm"
+                  />
                 </div>
                 <div>
                   <p class="text-sm font-medium text-gray-900">{{ member.full_name }}</p>
@@ -184,6 +183,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
+import UserAvatar from './UserAvatar.vue';
 import type { Team, User } from '@/types';
 
 // Props
@@ -344,6 +344,8 @@ const clearMessages = () => {
   successMessage.value = '';
   errorMessage.value = '';
 };
+
+// Debug methods removed - only add when needed for troubleshooting
 
 // Lifecycle
 onMounted(() => {

@@ -297,6 +297,18 @@ const handleTeamUpdated = () => {
   closeManageModal();
 };
 
+const confirmDissolveTeam = (team: Team) => {
+  const confirmed = confirm(`确定要解散团队"${team.name}"吗？此操作不可撤销！`);
+  if (confirmed) {
+    deleteTeam(team);
+  }
+};
+
+const openTransferModal = (team: Team) => {
+  // TODO: 实现转让功能
+  alert(`转让功能即将开放，敬请期待！团队：${team.name}`);
+};
+
 const confirmDeleteTeam = (team: Team) => {
   const confirmed = confirm(
     `确定要删除团队"${team.name}"吗？这将会删除团队的所有信息，此操作不可撤销！`

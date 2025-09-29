@@ -190,6 +190,31 @@ export const useTeamStore = defineStore('team', () => {
     }
   }
 
+  async function transferTeam(teamId: number, newCreatorId: number) {
+    try {
+      loading.value = true;
+      error.value = null;
+      await apiClient.transferTeam(teamId, newCreatorId);
+      
+      // Update the team in the list to reflect the new creator
+      const teamIndex = teams.value.findIndex(t => t.id === teamId);
+      if (teamIndex !== -1) {
+        teams.value[teamIndex].creator_id = newCreatorId;
+      }
+      
+      // Update current team if it's the same
+      if (currentTeam.value?.id === teamId) {
+        currentTeam.value.creator_id = newCreatorId;
+      }
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '转让团队失败';
+      console.error('Failed to transfer team:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function addTeamMember(teamId: number, memberData: TeamMemberAdd) {
     try {
       loading.value = true;
@@ -316,6 +341,7 @@ export const useTeamStore = defineStore('team', () => {
     deleteTeam,
     joinTeam,
     leaveTeam,
+    transferTeam,
     addTeamMember,
     removeTeamMember,
     fetchTeamSchedules,

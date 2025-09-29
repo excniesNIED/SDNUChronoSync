@@ -311,9 +311,21 @@ def get_team_by_code(db: Session, team_code: str) -> Optional[Team]:
     ).filter(Team.team_code == team_code).first()
 
 def get_user_teams(db: Session, user_id: int) -> List[Team]:
-    """Get all teams that a user belongs to."""
-    user = db.query(User).options(joinedload(User.teams)).filter(User.id == user_id).first()
-    return user.teams if user else []
+    """Get all teams that a user belongs to (as member or creator)."""
+    from sqlalchemy import or_
+    
+    # Get teams where user is either a member or the creator
+    teams = db.query(Team).options(
+        joinedload(Team.creator),
+        joinedload(Team.members)
+    ).filter(
+        or_(
+            Team.creator_id == user_id,  # Teams created by user
+            Team.members.any(User.id == user_id)  # Teams where user is a member
+        )
+    ).all()
+    
+    return teams
 
 def get_all_teams(db: Session, skip: int = 0, limit: int = 100) -> List[Team]:
     """Get all teams with creator and members information."""
@@ -385,6 +397,22 @@ def remove_team_member(db: Session, team_id: int, user_id: int) -> bool:
         db.commit()
     
     return True
+
+def transfer_team(db: Session, team_id: int, new_creator_id: int) -> bool:
+    """Transfer team ownership to a new creator."""
+    try:
+        db_team = db.query(Team).filter(Team.id == team_id).first()
+        if not db_team:
+            return False
+        
+        # Update the creator_id
+        db_team.creator_id = new_creator_id
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        print(f"Error transferring team: {e}")
+        return False
 
 def join_team_by_code(db: Session, team_code: str, user_id: int) -> Optional[Team]:
     """Join a team using team code."""
