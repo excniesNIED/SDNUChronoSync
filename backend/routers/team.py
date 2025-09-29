@@ -12,6 +12,22 @@ from schemas import (
 
 router = APIRouter()
 
+# Admin only endpoints
+@router.get("/admin/teams", response_model=List[TeamResponse])
+async def get_all_teams_admin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all teams. Only accessible by system admin."""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this endpoint"
+        )
+    
+    teams = crud.get_all_teams(db)
+    return teams
+
 # Helper function to check permissions
 def check_team_admin_permission(db: Session, team_id: int, current_user: User):
     """Check if current user is team admin (creator) or system admin"""
@@ -81,6 +97,28 @@ async def update_team(
         )
     
     return team
+
+@router.delete("/teams/{team_id}")
+async def delete_team(
+    team_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a team. Only team creator or system admin can delete."""
+    if not check_team_admin_permission(db, team_id, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this team"
+        )
+    
+    success = crud.delete_team(db, team_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Team not found"
+        )
+    
+    return {"message": "Team deleted successfully"}
 
 @router.post("/teams/{team_id}/members", status_code=status.HTTP_201_CREATED)
 async def add_team_member(

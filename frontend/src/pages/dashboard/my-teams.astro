@@ -5,116 +5,21 @@ const description = '管理和查看团队课表';
 ---
 
 <DashboardLayout title={title} description={description}>
-  <div class="space-y-8">
-    <!-- Page Header -->
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900">我的团队</h1>
-      <p class="mt-2 text-sm text-gray-600">创建团队、加入团队或管理现有团队</p>
-    </div>
-
-    <!-- Team Management Section -->
-    <div class="grid gap-8 lg:grid-cols-2">
-      <!-- Create Team -->
-      <div id="create-team-section"></div>
-      
-      <!-- Join Team -->
-      <div id="join-team-section"></div>
-    </div>
-
-    <!-- Team List -->
-    <div id="team-list-section"></div>
-  </div>
+  <div id="my-teams-app"></div>
 
   <script>
-    import { createApp, ref } from 'vue';
+    import { createApp } from 'vue';
     import { createPinia } from 'pinia';
-    import CreateTeam from '@/components/CreateTeam.vue';
-    import JoinTeam from '@/components/JoinTeam.vue';
-    import TeamList from '@/components/TeamList.vue';
+    import MyTeamsPage from '@/components/MyTeamsPage.vue';
 
-    // Create the Vue app with Pinia
+    // Create Vue app
     const pinia = createPinia();
-    
-    // Shared refresh trigger
-    let refreshTrigger = 0;
-    
-    const refreshAllTeams = () => {
-      refreshTrigger++;
-      // Trigger refresh for team list
-      window.dispatchEvent(new CustomEvent('refreshTeams'));
-    };
+    const app = createApp(MyTeamsPage);
+    app.use(pinia);
 
-    // Create team component
-    const createTeamApp = createApp({
-      components: { CreateTeam },
-      setup() {
-        const handleTeamCreated = (team) => {
-          console.log('Team created:', team);
-          refreshAllTeams();
-        };
-        
-        return {
-          handleTeamCreated
-        };
-      },
-      template: `<CreateTeam @team-created="handleTeamCreated" />`
+    // Mount when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      app.mount('#my-teams-app');
     });
-    createTeamApp.use(pinia);
-    createTeamApp.mount('#create-team-section');
-
-    // Join team component
-    const joinTeamApp = createApp({
-      components: { JoinTeam },
-      setup() {
-        const handleTeamJoined = (team) => {
-          console.log('Team joined:', team);
-          refreshAllTeams();
-        };
-        
-        return {
-          handleTeamJoined
-        };
-      },
-      template: `<JoinTeam @team-joined="handleTeamJoined" />`
-    });
-    joinTeamApp.use(pinia);
-    joinTeamApp.mount('#join-team-section');
-
-    // Team list component
-    const teamListApp = createApp({
-      components: { TeamList },
-      setup() {
-        const currentRefreshTrigger = ref(refreshTrigger);
-        
-        const handleViewTeam = (teamId) => {
-          window.location.href = `/dashboard/team-view/${teamId}`;
-        };
-        
-        const handleTeamLeft = (teamId) => {
-          console.log('Team left:', teamId);
-          refreshAllTeams();
-        };
-        
-        // Listen for refresh events
-        window.addEventListener('refreshTeams', () => {
-          currentRefreshTrigger.value = refreshTrigger;
-        });
-        
-        return {
-          refreshTrigger: currentRefreshTrigger,
-          handleViewTeam,
-          handleTeamLeft
-        };
-      },
-      template: `
-        <TeamList 
-          :refresh-trigger="refreshTrigger"
-          @view-team="handleViewTeam"
-          @team-left="handleTeamLeft"
-        />
-      `
-    });
-    teamListApp.use(pinia);
-    teamListApp.mount('#team-list-section');
   </script>
 </DashboardLayout>

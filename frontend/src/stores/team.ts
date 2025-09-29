@@ -8,12 +8,25 @@ export const useTeamStore = defineStore('team', () => {
   const teams = ref<Team[]>([]);
   const currentTeam = ref<Team | null>(null);
   const teamEvents = ref<Event[]>([]);
+  const allTeams = ref<Team[]>([]);  // For admin use
+  const userList = ref<User[]>([]);  // For admin user management
   const loading = ref(false);
   const error = ref<string | null>(null);
 
   // Getters
   const getTeamById = computed(() => {
     return (id: number) => teams.value.find(team => team.id === id);
+  });
+
+  // User-related computed properties for admin use
+  const allClasses = computed(() => {
+    const classes = [...new Set(userList.value.map(user => user.class_name))];
+    return classes.filter(Boolean).sort();
+  });
+
+  const allGrades = computed(() => {
+    const grades = [...new Set(userList.value.map(user => user.grade))];
+    return grades.filter(Boolean).sort();
   });
 
   const isTeamCreator = computed(() => {
@@ -227,6 +240,37 @@ export const useTeamStore = defineStore('team', () => {
     }
   }
 
+  // Admin functions
+  async function fetchAllTeams() {
+    try {
+      loading.value = true;
+      error.value = null;
+      const data = await apiClient.getAllTeamsAdmin();
+      allTeams.value = data;
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '获取所有团队失败';
+      console.error('Failed to fetch all teams:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchUsers() {
+    try {
+      loading.value = true;
+      error.value = null;
+      const data = await apiClient.getAllUsersAdmin();
+      userList.value = data;
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '获取用户列表失败';
+      console.error('Failed to fetch users:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   function clearError() {
     error.value = null;
   }
@@ -241,6 +285,8 @@ export const useTeamStore = defineStore('team', () => {
     teams.value = [];
     currentTeam.value = null;
     teamEvents.value = [];
+    allTeams.value = [];
+    userList.value = [];
     loading.value = false;
     error.value = null;
   }
@@ -250,6 +296,8 @@ export const useTeamStore = defineStore('team', () => {
     teams,
     currentTeam,
     teamEvents,
+    allTeams,
+    userList,
     loading,
     error,
     
@@ -257,6 +305,8 @@ export const useTeamStore = defineStore('team', () => {
     getTeamById,
     isTeamCreator,
     isTeamMember,
+    allClasses,
+    allGrades,
     
     // Actions
     fetchMyTeams,
@@ -269,6 +319,11 @@ export const useTeamStore = defineStore('team', () => {
     addTeamMember,
     removeTeamMember,
     fetchTeamSchedules,
+    
+    // Admin actions
+    fetchAllTeams,
+    fetchUsers,
+    
     clearError,
     clearCurrentTeam,
     $reset

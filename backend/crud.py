@@ -204,6 +204,13 @@ def get_user_teams(db: Session, user_id: int) -> List[Team]:
     user = db.query(User).options(joinedload(User.teams)).filter(User.id == user_id).first()
     return user.teams if user else []
 
+def get_all_teams(db: Session, skip: int = 0, limit: int = 100) -> List[Team]:
+    """Get all teams with creator and members information."""
+    return db.query(Team).options(
+        joinedload(Team.creator),
+        joinedload(Team.members)
+    ).offset(skip).limit(limit).all()
+
 def create_team(db: Session, team: TeamCreate, creator_id: int) -> Team:
     """Create a new team."""
     team_code = Team.generate_team_code(db)

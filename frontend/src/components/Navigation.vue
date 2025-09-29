@@ -176,6 +176,12 @@ const adminNavigation = computed(() => [
     current: currentPath.value === '/dashboard/admin/user-management',
   },
   {
+    name: '团队管理',
+    href: '/dashboard/admin/team-management',
+    icon: UserGroupIcon,
+    current: currentPath.value === '/dashboard/admin/team-management',
+  },
+  {
     name: '课表管理',
     href: '/dashboard/admin/schedule-management',
     icon: Cog6ToothIcon,

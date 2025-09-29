@@ -394,6 +394,22 @@ class ApiClient {
     return response.data;
   }
 
+  // Admin team management
+  async getAllTeamsAdmin(): Promise<Team[]> {
+    const response = await axios.get('/api/admin/teams');
+    return response.data;
+  }
+
+  // Admin user management
+  async getAllUsersAdmin(skip?: number, limit?: number): Promise<User[]> {
+    const params = new URLSearchParams();
+    if (skip !== undefined) params.append('skip', skip.toString());
+    if (limit !== undefined) params.append('limit', limit.toString());
+    
+    const response = await axios.get(`/api/admin/users?${params.toString()}`);
+    return response.data;
+  }
+
   // Utility methods
   isAuthenticated(): boolean {
     return this.getToken() !== null;
