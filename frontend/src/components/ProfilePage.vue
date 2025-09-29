@@ -11,11 +11,10 @@
               <!-- Avatar Section -->
               <div class="flex-shrink-0">
                 <div class="relative group">
-                  <img
-                    :src="getAvatarUrl"
-                    :alt="`${profileData.full_name}的头像`"
-                    class="h-24 w-24 rounded-full object-cover border-4 border-gray-200 transition-opacity group-hover:opacity-80"
-                    @error="handleAvatarError"
+                  <UserAvatar 
+                    :user="profileData"
+                    size="xl"
+                    class="transition-opacity group-hover:opacity-80 border-4 border-gray-200"
                   />
                   <!-- Loading overlay -->
                   <div 
@@ -312,6 +311,7 @@ import { ArrowLeftIcon, CameraIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
 import { apiClient } from '@/utils/api';
+import UserAvatar from './UserAvatar.vue';
 import type { User } from '@/types';
 
 const authStore = useAuthStore();

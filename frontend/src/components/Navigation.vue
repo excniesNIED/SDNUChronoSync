@@ -64,8 +64,30 @@
             </ul>
           </li>
 
-          <!-- Logout -->
+          <!-- User Info -->
           <li class="mt-auto">
+            <div class="mb-3 px-2">
+              <div class="flex items-center gap-x-3 py-2">
+                <UserAvatar 
+                  :user="authStore.user" 
+                  size="md" 
+                  :clickable="true"
+                  @click="goToProfile"
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">
+                    {{ authStore.user?.full_name || '用户' }}
+                  </p>
+                  <p class="text-xs text-gray-500 truncate">
+                    {{ authStore.user?.class_name || '' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <!-- Logout -->
+          <li>
             <button
               @click="handleLogout"
               class="group flex w-full gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
@@ -99,9 +121,12 @@
         
         <!-- Mobile user avatar -->
         <div class="flex items-center">
-          <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
-            <UserIcon class="h-5 w-5 text-primary-600" />
-          </div>
+          <UserAvatar 
+            :user="authStore.user" 
+            size="sm" 
+            :clickable="true"
+            @click="goToProfile"
+          />
         </div>
       </div>
     </div>
@@ -118,6 +143,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import MobileDrawer from './MobileDrawer.vue';
+import UserAvatar from './UserAvatar.vue';
 import {
   Bars3Icon,
   CalendarIcon,
@@ -199,5 +225,9 @@ async function handleLogout() {
   await authStore.logout();
   // Redirect to login page after logout
   window.location.href = '/login';
+}
+
+function goToProfile() {
+  window.location.href = '/dashboard/profile';
 }
 </script>

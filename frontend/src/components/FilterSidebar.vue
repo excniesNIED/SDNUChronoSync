@@ -88,12 +88,17 @@
               @click="toggleUser(user.id)"
               class="relative cursor-pointer select-none py-2 pl-8 pr-4 hover:bg-gray-50"
             >
-              <span class="block truncate font-normal">
-                {{ user.full_name }}
-              </span>
-              <span class="block truncate text-xs text-gray-500">
-                {{ user.class_name }} - {{ user.student_id }}
-              </span>
+              <div class="flex items-center gap-3">
+                <UserAvatar :user="user" size="xs" />
+                <div class="flex-1 min-w-0">
+                  <span class="block truncate font-normal">
+                    {{ user.full_name }}
+                  </span>
+                  <span class="block truncate text-xs text-gray-500">
+                    {{ user.class_name }} - {{ user.student_id }}
+                  </span>
+                </div>
+              </div>
               <span
                 v-if="filterState.selectedUserIds.includes(user.id)"
                 class="absolute inset-y-0 left-0 flex items-center pl-2 text-primary-600"
@@ -367,6 +372,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/outline';
+import UserAvatar from './UserAvatar.vue';
 import type { User, FilterState, Team } from '@/types';
 
 interface Props {

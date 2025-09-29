@@ -131,10 +131,6 @@
               <div v-if="props.isAdminMode" class="flex items-center justify-between">
                 <div class="flex items-center gap-1 flex-1 min-w-0">
                   <span class="font-bold truncate">{{ eventGroup[0].title }}</span>
-                  <span v-if="eventGroup[0].owner" 
-                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-current flex-shrink-0">
-                    1
-                  </span>
                 </div>
               </div>
               

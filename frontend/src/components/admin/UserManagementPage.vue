@@ -77,10 +77,8 @@
           <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10">
-                  <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                    <UserIcon class="h-6 w-6 text-primary-600" />
-                  </div>
+                <div class="flex-shrink-0">
+                  <UserAvatar :user="user" size="md" />
                 </div>
                 <div class="ml-4">
                   <div class="text-sm font-medium text-gray-900">{{ user.full_name }}</div>
@@ -169,6 +167,7 @@ import { apiClient } from '@/utils/api';
 import { formatDisplayDate } from '@/utils/date';
 import UserEditModal from './UserEditModal.vue';
 import ConfirmDeleteModal from './ConfirmDeleteModal.vue';
+import UserAvatar from '../UserAvatar.vue';
 import type { User } from '@/types';
 
 const authStore = useAuthStore();

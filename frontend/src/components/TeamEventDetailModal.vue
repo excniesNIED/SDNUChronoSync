@@ -140,6 +140,11 @@
                           :key="event.id"
                           class="flex items-center p-3 bg-gray-50 rounded-md"
                         >
+                          <UserAvatar 
+                            :user="event.owner" 
+                            size="sm"
+                            class="mr-3 flex-shrink-0"
+                          />
                           <div class="flex-1">
                             <div class="font-medium text-gray-900">
                               {{ event.owner?.full_name || '未知用户' }}
@@ -205,6 +210,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDateTime, formatDisplayTime } from '@/utils/date';
 import { getUserColor } from '@/utils/colors';
+import UserAvatar from './UserAvatar.vue';
 import type { Event } from '@/types';
 
 interface Props {

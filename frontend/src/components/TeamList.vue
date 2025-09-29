@@ -47,14 +47,43 @@
       >
         <div class="p-6">
           <!-- Team Header -->
-          <div class="flex items-center justify-between mb-4">
-            <div>
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex-1 min-w-0">
               <h4 class="text-lg font-medium text-gray-900 truncate">
                 {{ team.name }}
               </h4>
-              <p class="text-sm text-gray-500">
-                {{ team.members?.length || 0 }} 名成员
-              </p>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-sm text-gray-500">
+                  {{ team.members?.length || 0 }} 名成员
+                </span>
+                <!-- Members Avatar Preview -->
+                <div class="flex -space-x-1" v-if="team.members && team.members.length > 0">
+                  <UserAvatar 
+                    v-for="(member, index) in team.members.slice(0, 3)"
+                    :key="member.id"
+                    :user="member" 
+                    size="xs"
+                    class="ring-2 ring-white"
+                  />
+                  <div 
+                    v-if="team.members.length > 3"
+                    class="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-medium flex items-center justify-center ring-2 ring-white"
+                  >
+                    +{{ team.members.length - 3 }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Creator Info -->
+              <div class="flex items-center gap-2">
+                <UserAvatar 
+                  :user="team.creator" 
+                  size="xs"
+                />
+                <span class="text-xs text-gray-500">
+                  创建者: {{ team.creator?.full_name || '未知' }}
+                </span>
+              </div>
             </div>
             <div class="flex-shrink-0">
               <span
@@ -175,6 +204,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
 import TeamEditorModal from './TeamEditorModal.vue';
+import UserAvatar from './UserAvatar.vue';
 import type { Team, User } from '@/types';
 
 // Props
