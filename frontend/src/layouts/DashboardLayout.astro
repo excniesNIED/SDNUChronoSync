@@ -12,12 +12,84 @@ const { title, description } = Astro.props;
 
 <BaseLayout title={title} description={description}>
   <div class="min-h-screen bg-gray-50">
-    <Navigation client:load />
-    
-    <main class="lg:pl-72">
-      <div class="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
-        <slot />
+    <!-- Loading overlay for authentication -->
+    <div id="auth-loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+      <div class="text-center">
+        <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-2 text-sm text-gray-500">正在验证身份...</p>
       </div>
-    </main>
+    </div>
+    
+    <!-- Main content (hidden until auth check completes) -->
+    <div id="main-content" class="hidden">
+      <Navigation client:load />
+      
+      <main class="lg:pl-72">
+        <div class="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
+          <slot />
+        </div>
+      </main>
+    </div>
   </div>
+
+  <script>
+    import { createApp } from 'vue';
+    import { createPinia } from 'pinia';
+    import { useAuthStore } from '@/stores/auth';
+    import { apiClient } from '@/utils/api';
+
+    // Initialize Vue app with Pinia
+    const pinia = createPinia();
+    const app = createApp({});
+    app.use(pinia);
+
+    // Initialize auth store
+    const authStore = useAuthStore();
+
+    // Authentication check
+    async function initAuth() {
+      const loadingEl = document.getElementById('auth-loading');
+      const contentEl = document.getElementById('main-content');
+      
+      try {
+        // First check if we have a token in localStorage
+        const hasToken = apiClient.isAuthenticated();
+        
+        if (!hasToken) {
+          // No token found, redirect to login
+          window.location.href = '/login';
+          return;
+        }
+
+        // We have a token, try to initialize auth store
+        await authStore.initialize();
+        
+        // Double check authentication status after initialization
+        if (!authStore.isAuthenticated) {
+          // Token might be invalid, redirect to login
+          console.log('Authentication check failed, redirecting to login...');
+          window.location.href = '/login';
+          return;
+        }
+
+        // Authentication successful, show main content
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (contentEl) contentEl.style.display = 'block';
+        
+        console.log('Authentication successful, user:', authStore.user?.full_name);
+        
+      } catch (error) {
+        console.error('Auth initialization failed:', error);
+        // Clear any invalid tokens and redirect
+        localStorage.removeItem('access_token');
+        window.location.href = '/login';
+      }
+    }
+
+    // Start authentication check with a small delay to ensure DOM is ready
+    setTimeout(initAuth, 100);
+  </script>
 </BaseLayout>

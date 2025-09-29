@@ -4,10 +4,10 @@
       <!-- Sidebar -->
       <aside class="hidden w-96 overflow-y-auto border-r border-gray-200 bg-white lg:block">
         <FilterSidebar
-          :users="teamStore.userList"
+          :users="teamMembers"
           :filter-state="scheduleStore.filterState"
-          :all-classes="teamStore.allClasses"
-          :all-grades="teamStore.allGrades"
+          :all-classes="allClasses"
+          :all-grades="allGrades"
           @update-filter="handleFilterUpdate"
           @apply-filter="handleApplyFilter"
         />
@@ -149,9 +149,9 @@
                 </div>
               </div>
 
-              <!-- Selected users count -->
-              <div v-if="scheduleStore.filterState.selectedUserIds.length > 0" class="text-sm text-gray-600">
-                已选择 {{ scheduleStore.filterState.selectedUserIds.length }} 个成员
+              <!-- Team info -->
+              <div v-if="currentTeam" class="text-sm text-gray-600">
+                {{ currentTeam.name }} - {{ teamMembers.length }} 名成员
               </div>
             </div>
           </div>
@@ -159,18 +159,18 @@
           <!-- Calendar content -->
           <div class="flex-1 overflow-hidden">
             <!-- Loading state -->
-            <div v-if="scheduleStore.filteredEventsLoading" class="flex justify-center items-center h-full">
+            <div v-if="teamStore.loading" class="flex justify-center items-center h-full">
               <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
             </div>
 
             <!-- Error state -->
-            <div v-else-if="scheduleStore.filteredEventsError" class="flex justify-center items-center h-full">
+            <div v-else-if="teamStore.error" class="flex justify-center items-center h-full">
               <div class="rounded-md bg-red-50 p-4">
                 <div class="flex">
                   <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
                   <div class="ml-3">
                     <h3 class="text-sm font-medium text-red-800">
-                      {{ scheduleStore.filteredEventsError }}
+                      {{ teamStore.error }}
                     </h3>
                   </div>
                 </div>
@@ -241,10 +241,10 @@
                   <h2 class="text-lg font-semibold text-gray-900">筛选条件</h2>
                 </div>
                 <FilterSidebar
-                  :users="teamStore.userList"
+                  :users="teamMembers"
                   :filter-state="scheduleStore.filterState"
-                  :all-classes="teamStore.allClasses"
-                  :all-grades="teamStore.allGrades"
+                  :all-classes="allClasses"
+                  :all-grades="allGrades"
                   @update-filter="handleFilterUpdate"
                   @apply-filter="handleApplyFilter"
                 />
@@ -266,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useTeamStore } from '@/stores/team';
 import { useScheduleStore } from '@/stores/schedule';
@@ -274,6 +274,16 @@ import FilterSidebar from './FilterSidebar.vue';
 import ScheduleCalendar from './ScheduleCalendar.vue';
 import EventDetailModal from './EventDetailModal.vue';
 import TeamEventDetailModal from './TeamEventDetailModal.vue';
+
+// Props
+interface Props {
+  teamId?: number;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  teamId: undefined
+});
+
 import {
   Dialog,
   DialogPanel,
@@ -293,8 +303,8 @@ import {
   XMarkIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDate, addWeeks, addMonths } from '@/utils/date';
-import { getUserColor } from '@/utils/colors';
-import type { Event, CalendarEvent, FilterState } from '@/types';
+import { getUserColor, generateEventColor } from '@/utils/colors';
+import type { Event, CalendarEvent, FilterState, Team } from '@/types';
 
 const authStore = useAuthStore();
 const teamStore = useTeamStore();
@@ -306,6 +316,8 @@ const mobileFiltersOpen = ref(false);
 const isEventDetailOpen = ref(false);
 const selectedEvent = ref<Event | null>(null);
 const relatedEvents = ref<Event[]>([]);
+const currentTeam = ref<Team | null>(null);
+const teamEvents = ref<Event[]>([]);
 
 // Computed properties
 const currentDateTitle = computed(() => {
@@ -317,18 +329,42 @@ const currentDateTitle = computed(() => {
 });
 
 const calendarEvents = computed((): CalendarEvent[] => {
-  if (!scheduleStore.filteredEvents || scheduleStore.filteredEvents.length === 0) {
+  if (!teamEvents.value || teamEvents.value.length === 0) {
     return [];
   }
   
-  return scheduleStore.filteredEvents.map(event => {
-    const userColor = getUserColor(event.owner?.id || event.schedule_id);
+  return teamEvents.value.map(event => {
+    const color = generateEventColor(event.owner?.full_name || 'Unknown');
     return {
       ...event,
-      color: userColor.bg,
-      textColor: userColor.text,
+      color: color,
+      textColor: '#ffffff',
     };
   });
+});
+
+const teamMembers = computed(() => {
+  return currentTeam.value?.members || [];
+});
+
+const allClasses = computed(() => {
+  const classes = new Set<string>();
+  teamMembers.value.forEach(member => {
+    if (member.class_name) {
+      classes.add(member.class_name);
+    }
+  });
+  return Array.from(classes);
+});
+
+const allGrades = computed(() => {
+  const grades = new Set<string>();
+  teamMembers.value.forEach(member => {
+    if (member.grade) {
+      grades.add(member.grade);
+    }
+  });
+  return Array.from(grades);
 });
 
 // Methods
@@ -372,21 +408,18 @@ function jumpToToday() {
 }
 
 async function forceRefreshEvents() {
+  if (!props.teamId) return;
+  
   try {
     console.log('强制刷新团队数据...');
     
-    // 显示加载状态
-    scheduleStore.filteredEventsLoading = true;
-    
-    // 强制重新获取事件数据
-    await scheduleStore.fetchFilteredEvents();
+    // Force reload team data
+    await loadTeamData();
     
     console.log('团队数据刷新完成');
     
   } catch (error) {
     console.error('刷新团队数据失败:', error);
-  } finally {
-    scheduleStore.filteredEventsLoading = false;
   }
 }
 
@@ -414,11 +447,11 @@ function handleEventClick(event: Event, relatedEventsFromCalendar?: Event[]) {
 
 // 查找相关事件（同一课程名称、同一时间段）
 function findRelatedEvents(targetEvent: Event): Event[] {
-  if (!scheduleStore.filteredEvents) {
+  if (!teamEvents.value) {
     return [];
   }
 
-  return scheduleStore.filteredEvents.filter(event => {
+  return teamEvents.value.filter(event => {
     // 排除当前事件本身
     if (event.id === targetEvent.id) {
       return false;
@@ -475,11 +508,30 @@ onMounted(async () => {
     return;
   }
 
-  // Load users for filtering
-  await teamStore.fetchUsers();
-  
-  // Set initial date range and fetch events
-  scheduleStore.updateDateRangeFromView();
-  await scheduleStore.fetchFilteredEvents();
+  if (props.teamId) {
+    await loadTeamData();
+  }
 });
+
+// Watch for teamId changes
+watch(() => props.teamId, async (newTeamId) => {
+  if (newTeamId) {
+    await loadTeamData();
+  }
+});
+
+async function loadTeamData() {
+  if (!props.teamId) return;
+  
+  try {
+    // Load team information
+    currentTeam.value = await teamStore.fetchTeam(props.teamId);
+    
+    // Load team events
+    teamEvents.value = await teamStore.fetchTeamSchedules(props.teamId);
+  } catch (error) {
+    console.error('Failed to load team data:', error);
+    // Handle error - maybe redirect to team list
+  }
+}
 </script>

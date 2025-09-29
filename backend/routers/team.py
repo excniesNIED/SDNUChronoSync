@@ -1,90 +1,219 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 from database import get_db
-from schemas import UserPublic, EventResponse, ScheduleFilter
 from auth import get_current_user
-from models import User
+from models import User, Team
 import crud
-from datetime import datetime
+from schemas import (
+    TeamCreate, TeamUpdate, TeamResponse, TeamMemberAdd, 
+    TeamJoinRequest, UserPublic, EventResponse
+)
 
-router = APIRouter(prefix="/api/team", tags=["team & shared views"])
+router = APIRouter()
 
-@router.get("/users", response_model=List[UserPublic])
-async def get_all_users(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+# Helper function to check permissions
+def check_team_admin_permission(db: Session, team_id: int, current_user: User):
+    """Check if current user is team admin (creator) or system admin"""
+    if current_user.role == "admin":
+        return True
+    return crud.is_team_creator(db, team_id, current_user.id)
+
+def check_team_member_permission(db: Session, team_id: int, current_user: User):
+    """Check if current user is team member or system admin"""
+    if current_user.role == "admin":
+        return True
+    return crud.is_team_member(db, team_id, current_user.id)
+
+# General team operations
+@router.post("/teams", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
+async def create_team(
+    team: TeamCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """Get all users' public information for team filtering."""
-    users = crud.get_users(db)
-    return users
+    """Create a new team. Any logged-in user can create a team."""
+    db_team = crud.create_team(db, team, current_user.id)
+    return db_team
 
-@router.get("/schedule/user/{user_id}", response_model=List[EventResponse])
-async def get_user_schedule(
-    user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+@router.get("/teams/{team_id}", response_model=TeamResponse)
+async def get_team(
+    team_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """Get schedule for a specific user (member lookup feature)."""
-    # Check if target user exists
-    target_user = crud.get_user(db, user_id)
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    events = crud.get_user_events(db, user_id)
-    return events
-
-@router.get("/schedule/filtered", response_model=List[EventResponse])
-async def get_filtered_schedule(
-    start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
-    end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
-    user_ids: str = Query(None, description="Comma-separated user IDs, e.g., '1,5,12'"),
-    class_name: str = Query(None, description="Filter by class name"),
-    grade: str = Query(None, description="Filter by grade"),
-    full_name_contains: str = Query(None, description="Filter by name containing text"),
-    event_title_contains: str = Query(None, description="Filter by event title containing text"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Core query interface for aggregated multi-user schedule with complex filtering.
-    
-    This endpoint supports comprehensive filtering of events across multiple users
-    based on various criteria including date range, specific users, class, grade,
-    name, and event title.
-    """
-    
-    try:
-        # Parse date strings
-        start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-        end_datetime = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
-    except ValueError:
+    """Get team details. Only accessible by team members or system admin."""
+    if not check_team_member_permission(db, team_id, current_user):
         raise HTTPException(
-            status_code=400,
-            detail="Invalid date format. Use YYYY-MM-DD format."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this team"
         )
     
-    # Parse user_ids if provided
-    parsed_user_ids = None
-    if user_ids:
-        try:
-            parsed_user_ids = [int(uid.strip()) for uid in user_ids.split(",") if uid.strip()]
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid user_ids format. Use comma-separated integers."
-            )
+    team = crud.get_team(db, team_id)
+    if not team:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Team not found"
+        )
     
-    # Get filtered events
-    events = crud.get_filtered_events(
-        db=db,
-        start_date=start_datetime,
-        end_date=end_datetime,
-        user_ids=parsed_user_ids,
-        class_name=class_name,
-        grade=grade,
-        full_name_contains=full_name_contains,
-        event_title_contains=event_title_contains
-    )
+    return team
+
+# Team management operations (require admin permission)
+@router.put("/teams/{team_id}", response_model=TeamResponse)
+async def update_team(
+    team_id: int,
+    team_update: TeamUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update team name. Only accessible by team creator or system admin."""
+    if not check_team_admin_permission(db, team_id, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this team"
+        )
     
+    team = crud.update_team(db, team_id, team_update)
+    if not team:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Team not found"
+        )
+    
+    return team
+
+@router.post("/teams/{team_id}/members", status_code=status.HTTP_201_CREATED)
+async def add_team_member(
+    team_id: int,
+    member_add: TeamMemberAdd,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Add a user to team by student_id. Only accessible by team creator or system admin."""
+    if not check_team_admin_permission(db, team_id, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to add members to this team"
+        )
+    
+    # Find user by student_id
+    user = crud.get_user_by_student_id(db, member_add.student_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Add user to team
+    success = crud.add_team_member(db, team_id, user.id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to add user to team"
+        )
+    
+    return {"message": "User added to team successfully"}
+
+@router.delete("/teams/{team_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_team_member(
+    team_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Remove a user from team. Only accessible by team creator or system admin."""
+    if not check_team_admin_permission(db, team_id, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to remove members from this team"
+        )
+    
+    success = crud.remove_team_member(db, team_id, user_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to remove user from team"
+        )
+
+@router.delete("/teams/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_team(
+    team_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a team. Only accessible by team creator or system admin."""
+    if not check_team_admin_permission(db, team_id, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this team"
+        )
+    
+    success = crud.delete_team(db, team_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Team not found"
+        )
+
+# User team operations
+@router.get("/me/teams", response_model=List[TeamResponse])
+async def get_my_teams(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all teams the current user belongs to."""
+    teams = crud.get_user_teams(db, current_user.id)
+    return teams
+
+@router.post("/me/teams/join", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
+async def join_team(
+    join_request: TeamJoinRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Join a team using team code."""
+    team = crud.join_team_by_code(db, join_request.team_code, current_user.id)
+    if not team:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid team code"
+        )
+    
+    return team
+
+@router.post("/me/teams/{team_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
+async def leave_team(
+    team_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Leave a team. Users can leave any team they belong to."""
+    if not crud.is_team_member(db, team_id, current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="You are not a member of this team"
+        )
+    
+    success = crud.remove_team_member(db, team_id, current_user.id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to leave team"
+        )
+
+# Team schedule view
+@router.get("/teams/{team_id}/schedules", response_model=List[EventResponse])
+async def get_team_schedules(
+    team_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get aggregated schedules from all team members' active schedules."""
+    if not check_team_member_permission(db, team_id, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this team's schedules"
+        )
+    
+    events = crud.get_team_schedules_events(db, team_id)
     return events

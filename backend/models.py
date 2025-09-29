@@ -1,7 +1,14 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Text, Date, JSON
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Text, Date, JSON, Table
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
+import secrets
+
+# Association table for many-to-many relationship between users and teams
+user_teams_table = Table('user_teams', Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('team_id', Integer, ForeignKey('teams.id'), primary_key=True)
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -19,6 +26,9 @@ class User(Base):
 
     # Relationship with schedules
     schedules = relationship("Schedule", back_populates="owner", cascade="all, delete-orphan")
+    
+    # Relationship with teams (many-to-many)
+    teams = relationship("Team", secondary=user_teams_table, back_populates="members")
 
 class Schedule(Base):
     __tablename__ = "schedules"
@@ -95,3 +105,29 @@ class ScheduleAdjustment(Base):
     # Relationships
     schedule = relationship("Schedule", back_populates="adjustments")
     override_events = relationship("Event", back_populates="adjustment")
+
+
+class Team(Base):
+    __tablename__ = 'teams'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True, nullable=False)
+    team_code = Column(String, unique=True, index=True, nullable=False)  # 随机生成的唯一加入代码
+    creator_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # 明确指定团队的创建者
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    creator = relationship("User", foreign_keys=[creator_id])
+    members = relationship("User", secondary=user_teams_table, back_populates="teams")
+    
+    @classmethod
+    def generate_team_code(cls, db_session=None):
+        """Generate a unique 8-character team code"""
+        while True:
+            # Generate a random 8-character code with letters and numbers
+            team_code = ''.join(secrets.choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(8))
+            
+            # Check if it already exists (if db_session is provided)
+            if db_session is None or not db_session.query(cls).filter(cls.team_code == team_code).first():
+                return team_code

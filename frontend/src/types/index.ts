@@ -223,6 +223,34 @@ export interface AdjustmentOperationResponse {
   affected_events: number;
 }
 
+// Team Types
+export interface Team {
+  id: number;
+  name: string;
+  team_code: string;
+  creator_id: number;
+  created_at: string;
+  updated_at: string;
+  creator?: User;
+  members?: User[];
+}
+
+export interface TeamCreate {
+  name: string;
+}
+
+export interface TeamUpdate {
+  name?: string;
+}
+
+export interface TeamJoinRequest {
+  team_code: string;
+}
+
+export interface TeamMemberAdd {
+  student_id: string;
+}
+
 // Error Types
 export interface ApiError {
   detail: string;

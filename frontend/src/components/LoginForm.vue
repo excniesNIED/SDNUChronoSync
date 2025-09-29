@@ -72,12 +72,13 @@ const form = ref({
   password: '',
 });
 
-onMounted(async () => {
-  // Initialize auth store and check if already authenticated
-  await authStore.initialize();
+onMounted(() => {
+  // Clear any previous errors
+  authStore.clearError();
   
-  if (authStore.isAuthenticated) {
-    // Redirect to dashboard if already logged in
+  // Simple check: if user has a valid token, redirect to dashboard
+  // We don't call initialize here to avoid conflicts with dashboard auth check
+  if (localStorage.getItem('access_token')) {
     window.location.href = '/dashboard/my-schedule';
   }
 });

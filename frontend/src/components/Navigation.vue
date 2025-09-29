@@ -149,10 +149,16 @@ const navigation = computed(() => [
     current: currentPath.value === '/dashboard/my-schedule',
   },
   {
+    name: '我的团队',
+    href: '/dashboard/my-teams',
+    icon: UserGroupIcon,
+    current: currentPath.value === '/dashboard/my-teams',
+  },
+  {
     name: '团队视图',
     href: '/dashboard/team-view',
-    icon: UserGroupIcon,
-    current: currentPath.value === '/dashboard/team-view',
+    icon: UsersIcon,
+    current: currentPath.value.startsWith('/dashboard/team-view'),
   },
   {
     name: '个人中心',
@@ -185,5 +191,7 @@ const adminNavigation = computed(() => [
 
 async function handleLogout() {
   await authStore.logout();
+  // Redirect to login page after logout
+  window.location.href = '/login';
 }
 </script>

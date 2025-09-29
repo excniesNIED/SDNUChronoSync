@@ -15,7 +15,12 @@ import type {
   RegisterRequest,
   ImportSessionResponse,
   ImportRequest,
-  ImportResponse
+  ImportResponse,
+  Team,
+  TeamCreate,
+  TeamUpdate,
+  TeamJoinRequest,
+  TeamMemberAdd
 } from '@/types';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -336,6 +341,56 @@ class ApiClient {
 
   async getProfileStatistics(): Promise<{ schedule_count: number; event_count: number; join_date: string }> {
     const response = await axios.get('/api/profile/statistics');
+    return response.data;
+  }
+
+  // Team management endpoints
+  async createTeam(teamData: TeamCreate): Promise<Team> {
+    const response = await axios.post('/api/teams', teamData);
+    return response.data;
+  }
+
+  async getTeam(teamId: number): Promise<Team> {
+    const response = await axios.get(`/api/teams/${teamId}`);
+    return response.data;
+  }
+
+  async updateTeam(teamId: number, teamData: TeamUpdate): Promise<Team> {
+    const response = await axios.put(`/api/teams/${teamId}`, teamData);
+    return response.data;
+  }
+
+  async deleteTeam(teamId: number): Promise<void> {
+    await axios.delete(`/api/teams/${teamId}`);
+  }
+
+  async addTeamMember(teamId: number, memberData: TeamMemberAdd): Promise<{ message: string }> {
+    const response = await axios.post(`/api/teams/${teamId}/members`, memberData);
+    return response.data;
+  }
+
+  async removeTeamMember(teamId: number, userId: number): Promise<void> {
+    await axios.delete(`/api/teams/${teamId}/members/${userId}`);
+  }
+
+  // User team operations
+  async getMyTeams(): Promise<Team[]> {
+    const response = await axios.get('/api/me/teams');
+    return response.data;
+  }
+
+  async joinTeam(joinData: TeamJoinRequest): Promise<Team> {
+    const response = await axios.post('/api/me/teams/join', joinData);
+    return response.data;
+  }
+
+  async leaveTeam(teamId: number): Promise<void> {
+    await axios.post(`/api/me/teams/${teamId}/leave`);
+  }
+
+  // Team schedule view
+  async getTeamSchedules(teamId: number): Promise<Event[]> {
+    const response = await axios.get(`/api/teams/${teamId}/schedules`);
     return response.data;
   }
 

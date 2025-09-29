@@ -193,3 +193,44 @@ class AdjustmentOperationResponse(BaseModel):
     message: str
     adjustment_id: Optional[int] = None
     affected_events: int = 0
+
+# Team schemas
+class TeamBase(BaseModel):
+    name: str = Field(..., description="Team name")
+
+class TeamCreate(TeamBase):
+    pass
+
+class TeamUpdate(BaseModel):
+    name: Optional[str] = None
+
+class TeamMemberAdd(BaseModel):
+    student_id: str = Field(..., description="Student ID of the user to add")
+
+class TeamJoinRequest(BaseModel):
+    team_code: str = Field(..., description="Team code to join")
+
+class TeamResponse(TeamBase):
+    id: int
+    team_code: str
+    creator_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    # Include creator and members information
+    creator: Optional[UserPublic] = None
+    members: Optional[List[UserPublic]] = None
+    
+    class Config:
+        from_attributes = True
+
+class TeamMemberResponse(BaseModel):
+    """Response for team members list"""
+    id: int
+    name: str
+    team_code: str
+    creator_id: int
+    members: List[UserPublic]
+    
+    class Config:
+        from_attributes = True

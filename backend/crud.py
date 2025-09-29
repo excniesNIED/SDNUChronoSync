@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_
 from typing import List, Optional
 from datetime import datetime
-from models import User, Event, Schedule
-from schemas import UserCreate, UserUpdate, EventCreate, EventUpdate
+from models import User, Event, Schedule, Team
+from schemas import UserCreate, UserUpdate, EventCreate, EventUpdate, TeamCreate, TeamUpdate
 from auth import get_password_hash
 
 # User CRUD operations
@@ -182,3 +182,155 @@ def get_filtered_events(
             event.owner = event.schedule.owner
     
     return events
+
+
+# Team CRUD operations
+def get_team(db: Session, team_id: int) -> Optional[Team]:
+    """Get team by ID with creator and members."""
+    return db.query(Team).options(
+        joinedload(Team.creator),
+        joinedload(Team.members)
+    ).filter(Team.id == team_id).first()
+
+def get_team_by_code(db: Session, team_code: str) -> Optional[Team]:
+    """Get team by team code."""
+    return db.query(Team).options(
+        joinedload(Team.creator),
+        joinedload(Team.members)
+    ).filter(Team.team_code == team_code).first()
+
+def get_user_teams(db: Session, user_id: int) -> List[Team]:
+    """Get all teams that a user belongs to."""
+    user = db.query(User).options(joinedload(User.teams)).filter(User.id == user_id).first()
+    return user.teams if user else []
+
+def create_team(db: Session, team: TeamCreate, creator_id: int) -> Team:
+    """Create a new team."""
+    team_code = Team.generate_team_code(db)
+    db_team = Team(
+        name=team.name,
+        team_code=team_code,
+        creator_id=creator_id
+    )
+    db.add(db_team)
+    db.commit()
+    db.refresh(db_team)
+    
+    # Automatically add creator as a member
+    creator = db.query(User).filter(User.id == creator_id).first()
+    if creator:
+        db_team.members.append(creator)
+        db.commit()
+        db.refresh(db_team)
+    
+    return db_team
+
+def update_team(db: Session, team_id: int, team_update: TeamUpdate) -> Optional[Team]:
+    """Update team information."""
+    db_team = db.query(Team).filter(Team.id == team_id).first()
+    if not db_team:
+        return None
+    
+    update_data = team_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_team, field, value)
+    
+    db_team.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_team)
+    return db_team
+
+def add_team_member(db: Session, team_id: int, user_id: int) -> bool:
+    """Add a user to a team."""
+    team = db.query(Team).filter(Team.id == team_id).first()
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not team or not user:
+        return False
+    
+    if user not in team.members:
+        team.members.append(user)
+        db.commit()
+    
+    return True
+
+def remove_team_member(db: Session, team_id: int, user_id: int) -> bool:
+    """Remove a user from a team."""
+    team = db.query(Team).filter(Team.id == team_id).first()
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not team or not user:
+        return False
+    
+    if user in team.members:
+        team.members.remove(user)
+        db.commit()
+    
+    return True
+
+def join_team_by_code(db: Session, team_code: str, user_id: int) -> Optional[Team]:
+    """Join a team using team code."""
+    team = get_team_by_code(db, team_code)
+    if not team:
+        return None
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return None
+    
+    if user not in team.members:
+        team.members.append(user)
+        db.commit()
+        db.refresh(team)
+    
+    return team
+
+def get_team_schedules_events(db: Session, team_id: int) -> List[Event]:
+    """Get all events from active schedules of team members."""
+    team = db.query(Team).options(joinedload(Team.members)).filter(Team.id == team_id).first()
+    if not team:
+        return []
+    
+    # Get all member IDs
+    member_ids = [member.id for member in team.members]
+    
+    # Get all active schedules of team members
+    events = db.query(Event).options(
+        joinedload(Event.schedule).joinedload(Schedule.owner)
+    ).join(Schedule).filter(
+        and_(
+            Schedule.owner_id.in_(member_ids),
+            Schedule.status == "进行",  # Only active schedules
+            Event.is_active == True  # Only active events
+        )
+    ).all()
+    
+    # Set owner field for each event
+    for event in events:
+        if event.schedule and event.schedule.owner:
+            event.owner = event.schedule.owner
+    
+    return events
+
+def delete_team(db: Session, team_id: int) -> bool:
+    """Delete a team."""
+    db_team = db.query(Team).filter(Team.id == team_id).first()
+    if not db_team:
+        return False
+    
+    db.delete(db_team)
+    db.commit()
+    return True
+
+def is_team_creator(db: Session, team_id: int, user_id: int) -> bool:
+    """Check if a user is the creator of a team."""
+    team = db.query(Team).filter(Team.id == team_id).first()
+    return team and team.creator_id == user_id
+
+def is_team_member(db: Session, team_id: int, user_id: int) -> bool:
+    """Check if a user is a member of a team."""
+    user = db.query(User).options(joinedload(User.teams)).filter(User.id == user_id).first()
+    if not user:
+        return False
+    
+    return any(team.id == team_id for team in user.teams)

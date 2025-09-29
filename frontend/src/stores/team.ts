@@ -1,158 +1,276 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { User } from '@/types';
 import { apiClient } from '@/utils/api';
+import type { Team, TeamCreate, TeamUpdate, TeamJoinRequest, TeamMemberAdd, User, Event } from '@/types';
 
 export const useTeamStore = defineStore('team', () => {
   // State
-  const users = ref<User[]>([]);
-  const isLoading = ref(false);
+  const teams = ref<Team[]>([]);
+  const currentTeam = ref<Team | null>(null);
+  const teamEvents = ref<Event[]>([]);
+  const loading = ref(false);
   const error = ref<string | null>(null);
-  const lastFetchTime = ref<Date | null>(null);
-
-  // Cache duration in milliseconds (5 minutes)
-  const CACHE_DURATION = 5 * 60 * 1000;
 
   // Getters
-  const userList = computed(() => users.value);
-  const userMap = computed(() => {
-    const map = new Map<number, User>();
-    users.value.forEach(user => {
-      map.set(user.id, user);
-    });
-    return map;
+  const getTeamById = computed(() => {
+    return (id: number) => teams.value.find(team => team.id === id);
   });
 
-  const getUserById = computed(() => {
-    return (id: number): User | undefined => userMap.value.get(id);
+  const isTeamCreator = computed(() => {
+    return (teamId: number, userId: number) => {
+      const team = getTeamById.value(teamId);
+      return team?.creator_id === userId;
+    };
   });
 
-  const usersByClass = computed(() => {
-    const groups = new Map<string, User[]>();
-    users.value.forEach(user => {
-      if (!groups.has(user.class_name)) {
-        groups.set(user.class_name, []);
-      }
-      groups.get(user.class_name)!.push(user);
-    });
-    return groups;
-  });
-
-  const usersByGrade = computed(() => {
-    const groups = new Map<string, User[]>();
-    users.value.forEach(user => {
-      if (!groups.has(user.grade)) {
-        groups.set(user.grade, []);
-      }
-      groups.get(user.grade)!.push(user);
-    });
-    return groups;
-  });
-
-  const allClasses = computed(() => {
-    const classes = new Set<string>();
-    users.value.forEach(user => {
-      classes.add(user.class_name);
-    });
-    return Array.from(classes).sort();
-  });
-
-  const allGrades = computed(() => {
-    const grades = new Set<string>();
-    users.value.forEach(user => {
-      grades.add(user.grade);
-    });
-    return Array.from(grades).sort();
+  const isTeamMember = computed(() => {
+    return (teamId: number, userId: number) => {
+      const team = getTeamById.value(teamId);
+      return team?.members?.some(member => member.id === userId) || false;
+    };
   });
 
   // Actions
-  async function fetchUsers(forceRefresh = false): Promise<void> {
-    // Check if we need to refresh based on cache duration
-    if (!forceRefresh && lastFetchTime.value) {
-      const timeSinceLastFetch = Date.now() - lastFetchTime.value.getTime();
-      if (timeSinceLastFetch < CACHE_DURATION) {
-        return;
-      }
-    }
-
-    isLoading.value = true;
-    error.value = null;
-
+  async function fetchMyTeams() {
     try {
-      const fetchedUsers = await apiClient.getAllUsers();
-      users.value = fetchedUsers;
-      lastFetchTime.value = new Date();
+      loading.value = true;
+      error.value = null;
+      const data = await apiClient.getMyTeams();
+      teams.value = data;
     } catch (err: any) {
-      error.value = err.response?.data?.detail || '获取用户列表失败';
-      console.error('Failed to fetch users:', err);
+      error.value = err.response?.data?.detail || '获取团队列表失败';
+      console.error('Failed to fetch teams:', err);
     } finally {
-      isLoading.value = false;
+      loading.value = false;
     }
   }
 
-  function searchUsers(query: string): User[] {
-    if (!query.trim()) {
-      return users.value;
+  async function fetchTeam(teamId: number) {
+    try {
+      loading.value = true;
+      error.value = null;
+      const team = await apiClient.getTeam(teamId);
+      currentTeam.value = team;
+      
+      // Update the team in the list if it exists
+      const index = teams.value.findIndex(t => t.id === teamId);
+      if (index !== -1) {
+        teams.value[index] = team;
+      }
+      
+      return team;
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '获取团队信息失败';
+      console.error('Failed to fetch team:', err);
+      throw err;
+    } finally {
+      loading.value = false;
     }
-
-    const lowercaseQuery = query.toLowerCase();
-    return users.value.filter(user => 
-      user.full_name.toLowerCase().includes(lowercaseQuery) ||
-      user.student_id.toLowerCase().includes(lowercaseQuery) ||
-      user.class_name.toLowerCase().includes(lowercaseQuery) ||
-      user.grade.toLowerCase().includes(lowercaseQuery)
-    );
   }
 
-  function filterUsers(filters: {
-    class_name?: string;
-    grade?: string;
-    role?: 'user' | 'admin';
-  }): User[] {
-    return users.value.filter(user => {
-      if (filters.class_name && user.class_name !== filters.class_name) {
-        return false;
-      }
-      if (filters.grade && user.grade !== filters.grade) {
-        return false;
-      }
-      if (filters.role && user.role !== filters.role) {
-        return false;
-      }
-      return true;
-    });
+  async function createTeam(teamData: TeamCreate) {
+    try {
+      loading.value = true;
+      error.value = null;
+      const newTeam = await apiClient.createTeam(teamData);
+      teams.value.push(newTeam);
+      return newTeam;
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '创建团队失败';
+      console.error('Failed to create team:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
   }
 
-  function clearError(): void {
+  async function updateTeam(teamId: number, teamData: TeamUpdate) {
+    try {
+      loading.value = true;
+      error.value = null;
+      const updatedTeam = await apiClient.updateTeam(teamId, teamData);
+      
+      // Update the team in the list
+      const index = teams.value.findIndex(t => t.id === teamId);
+      if (index !== -1) {
+        teams.value[index] = updatedTeam;
+      }
+      
+      // Update current team if it's the same
+      if (currentTeam.value?.id === teamId) {
+        currentTeam.value = updatedTeam;
+      }
+      
+      return updatedTeam;
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '更新团队失败';
+      console.error('Failed to update team:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function deleteTeam(teamId: number) {
+    try {
+      loading.value = true;
+      error.value = null;
+      await apiClient.deleteTeam(teamId);
+      
+      // Remove from teams list
+      teams.value = teams.value.filter(t => t.id !== teamId);
+      
+      // Clear current team if it's the same
+      if (currentTeam.value?.id === teamId) {
+        currentTeam.value = null;
+      }
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '删除团队失败';
+      console.error('Failed to delete team:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function joinTeam(joinData: TeamJoinRequest) {
+    try {
+      loading.value = true;
+      error.value = null;
+      const team = await apiClient.joinTeam(joinData);
+      
+      // Add to teams list if not already there
+      const exists = teams.value.find(t => t.id === team.id);
+      if (!exists) {
+        teams.value.push(team);
+      }
+      
+      return team;
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '加入团队失败';
+      console.error('Failed to join team:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function leaveTeam(teamId: number) {
+    try {
+      loading.value = true;
+      error.value = null;
+      await apiClient.leaveTeam(teamId);
+      
+      // Remove from teams list
+      teams.value = teams.value.filter(t => t.id !== teamId);
+      
+      // Clear current team if it's the same
+      if (currentTeam.value?.id === teamId) {
+        currentTeam.value = null;
+      }
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '退出团队失败';
+      console.error('Failed to leave team:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function addTeamMember(teamId: number, memberData: TeamMemberAdd) {
+    try {
+      loading.value = true;
+      error.value = null;
+      await apiClient.addTeamMember(teamId, memberData);
+      
+      // Refresh team data to get updated members
+      await fetchTeam(teamId);
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '添加成员失败';
+      console.error('Failed to add team member:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function removeTeamMember(teamId: number, userId: number) {
+    try {
+      loading.value = true;
+      error.value = null;
+      await apiClient.removeTeamMember(teamId, userId);
+      
+      // Refresh team data to get updated members
+      await fetchTeam(teamId);
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '移除成员失败';
+      console.error('Failed to remove team member:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchTeamSchedules(teamId: number) {
+    try {
+      loading.value = true;
+      error.value = null;
+      const events = await apiClient.getTeamSchedules(teamId);
+      teamEvents.value = events;
+      return events;
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || '获取团队课表失败';
+      console.error('Failed to fetch team schedules:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  function clearError() {
     error.value = null;
   }
 
-  function clearCache(): void {
-    users.value = [];
-    lastFetchTime.value = null;
+  function clearCurrentTeam() {
+    currentTeam.value = null;
+    teamEvents.value = [];
+  }
+
+  // Reset store state
+  function $reset() {
+    teams.value = [];
+    currentTeam.value = null;
+    teamEvents.value = [];
+    loading.value = false;
+    error.value = null;
   }
 
   return {
     // State
-    users,
-    isLoading,
+    teams,
+    currentTeam,
+    teamEvents,
+    loading,
     error,
-    lastFetchTime,
-
+    
     // Getters
-    userList,
-    userMap,
-    getUserById,
-    usersByClass,
-    usersByGrade,
-    allClasses,
-    allGrades,
-
+    getTeamById,
+    isTeamCreator,
+    isTeamMember,
+    
     // Actions
-    fetchUsers,
-    searchUsers,
-    filterUsers,
+    fetchMyTeams,
+    fetchTeam,
+    createTeam,
+    updateTeam,
+    deleteTeam,
+    joinTeam,
+    leaveTeam,
+    addTeamMember,
+    removeTeamMember,
+    fetchTeamSchedules,
     clearError,
-    clearCache,
+    clearCurrentTeam,
+    $reset
   };
 });

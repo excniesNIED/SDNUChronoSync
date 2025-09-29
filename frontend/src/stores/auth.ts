@@ -33,7 +33,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout(): Promise<void> {
     user.value = null;
-    apiClient.logout();
+    // Clear token without automatic redirect
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+    }
   }
 
   async function fetchCurrentUser(): Promise<void> {
@@ -49,9 +52,14 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = userData;
     } catch (err: any) {
       error.value = err.response?.data?.detail || '获取用户信息失败';
-      // If token is invalid, logout
+      // If token is invalid, clear user data and throw error
       if (err.response?.status === 401) {
-        await logout();
+        user.value = null;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token');
+        }
+        // Re-throw the error so caller knows authentication failed
+        throw err;
       }
     } finally {
       isLoading.value = false;
