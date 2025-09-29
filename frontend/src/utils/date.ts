@@ -10,6 +10,18 @@ export function formatDate(date: Date | string): string {
   return d.toISOString().split('T')[0];
 }
 
+export function formatDateChinese(date: Date | string): string {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '无效日期';
+  }
+  return d.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).replace(/\//g, '-'); // 将 / 替换为 -，格式为 YYYY-MM-DD
+}
+
 export function formatDateTime(date: Date | string): string {
   const d = new Date(date);
   if (isNaN(d.getTime())) {
@@ -27,6 +39,18 @@ export function formatDisplayDate(date: Date | string): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+  });
+}
+
+export function formatDisplayDateShort(date: Date | string): string {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '无效日期';
+  }
+  return d.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
 }
 
@@ -50,6 +74,20 @@ export function formatDisplayDateTime(date: Date | string): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export function formatDisplayDateTimeShort(date: Date | string): string {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '无效日期时间';
+  }
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   });

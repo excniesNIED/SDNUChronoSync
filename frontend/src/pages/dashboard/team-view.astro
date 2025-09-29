@@ -75,6 +75,14 @@ const description = '选择要查看的团队课表';
         if (emptyState) emptyState.style.display = 'none';
         if (teamsGrid) teamsGrid.style.display = 'none';
 
+        // Initialize authentication first
+        await authStore.initialize();
+        
+        if (!authStore.isAuthenticated) {
+          window.location.href = '/login';
+          return;
+        }
+
         // Fetch user's teams
         await teamStore.fetchMyTeams();
         const teams = teamStore.teams;
@@ -110,6 +118,10 @@ const description = '选择要查看的团队课表';
         const teamCard = document.createElement('div');
         teamCard.className = 'bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer';
         
+        const isCreator = authStore.user && team.creator_id === authStore.user.id;
+        const roleClass = isCreator ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
+        const roleText = isCreator ? '创建者' : '成员';
+        
         teamCard.innerHTML = `
           <div class="p-6">
             <div class="flex items-center justify-between mb-4">
@@ -118,12 +130,8 @@ const description = '选择要查看的团队课表';
                 <p class="text-sm text-gray-500">${team.members?.length || 0} 名成员</p>
               </div>
               <div class="flex-shrink-0">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  team.creator_id === authStore.user?.id 
-                    ? 'bg-blue-100 text-blue-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }">
-                  ${team.creator_id === authStore.user?.id ? '创建者' : '成员'}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleClass}">
+                  ${roleText}
                 </span>
               </div>
             </div>

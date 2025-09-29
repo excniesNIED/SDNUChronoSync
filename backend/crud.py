@@ -77,9 +77,22 @@ def get_event(db: Session, event_id: int) -> Optional[Event]:
 
 def get_user_events(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Event]:
     """Get all events for a specific user through their schedules."""
-    return db.query(Event).options(
+    events = db.query(Event).options(
         joinedload(Event.schedule).joinedload(Schedule.owner)
-    ).join(Schedule).filter(Schedule.owner_id == user_id).offset(skip).limit(limit).all()
+    ).join(Schedule).filter(
+        and_(
+            Schedule.owner_id == user_id,
+            # 与团队视图保持一致的过滤条件
+            or_(Event.is_active == True, Event.is_active.is_(None))
+        )
+    ).offset(skip).limit(limit).all()
+    
+    # 为每个事件设置 owner 字段
+    for event in events:
+        if event.schedule and event.schedule.owner:
+            event.owner = event.schedule.owner
+    
+    return events
 
 def create_event(db: Session, event: EventCreate, schedule_id: int) -> Event:
     """Create a new event in a specific schedule."""

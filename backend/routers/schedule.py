@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/schedule", tags=["personal schedule"])
 @router.get("/", response_model=List[EventResponse])
 async def get_my_events(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 10000,  # 增加限制到10000，与多课表API保持一致
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):

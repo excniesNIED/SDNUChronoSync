@@ -134,6 +134,7 @@ import {
   ExclamationTriangleIcon,
   CalendarIcon,
 } from '@heroicons/vue/24/outline';
+import { formatDisplayDateShort } from '@/utils/date';
 import type { ScheduleResponse } from '@/types';
 
 const scheduleStore = useScheduleStore();
@@ -192,7 +193,7 @@ function formatScheduleInfo(schedule: ScheduleResponse): string {
   
   if (schedule.start_date) {
     const startDate = new Date(schedule.start_date);
-    parts.push(`从 ${startDate.toLocaleDateString()}`);
+    parts.push(`从 ${formatDisplayDateShort(schedule.start_date)}`);
   }
   
   return parts.join(' • ') || '无信息';
