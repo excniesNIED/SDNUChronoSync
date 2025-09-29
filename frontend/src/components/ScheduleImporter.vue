@@ -268,7 +268,7 @@
                         <div><strong>姓名：</strong>{{ userInfo.XM }}</div>
                         <div><strong>学号：</strong>{{ userInfo.XH }}</div>
                         <div><strong>班级：</strong>{{ userInfo.BJMC }}</div>
-                        <div><strong>年级：</strong>{{ userInfo.XQM === '1' ? '大一' : userInfo.XQM === '2' ? '大二' : userInfo.XQM === '3' ? '大三' : userInfo.XQM === '4' ? '大四' : '其他' }}</div>
+                        <div><strong>年级：</strong>{{ getGradeFromYear(userInfo.NJDM_ID) }}</div>
                         <div><strong>专业：</strong>{{ userInfo.ZYMC }}</div>
                         <div><strong>学年：</strong>{{ userInfo.XNMC }}</div>
                       </div>
@@ -397,6 +397,33 @@ const otherSchedules = computed(() => {
   if (!props.currentSchedule) return userSchedules.value;
   return userSchedules.value.filter(schedule => schedule.id !== props.currentSchedule.id);
 });
+
+// 根据入学年份计算年级
+const getGradeFromYear = (njdmId: string) => {
+  if (!njdmId) return '未知';
+  
+  const currentYear = new Date().getFullYear();
+  const entranceYear = parseInt(njdmId);
+  
+  if (isNaN(entranceYear)) return '未知';
+  
+  const grade = currentYear - entranceYear + 1;
+  
+  switch (grade) {
+    case 1:
+      return '大一';
+    case 2:
+      return '大二';
+    case 3:
+      return '大三';
+    case 4:
+      return '大四';
+    case 5:
+      return '大五';
+    default:
+      return grade > 0 ? `大${grade}` : '未知';
+  }
+};
 
 async function handleImport() {
   if (!sessionData.value) {

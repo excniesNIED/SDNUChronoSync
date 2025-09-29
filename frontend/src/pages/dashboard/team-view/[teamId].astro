@@ -1,5 +1,8 @@
 ---
 import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+
+export const prerender = false;
+
 const title = `团队课表视图`;
 const description = '查看团队成员的聚合课表';
 ---
@@ -121,7 +124,7 @@ const description = '查看团队成员的聚合课表';
   </div>
 
   <script>
-    import { createApp } from 'vue';
+    import { createApp, h } from 'vue';
     import { createPinia } from 'pinia';
     import ScheduleCalendar from '@/components/ScheduleCalendar.vue';
     import { useAuthStore } from '@/stores/auth';
@@ -252,24 +255,20 @@ const description = '查看团队成员的聚合课表';
         const calendarApp = createApp({
           components: { ScheduleCalendar },
           setup() {
-            return {
-              events: calendarEvents,
-              viewMode: { type: 'week', date: new Date() }
-            };
-          },
-          template: `
-            <ScheduleCalendar 
-              :events="events"
-              :view-mode="viewMode"
-              :is-team-view="true"
-              @event-click="handleEventClick"
-            />
-          `,
-          methods: {
-            handleEventClick(event) {
+            const handleEventClick = (event) => {
               // Handle event click - could show details modal
               console.log('Event clicked:', event);
-            }
+            };
+
+            return () => {
+              return h(ScheduleCalendar, {
+                events: calendarEvents,
+                viewMode: 'week',
+                currentDate: new Date(),
+                isAdminMode: true,
+                onEventClick: handleEventClick
+              });
+            };
           }
         });
 

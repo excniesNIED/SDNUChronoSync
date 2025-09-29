@@ -51,7 +51,7 @@
             v-for="(timeSlot, index) in timeSlots"
             :key="index"
             class="h-24 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
-            @click="$emit('date-click', day)"
+            @click="handleTimeSlotClick(day, index)"
           ></div>
 
           <!-- Events -->
@@ -189,7 +189,7 @@
             'min-h-[120px] border-b border-r border-gray-200 last:border-r-0 p-2 cursor-pointer hover:bg-gray-50',
             !isSameMonth(day, currentDate) ? 'bg-gray-50 text-gray-400' : 'bg-white',
           ]"
-          @click="$emit('date-click', day)"
+          @click="handleDateClick(day)"
         >
           <div
             :class="[
@@ -271,6 +271,12 @@ import {
   addDays
 } from '@/utils/date';
 
+// 添加isSameMonth函数
+function isSameMonth(date1: Date, date2: Date): boolean {
+  return date1.getFullYear() === date2.getFullYear() && 
+         date1.getMonth() === date2.getMonth();
+}
+
 interface Props {
   events: CalendarEvent[];
   viewMode: 'week' | 'month';
@@ -282,7 +288,7 @@ const props = withDefaults(defineProps<Props>(), {
   isAdminMode: false,
 });
 
-defineEmits<{
+const emit = defineEmits<{
   'event-click': [event: CalendarEvent, relatedEvents?: CalendarEvent[]];
   'date-click': [date: Date];
 }>();
@@ -329,11 +335,6 @@ function formatTimeSlot(timeSlot: any): string {
 
 function formatTime(dateTime: string): string {
   return formatDisplayTime(new Date(dateTime));
-}
-
-function isSameMonth(date1: Date, date2: Date): boolean {
-  return date1.getFullYear() === date2.getFullYear() && 
-         date1.getMonth() === date2.getMonth();
 }
 
 function getDayEvents(day: Date): CalendarEvent[] {
@@ -461,6 +462,32 @@ function getEventGroupStyle(eventGroup: CalendarEvent[], groupIndex: number) {
     top: `${top}%`,
     height: `${Math.max(height, 14)}%`,
   };
+}
+
+// 处理时间槽点击
+function handleTimeSlotClick(day: Date, timeSlotIndex: number) {
+  if (props.isAdminMode) return; // 管理模式下不允许添加事件
+  
+  const timeSlot = timeSlots[timeSlotIndex];
+  if (!timeSlot) return;
+  
+  // 创建日期时间对象
+  const clickDate = new Date(day);
+  const [hours, minutes] = timeSlot.start.split(':').map(Number);
+  clickDate.setHours(hours, minutes, 0, 0);
+  
+  emit('date-click', clickDate);
+}
+
+// 处理日期点击（月视图）
+function handleDateClick(date: Date) {
+  if (props.isAdminMode) return; // 管理模式下不允许添加事件
+  
+  // 设置为当天的早上8:20开始
+  const clickDate = new Date(date);
+  clickDate.setHours(8, 20, 0, 0);
+  
+  emit('date-click', clickDate);
 }
 </script>
 

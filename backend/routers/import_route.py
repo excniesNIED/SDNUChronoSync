@@ -180,6 +180,31 @@ async def import_from_zfw(
         saved_events = db.query(Event).filter(Event.schedule_id == user_schedule.id).count()
         print(f"数据库中该课表的总事件数: {saved_events}")
         
+        # 更新用户信息（如果有获取到用户信息）
+        if user_info:
+            try:
+                # 计算正确的年级
+                njdm_id = user_info.get("NJDM_ID")  # 入学年份
+                if njdm_id:
+                    from datetime import datetime
+                    current_year = datetime.now().year
+                    entrance_year = int(njdm_id)
+                    calculated_grade = str(entrance_year)  # 使用入学年份作为年级
+                    
+                    # 更新用户的年级和其他信息
+                    if user_info.get("BJMC"):  # 班级名称
+                        current_user.class_name = user_info["BJMC"]
+                    if user_info.get("XM"):  # 姓名
+                        current_user.full_name = user_info["XM"]
+                    
+                    current_user.grade = calculated_grade
+                    db.commit()
+                    
+                    print(f"用户信息已更新: 年级={calculated_grade}, 班级={current_user.class_name}, 姓名={current_user.full_name}")
+            except Exception as e:
+                print(f"更新用户信息失败: {e}")
+                # 不影响导入成功的返回
+        
         return ImportResponse(
             success=True,
             message=f"导入成功！共导入 {imported_count} 门课程",

@@ -72,6 +72,24 @@ export function getContrastColor(backgroundColor: string): string {
 }
 
 /**
+ * Generate a consistent color for an event based on owner name
+ */
+export function generateEventColor(ownerName: string): string {
+  if (!ownerName) return USER_COLORS[0].border;
+  
+  // Simple hash function to generate consistent colors based on string
+  let hash = 0;
+  for (let i = 0; i < ownerName.length; i++) {
+    const char = ownerName.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  const colorIndex = Math.abs(hash) % USER_COLORS.length;
+  return USER_COLORS[colorIndex].border;
+}
+
+/**
  * Clear the user color cache (useful for testing or when users change)
  */
 export function clearUserColorCache(): void {

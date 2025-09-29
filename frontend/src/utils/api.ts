@@ -157,15 +157,11 @@ class ApiClient {
     if (filter.full_name_contains) params.append('full_name_contains', filter.full_name_contains);
     if (filter.event_title_contains) params.append('event_title_contains', filter.event_title_contains);
 
-    const response = await axios.get(`/api/team/schedule/filtered?${params.toString()}`);
+    const response = await axios.get(`/api/schedule/filtered?${params.toString()}`);
     return response.data;
   }
 
   // Admin endpoints
-  async getAllUsersAdmin(): Promise<User[]> {
-    const response = await axios.get('/api/admin/users');
-    return response.data;
-  }
 
   async createUser(user: CreateUserRequest): Promise<User> {
     const response = await axios.post('/api/admin/users', user);
