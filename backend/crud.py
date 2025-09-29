@@ -106,12 +106,90 @@ def create_event(db: Session, event: EventCreate, schedule_id: int) -> Event:
         instructor=event.instructor,
         weeks_display=event.weeks_display,
         day_of_week=event.day_of_week,
-        period=event.period
+        period=event.period,
+        weeks_input=event.weeks_input
     )
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
     return db_event
+
+def create_recurring_event(db: Session, event: EventCreate, schedule_id: int) -> List[Event]:
+    """Create recurring events based on weeks_input range."""
+    from utils import parse_weeks
+    from datetime import timedelta, datetime
+    
+    # 获取课表信息
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise ValueError("Schedule not found")
+    
+    # 解析周数
+    weeks = parse_weeks(event.weeks_input or event.weeks_display or "")
+    if not weeks:
+        # 如果没有周数信息，创建单个事件
+        return [create_event(db, event, schedule_id)]
+    
+    created_events = []
+    
+    for week_number in weeks:
+        # 计算这一周对应的具体日期
+        if event.day_of_week and schedule.start_date:
+            # 计算从课表开始到目标周的天数
+            # 周一=1对应offset=0，周二=2对应offset=1，...，周日=7对应offset=6
+            day_offset = event.day_of_week - 1
+            total_days = (week_number - 1) * 7 + day_offset
+            
+            target_date = schedule.start_date + timedelta(days=total_days)
+            
+            # 提取原始事件的时间部分
+            original_start = event.start_time
+            original_end = event.end_time
+            
+            # 合并日期和时间
+            if isinstance(original_start, datetime) and isinstance(original_end, datetime):
+                new_start_time = datetime.combine(
+                    target_date, 
+                    original_start.time()
+                )
+                new_end_time = datetime.combine(
+                    target_date, 
+                    original_end.time()
+                )
+            else:
+                # 如果时间不是datetime对象，使用原始时间
+                new_start_time = original_start
+                new_end_time = original_end
+        else:
+            # 如果没有day_of_week或start_date信息，使用原始时间
+            new_start_time = event.start_time
+            new_end_time = event.end_time
+        
+        # 创建这一周的事件
+        week_event = Event(
+            schedule_id=schedule_id,
+            title=event.title,
+            description=event.description,
+            location=event.location,
+            start_time=new_start_time,
+            end_time=new_end_time,
+            instructor=event.instructor,
+            weeks_display=f"第{week_number}周",
+            weeks_input=str(week_number),
+            day_of_week=event.day_of_week,
+            period=event.period
+        )
+        
+        db.add(week_event)
+        created_events.append(week_event)
+    
+    db.commit()
+    
+    # 刷新所有创建的事件
+    for event_obj in created_events:
+        db.refresh(event_obj)
+    
+    return created_events
 
 def update_event(db: Session, event_id: int, event_update: EventUpdate) -> Optional[Event]:
     """Update event."""

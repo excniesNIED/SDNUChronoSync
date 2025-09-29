@@ -213,31 +213,44 @@
                       </div>
                     </div>
 
-                    <!-- Date and Time -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <label for="start_time" class="block text-sm font-medium leading-6 text-gray-900">
-                          开始时间 <span class="text-red-500">*</span>
+                    <!-- Time Input (HHMM only) -->
+                    <div class="space-y-4">
+                      <!-- Date Display (read-only, calculated from week and day) -->
+                      <div v-if="calculatedDate">
+                        <label class="block text-sm font-medium leading-6 text-gray-900">
+                          计算的日期
                         </label>
-                        <input
-                          id="start_time"
-                          v-model="form.start_time"
-                          type="datetime-local"
-                          required
-                          class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
-                        />
+                        <div class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-gray-50 text-gray-700 text-sm">
+                          {{ formatCalculatedDate(calculatedDate) }}
+                        </div>
                       </div>
-                      <div>
-                        <label for="end_time" class="block text-sm font-medium leading-6 text-gray-900">
-                          结束时间 <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="end_time"
-                          v-model="form.end_time"
-                          type="datetime-local"
-                          required
-                          class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
-                        />
+                      
+                      <!-- Time inputs -->
+                      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                          <label for="start_time_input" class="block text-sm font-medium leading-6 text-gray-900">
+                            开始时间 <span class="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="start_time_input"
+                            v-model="form.start_time_only"
+                            type="time"
+                            required
+                            class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                        <div>
+                          <label for="end_time_input" class="block text-sm font-medium leading-6 text-gray-900">
+                            结束时间 <span class="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="end_time_input"
+                            v-model="form.end_time_only"
+                            type="time"
+                            required
+                            class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -300,7 +313,8 @@
 import { ref, computed, watch } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { formatDateTime } from '@/utils/date';
+import { formatDateTime, formatDisplayDate } from '@/utils/date';
+import { useScheduleStore } from '@/stores/schedule';
 import type { Event } from '@/types';
 
 interface Props {
@@ -322,12 +336,16 @@ const emit = defineEmits<{
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
+const scheduleStore = useScheduleStore();
+
 const form = ref({
   title: '',
   description: '',
   location: '',
   start_time: '',
   end_time: '',
+  start_time_only: '',
+  end_time_only: '',
   instructor: '',
   weeks_display: '',
   weeks_input: '',
@@ -359,28 +377,46 @@ const classTimes = ref({
 const isEditMode = computed(() => props.event && props.event.id > 0);
 const onDelete = computed(() => emit);
 
+// 计算具体日期：基于课表开始日期、周数和星期几
+const calculatedDate = computed(() => {
+  const schedule = scheduleStore.activeSchedule;
+  if (!schedule || !schedule.start_date || !form.value.week_start || !form.value.day_of_week) {
+    return null;
+  }
+  
+  // 使用第一个选中的周数
+  const weekNumber = form.value.week_start;
+  const dayOfWeek = form.value.day_of_week;
+  
+  // 计算具体日期
+  const scheduleStartDate = new Date(schedule.start_date);
+  
+  // 计算从课表开始到目标周的天数
+  // 周一=1对应offset=0，周二=2对应offset=1，...，周日=7对应offset=6
+  const dayOffset = dayOfWeek - 1;
+  const totalDays = (weekNumber - 1) * 7 + dayOffset;
+  
+  const targetDate = new Date(scheduleStartDate);
+  targetDate.setDate(scheduleStartDate.getDate() + totalDays);
+  
+  return targetDate;
+});
+
+// 格式化计算出的日期
+function formatCalculatedDate(date: Date): string {
+  return formatDisplayDate(date);
+}
+
 // 根据节次自动填充时间
 function updateTimeFromPeriod() {
-  if (form.value.period_start && form.value.period_end && form.value.start_time) {
+  if (form.value.period_start && form.value.period_end) {
     const startPeriod = classTimes.value[form.value.period_start.toString()];
     const endPeriod = classTimes.value[form.value.period_end.toString()];
     
     if (startPeriod && endPeriod) {
-      // 获取当前开始时间的日期部分
-      const currentStartDate = new Date(form.value.start_time);
-      
-      // 创建新的开始和结束时间
-      const [startHour, startMinute] = startPeriod.start.split(':').map(Number);
-      const [endHour, endMinute] = endPeriod.end.split(':').map(Number);
-      
-      const newStartTime = new Date(currentStartDate);
-      newStartTime.setHours(startHour, startMinute, 0, 0);
-      
-      const newEndTime = new Date(currentStartDate);
-      newEndTime.setHours(endHour, endMinute, 0, 0);
-      
-      form.value.start_time = formatDateTime(newStartTime);
-      form.value.end_time = formatDateTime(newEndTime);
+      // 直接使用时间字符串
+      form.value.start_time_only = startPeriod.start;
+      form.value.end_time_only = endPeriod.end;
       
       // 更新period显示
       if (form.value.period_start === form.value.period_end) {
@@ -415,16 +451,18 @@ function formatWeeksDisplay() {
 // Watch for event changes to populate form
 watch(() => props.event, (newEvent) => {
   if (newEvent) {
-    // Safely format dates with fallback to current time
-    const now = new Date();
-    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    // 解析现有事件的时间部分
+    const startTime = newEvent.start_time ? new Date(newEvent.start_time) : new Date();
+    const endTime = newEvent.end_time ? new Date(newEvent.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
     
     form.value = {
       title: newEvent.title || '',
       description: newEvent.description || '',
       location: newEvent.location || '',
-      start_time: newEvent.start_time ? formatDateTime(newEvent.start_time) : formatDateTime(now),
-      end_time: newEvent.end_time ? formatDateTime(newEvent.end_time) : formatDateTime(oneHourLater),
+      start_time: newEvent.start_time ? formatDateTime(newEvent.start_time) : '',
+      end_time: newEvent.end_time ? formatDateTime(newEvent.end_time) : '',
+      start_time_only: startTime.toTimeString().slice(0, 5), // HH:MM格式
+      end_time_only: endTime.toTimeString().slice(0, 5), // HH:MM格式
       instructor: newEvent.instructor || '',
       weeks_display: newEvent.weeks_display || '',
       weeks_input: newEvent.weeks_input || '',
@@ -459,24 +497,36 @@ watch(() => props.event, (newEvent) => {
           form.value.week_end = parseInt(weekMatch[2] || weekMatch[1]);
         }
       }
+    } else if (!form.value.week_start && !form.value.day_of_week) {
+      // 如果没有周数信息，尝试从事件时间计算
+      if (newEvent.start_time && scheduleStore.activeSchedule?.start_date) {
+        const eventDate = new Date(newEvent.start_time);
+        const scheduleStartDate = new Date(scheduleStore.activeSchedule.start_date);
+        const daysDiff = Math.floor((eventDate.getTime() - scheduleStartDate.getTime()) / (1000 * 60 * 60 * 24));
+        const weekNumber = Math.floor(daysDiff / 7) + 1;
+        const dayOfWeek = eventDate.getDay() === 0 ? 7 : eventDate.getDay();
+        
+        form.value.week_start = weekNumber;
+        form.value.week_end = weekNumber;
+        form.value.day_of_week = dayOfWeek;
+      }
     }
   } else {
-    // Reset form for new event
-    const now = new Date();
-    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-    
+    // Reset form for new event - 设置默认时间
     form.value = {
       title: '',
       description: '',
       location: '',
-      start_time: formatDateTime(now),
-      end_time: formatDateTime(oneHourLater),
+      start_time: '',
+      end_time: '',
+      start_time_only: '08:20', // 默认第一节课开始时间
+      end_time_only: '09:05',   // 默认第一节课结束时间
       instructor: '',
       weeks_display: '',
       weeks_input: '',
-      week_start: undefined,
-      week_end: undefined,
-      day_of_week: undefined,
+      week_start: 1, // 默认第1周
+      week_end: 1,
+      day_of_week: 1, // 默认周一
       period: '',
       period_start: undefined,
       period_end: undefined,
@@ -499,18 +549,37 @@ async function handleSubmit() {
     return;
   }
   
-  if (!form.value.start_time || !form.value.end_time) {
+  if (!form.value.start_time_only || !form.value.end_time_only) {
     error.value = '请选择开始和结束时间';
     return;
   }
   
-  const startTime = new Date(form.value.start_time);
-  const endTime = new Date(form.value.end_time);
+  if (!form.value.week_start || !form.value.day_of_week) {
+    error.value = '请选择周数和星期';
+    return;
+  }
   
-  if (startTime >= endTime) {
+  // 验证时间逻辑
+  const [startHour, startMinute] = form.value.start_time_only.split(':').map(Number);
+  const [endHour, endMinute] = form.value.end_time_only.split(':').map(Number);
+  
+  if (startHour * 60 + startMinute >= endHour * 60 + endMinute) {
     error.value = '结束时间必须晚于开始时间';
     return;
   }
+  
+  // 构造完整的日期时间
+  const targetDate = calculatedDate.value;
+  if (!targetDate) {
+    error.value = '无法计算日期，请检查课表设置';
+    return;
+  }
+  
+  const startDateTime = new Date(targetDate);
+  startDateTime.setHours(startHour, startMinute, 0, 0);
+  
+  const endDateTime = new Date(targetDate);
+  endDateTime.setHours(endHour, endMinute, 0, 0);
   
   isLoading.value = true;
   
@@ -522,8 +591,8 @@ async function handleSubmit() {
       title: form.value.title.trim(),
       description: form.value.description?.trim() || undefined,
       location: form.value.location?.trim() || undefined,
-      start_time: new Date(form.value.start_time).toISOString(),
-      end_time: new Date(form.value.end_time).toISOString(),
+      start_time: startDateTime.toISOString(),
+      end_time: endDateTime.toISOString(),
       instructor: form.value.instructor?.trim() || undefined,
       weeks_display: form.value.weeks_display?.trim() || undefined,
       weeks_input: form.value.weeks_input?.trim() || undefined,

@@ -163,14 +163,14 @@ async def get_schedule_events(
     return events
 
 
-@router.post("/{schedule_id}/events", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/{schedule_id}/events", response_model=List[EventResponse], status_code=status.HTTP_201_CREATED)
 async def create_schedule_event(
     schedule_id: int,
     event_data: EventCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """在指定课表下创建事件"""
+    """在指定课表下创建事件，支持周数范围"""
     # 验证课表所有权
     schedule = db.query(Schedule).filter(
         Schedule.id == schedule_id,
@@ -183,26 +183,10 @@ async def create_schedule_event(
             detail="Schedule not found"
         )
     
-    # 创建事件
-    db_event = Event(
-        schedule_id=schedule_id,
-        title=event_data.title,
-        description=event_data.description,
-        location=event_data.location,
-        start_time=event_data.start_time,
-        end_time=event_data.end_time,
-        instructor=event_data.instructor,
-        weeks_display=event_data.weeks_display,
-        day_of_week=event_data.day_of_week,
-        period=event_data.period,
-        weeks_input=event_data.weeks_input
-    )
+    # 使用新的递归事件创建函数
+    created_events = crud.create_recurring_event(db, event_data, schedule_id)
     
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-    
-    return db_event
+    return created_events
 
 
 @router.put("/{schedule_id}/events/{event_id}", response_model=EventResponse)

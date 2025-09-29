@@ -22,13 +22,13 @@ async def get_my_events(
     events = crud.get_user_events(db, current_user.id, skip=skip, limit=limit)
     return events
 
-@router.post("/", response_model=EventResponse)
+@router.post("/", response_model=List[EventResponse])
 async def create_my_event(
     event: EventCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create a new event for the current user."""
+    """Create a new event for the current user. Returns a list of events if creating for multiple weeks."""
     # Get or create user's default schedule
     user_schedule = db.query(Schedule).filter(Schedule.owner_id == current_user.id).first()
     
@@ -61,9 +61,17 @@ async def create_my_event(
         db.commit()
         db.refresh(user_schedule)
     
-    db_event = crud.create_event(db, event, user_schedule.id)
-    # Reload with owner information
-    return crud.get_event(db, db_event.id)
+    # 使用新的递归事件创建函数
+    created_events = crud.create_recurring_event(db, event, user_schedule.id)
+    
+    # 重新加载每个事件以包含owner信息
+    result_events = []
+    for db_event in created_events:
+        reloaded_event = crud.get_event(db, db_event.id)
+        if reloaded_event:
+            result_events.append(reloaded_event)
+    
+    return result_events
 
 @router.put("/{event_id}", response_model=EventResponse)
 async def update_my_event(

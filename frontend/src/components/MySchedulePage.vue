@@ -725,7 +725,25 @@ function handleEventClick(event: Event, relatedEventsFromCalendar?: Event[]) {
 }
 
 function handleDateClick(date: Date) {
-  // Create new event at clicked date
+  if (!scheduleStore.activeSchedule) {
+    console.warn('No active schedule found');
+    return;
+  }
+  
+  // 计算点击日期相对于课表开始日期的周数和星期几
+  const scheduleStartDate = new Date(scheduleStore.activeSchedule.start_date);
+  const clickedDate = new Date(date);
+  
+  // 计算天数差
+  const daysDiff = Math.floor((clickedDate.getTime() - scheduleStartDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // 计算周数（从第1周开始）
+  const weekNumber = Math.floor(daysDiff / 7) + 1;
+  
+  // 计算星期几（1=周一, 7=周日）
+  const dayOfWeek = clickedDate.getDay() === 0 ? 7 : clickedDate.getDay();
+  
+  // Create new event at clicked date with calculated week and day
   selectedEvent.value = {
     id: 0,
     schedule_id: scheduleStore.activeScheduleId || 0,
@@ -736,6 +754,9 @@ function handleDateClick(date: Date) {
     end_time: formatDisplayDateTime(new Date(date.getTime() + 60 * 60 * 1000)), // 1 hour later
     created_at: '',
     updated_at: '',
+    day_of_week: dayOfWeek,
+    weeks_input: weekNumber.toString(),
+    weeks_display: `第${weekNumber}周`,
   };
   isModalOpen.value = true;
 }

@@ -197,10 +197,17 @@ export const useScheduleStore = defineStore('schedule', () => {
 
   async function createEvent(eventData: CreateEventRequest) {
     try {
-      // 使用个人课表API创建事件
-      const newEvent = await apiClient.createMyEvent(eventData)
-      currentMyEvents.value.push(newEvent)
-      return newEvent
+      // 使用个人课表API创建事件 - 现在返回事件数组
+      const newEvents = await apiClient.createMyEvent(eventData)
+      // 将所有新创建的事件添加到当前事件列表
+      if (Array.isArray(newEvents)) {
+        currentMyEvents.value.push(...newEvents)
+        return newEvents[0] // 返回第一个事件以保持兼容性
+      } else {
+        // 如果是单个事件（向后兼容）
+        currentMyEvents.value.push(newEvents)
+        return newEvents
+      }
     } catch (err: any) {
       eventsError.value = err.response?.data?.detail || '创建事件失败'
       console.error('Failed to create event:', err)

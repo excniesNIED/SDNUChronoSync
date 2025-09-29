@@ -114,7 +114,7 @@ class ApiClient {
     return response.data;
   }
 
-  async createMyEvent(event: CreateEventRequest): Promise<Event> {
+  async createMyEvent(event: CreateEventRequest): Promise<Event[]> {
     const response = await axios.post('/api/schedule/', event);
     return response.data;
   }
@@ -266,7 +266,7 @@ class ApiClient {
     return response.data;
   }
 
-  async createScheduleEvent(scheduleId: number, eventData: CreateEventRequest): Promise<Event> {
+  async createScheduleEvent(scheduleId: number, eventData: CreateEventRequest): Promise<Event[]> {
     const response = await axios.post(`/api/schedules/${scheduleId}/events`, eventData);
     return response.data;
   }
