@@ -112,6 +112,34 @@
             >
               <ChevronRightIcon class="h-5 w-5" />
             </button>
+            
+            <!-- Jump to schedule start date button -->
+            <button
+              v-if="scheduleStore.activeSchedule?.start_date"
+              @click="jumpToScheduleStart"
+              class="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
+              title="跳转到开学时间"
+            >
+              开学
+            </button>
+            
+            <!-- Jump to today button -->
+            <button
+              @click="jumpToToday"
+              class="px-3 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
+              title="跳转到今天"
+            >
+              今天
+            </button>
+            
+            <!-- Force refresh events button -->
+            <button
+              @click="forceRefreshEvents"
+              class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
+              title="强制刷新课程数据"
+            >
+              刷新
+            </button>
           </div>
         </div>
 
@@ -255,7 +283,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
@@ -283,6 +311,7 @@ import type { Event, CalendarEvent, ScheduleResponse } from '@/types';
 const authStore = useAuthStore();
 const scheduleStore = useScheduleStore();
 
+// 默认显示当前时间，如果有活跃课表且开学时间在未来，则显示开学时间
 const currentDate = ref(new Date());
 const viewMode = ref<'week' | 'month'>('week');
 const isModalOpen = ref(false);
@@ -336,6 +365,56 @@ function navigateDate(direction: number) {
     type: viewMode.value,
     date: currentDate.value,
   });
+}
+
+function jumpToScheduleStart() {
+  if (scheduleStore.activeSchedule?.start_date) {
+    currentDate.value = new Date(scheduleStore.activeSchedule.start_date);
+    console.log(`跳转到开学时间: ${currentDate.value.toLocaleDateString()}`);
+    
+    scheduleStore.setViewMode({
+      type: viewMode.value,
+      date: currentDate.value,
+    });
+  }
+}
+
+function jumpToToday() {
+  currentDate.value = new Date();
+  console.log(`跳转到今天: ${currentDate.value.toLocaleDateString()}`);
+  
+  scheduleStore.setViewMode({
+    type: viewMode.value,
+    date: currentDate.value,
+  });
+}
+
+async function forceRefreshEvents() {
+  if (!scheduleStore.activeScheduleId) {
+    console.warn('没有活跃的课表');
+    return;
+  }
+  
+  try {
+    console.log('强制刷新课程数据...');
+    
+    // 显示加载状态
+    scheduleStore.eventsLoading = true;
+    
+    // 强制重新获取事件数据
+    await scheduleStore.fetchMyEvents();
+    
+    console.log('课程数据刷新完成');
+    
+    // 可选：显示成功提示
+    // 这里可以添加 toast 提示
+    
+  } catch (error) {
+    console.error('刷新课程数据失败:', error);
+    // 可选：显示错误提示
+  } finally {
+    scheduleStore.eventsLoading = false;
+  }
 }
 
 function openCreateModal() {
@@ -465,10 +544,25 @@ function closeAdjustmentModal() {
 async function handleAdjustmentApplied() {
   // 调休操作成功后，重新加载当前课表的事件数据
   if (scheduleStore.activeScheduleId) {
-    await scheduleStore.loadScheduleEvents(scheduleStore.activeScheduleId);
+    await scheduleStore.fetchMyEvents();
   }
   closeAdjustmentModal();
 }
+
+// Watch for active schedule changes to update current date
+watch(() => scheduleStore.activeSchedule, (newSchedule) => {
+  if (newSchedule && newSchedule.start_date) {
+    const scheduleStartDate = new Date(newSchedule.start_date);
+    const now = new Date();
+    
+    // 如果课表开学时间比当前时间晚超过30天，则跳转到开学时间
+    const daysDiff = (scheduleStartDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysDiff > 30) {
+      currentDate.value = scheduleStartDate;
+      console.log(`跳转到课表开学时间: ${scheduleStartDate.toLocaleDateString()}`);
+    }
+  }
+}, { immediate: true });
 
 // Initialize
 onMounted(async () => {

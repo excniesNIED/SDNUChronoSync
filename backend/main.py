@@ -41,7 +41,7 @@ def init_db():
         # Create some sample users for testing
         sample_users = [
             {
-                "student_id": "202311000516",
+                "student_id": "202311001145",
                 "password": "password123",
                 "full_name": "黄浩二",
                 "class_name": "计工本2303",

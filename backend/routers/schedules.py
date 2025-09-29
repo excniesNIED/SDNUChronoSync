@@ -133,7 +133,7 @@ async def get_schedule_events(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 10000
 ):
     """获取指定课表的所有事件"""
     # 验证课表所有权
@@ -148,10 +148,17 @@ async def get_schedule_events(
             detail="Schedule not found"
         )
     
-    events = db.query(Event).filter(
-        Event.schedule_id == schedule_id,
-        Event.is_active == True  # 只返回活跃的事件
-    ).offset(skip).limit(limit).all()
+    events = (
+        db.query(Event)
+        .filter(
+            Event.schedule_id == schedule_id,
+            Event.is_active == True  # 只返回活跃的事件
+        )
+        .order_by(Event.start_time.asc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     
     return events
 
