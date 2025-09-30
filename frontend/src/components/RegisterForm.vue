@@ -6,13 +6,13 @@
           <UserPlusIcon class="h-6 w-6 text-primary-600" />
         </div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          创建新账户
+          注册时序同笺账户
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600">
           或
-          <router-link to="/login" class="font-medium text-primary-600 hover:text-primary-500">
+          <a href="/login" class="font-medium text-primary-600 hover:text-primary-500">
             登录现有账户
-          </router-link>
+          </a>
         </p>
       </div>
 

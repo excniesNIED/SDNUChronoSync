@@ -4,7 +4,7 @@
     <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-sm ring-1 ring-gray-900/5">
       <!-- Logo -->
       <div class="flex h-16 shrink-0 items-center">
-        <h1 class="text-2xl font-bold text-primary-600">课表管理</h1>
+        <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
       </div>
 
       <!-- Navigation -->
@@ -15,6 +15,8 @@
               <li v-for="item in navigation" :key="item.name">
                 <a
                   :href="item.href"
+                  :target="item.external ? '_blank' : undefined"
+                  :rel="item.external ? 'noopener noreferrer' : undefined"
                   :class="[
                     item.current
                       ? 'bg-primary-50 text-primary-700'
@@ -116,7 +118,7 @@
 
       <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         <div class="flex flex-1 items-center">
-          <h1 class="text-lg font-semibold text-gray-900">课表管理</h1>
+          <h1 class="text-lg font-semibold text-gray-900">时序同笺</h1>
         </div>
         
         <!-- Mobile user avatar -->
@@ -152,6 +154,8 @@ import {
   Cog6ToothIcon,
   UserIcon,
   ArrowRightOnRectangleIcon,
+  InformationCircleIcon,
+  AcademicCapIcon,
 } from '@heroicons/vue/24/outline';
 
 const authStore = useAuthStore();
@@ -191,6 +195,20 @@ const navigation = computed(() => [
     href: '/dashboard/profile',
     icon: UserIcon,
     current: currentPath.value === '/dashboard/profile',
+  },
+  {
+    name: '使用教程',
+    href: 'https://hs.cnies.org/archives/lag_about',
+    icon: AcademicCapIcon,
+    current: false,
+    external: true,
+  },
+  {
+    name: '关于',
+    href: 'https://hs.cnies.org/archives/lag',
+    icon: InformationCircleIcon,
+    current: false,
+    external: true,
   },
 ]);
 

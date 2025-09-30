@@ -44,7 +44,7 @@
             <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
               <!-- Logo -->
               <div class="flex h-16 shrink-0 items-center">
-                <h1 class="text-2xl font-bold text-primary-600">课表管理</h1>
+                <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
               </div>
 
               <!-- Navigation -->
@@ -55,7 +55,9 @@
                       <li v-for="item in navigation" :key="item.name">
                         <a
                           :href="item.href"
-                          @click="$emit('close')"
+                          :target="item.external ? '_blank' : undefined"
+                          :rel="item.external ? 'noopener noreferrer' : undefined"
+                          @click="!item.external && $emit('close')"
                           :class="[
                             item.current
                               ? 'bg-primary-50 text-primary-700'
@@ -143,6 +145,8 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   XMarkIcon,
+  InformationCircleIcon,
+  AcademicCapIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -173,16 +177,36 @@ const navigation = computed(() => [
     current: currentPath.value === '/dashboard/my-schedule',
   },
   {
+    name: '我的团队',
+    href: '/dashboard/my-teams',
+    icon: UserGroupIcon,
+    current: currentPath.value === '/dashboard/my-teams',
+  },
+  {
     name: '团队视图',
     href: '/dashboard/team-view',
-    icon: UserGroupIcon,
-    current: currentPath.value === '/dashboard/team-view',
+    icon: UsersIcon,
+    current: currentPath.value.startsWith('/dashboard/team-view'),
   },
   {
     name: '个人中心',
     href: '/dashboard/profile',
     icon: UserIcon,
     current: currentPath.value === '/dashboard/profile',
+  },
+  {
+    name: '使用教程',
+    href: 'https://hs.cnies.org/archives/lag_about',
+    icon: AcademicCapIcon,
+    current: false,
+    external: true,
+  },
+  {
+    name: '关于',
+    href: 'https://hs.cnies.org/archives/lag',
+    icon: InformationCircleIcon,
+    current: false,
+    external: true,
   },
 ]);
 
