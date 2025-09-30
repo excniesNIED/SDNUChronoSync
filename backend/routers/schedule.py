@@ -163,13 +163,43 @@ async def get_filtered_schedule(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get filtered events. Only accessible by admin users."""
-    # Check if user is admin
+    """Get filtered events. Accessible by admin users or team members for their teams."""
+    # Parse team IDs first if provided
+    team_id_list = None
+    if team_ids:
+        try:
+            team_id_list = [int(tid.strip()) for tid in team_ids.split(',') if tid.strip()]
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid team IDs format"
+            )
+    
+    # Check permissions
     if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admin users can access filtered schedules"
-        )
+        # Non-admin users can only access data from their teams
+        if not team_id_list:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must specify team IDs to filter. Only admin users can access all schedules."
+            )
+        
+        # Verify user is a member of all requested teams
+        from models import Team
+        for team_id in team_id_list:
+            team = db.query(Team).filter(Team.id == team_id).first()
+            if not team:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Team with ID {team_id} not found"
+                )
+            
+            # Check if user is a member of this team
+            if current_user not in team.members:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"You are not a member of team '{team.name}'"
+                )
     
     try:
         # Parse date strings
@@ -189,16 +219,7 @@ async def get_filtered_schedule(
                     detail="Invalid user IDs format"
                 )
         
-        # Parse team IDs if provided
-        team_id_list = None
-        if team_ids:
-            try:
-                team_id_list = [int(tid.strip()) for tid in team_ids.split(',') if tid.strip()]
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid team IDs format"
-                )
+        # team_id_list is already parsed above in permission check
         
         # Parse class names if provided
         class_name_list = None

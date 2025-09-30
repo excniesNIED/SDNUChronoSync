@@ -510,7 +510,7 @@ const handleJoinTeam = async () => {
 };
 
 const viewTeam = (teamId: number) => {
-  window.location.href = `/dashboard/team-view/${teamId}`;
+  window.location.href = `/dashboard/team-view?teamId=${teamId}`;
 };
 
 const copyTeamCode = async (code: string) => {
