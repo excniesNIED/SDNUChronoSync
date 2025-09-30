@@ -43,8 +43,17 @@
 
             <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
               <!-- Logo -->
-              <div class="flex h-16 shrink-0 items-center">
+              <div class="flex h-16 shrink-0 items-center justify-between">
                 <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
+                <!-- Theme Toggle -->
+                <button
+                  @click="themeStore.toggleTheme()"
+                  class="p-2 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                  :title="themeStore.isDark() ? '切换到浅色模式' : '切换到深色模式'"
+                >
+                  <SunIcon v-if="themeStore.isDark()" class="h-5 w-5" aria-hidden="true" />
+                  <MoonIcon v-else class="h-5 w-5" aria-hidden="true" />
+                </button>
               </div>
 
               <!-- Navigation -->
@@ -131,6 +140,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useThemeStore } from '@/stores/theme';
 import {
   Dialog,
   DialogPanel,
@@ -147,6 +157,8 @@ import {
   XMarkIcon,
   InformationCircleIcon,
   AcademicCapIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -160,6 +172,7 @@ const emit = defineEmits<{
 }>();
 
 const authStore = useAuthStore();
+const themeStore = useThemeStore();
 const currentPath = ref('');
 
 onMounted(async () => {

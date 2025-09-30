@@ -23,6 +23,16 @@ const { title, description = "多用户课表与日程管理工具" } = Astro.pr
     
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Theme initialization script - runs before page render to avoid flash -->
+    <script is:inline>
+      (function() {
+        const theme = localStorage.getItem('app-theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      })();
+    </script>
   </head>
   <body class="bg-gray-50 min-h-screen">
     <slot />
@@ -41,6 +51,26 @@ const { title, description = "多用户课表与日程管理工具" } = Astro.pr
   
   * {
     box-sizing: border-box;
+  }
+  
+  /* 深色模式样式 - 使用反色滤镜 */
+  html.dark-mode {
+    filter: invert(1) hue-rotate(180deg);
+    background-color: #1a1a1a;
+  }
+  
+  /* 图片和媒体元素需要再次反色以保持正常显示 */
+  html.dark-mode img,
+  html.dark-mode video,
+  html.dark-mode iframe,
+  html.dark-mode [style*="background-image"] {
+    filter: invert(1) hue-rotate(180deg);
+  }
+  
+  /* 平滑过渡效果 */
+  html,
+  body {
+    transition: filter 0.3s ease-in-out, background-color 0.3s ease-in-out;
   }
   
   /* 确保日期时间输入框使用中国格式 */

@@ -3,8 +3,17 @@
     <!-- Sidebar component -->
     <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-sm ring-1 ring-gray-900/5">
       <!-- Logo -->
-      <div class="flex h-16 shrink-0 items-center">
+      <div class="flex h-16 shrink-0 items-center justify-between">
         <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
+        <!-- Theme Toggle -->
+        <button
+          @click="themeStore.toggleTheme()"
+          class="p-2 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+          :title="themeStore.isDark() ? '切换到浅色模式' : '切换到深色模式'"
+        >
+          <SunIcon v-if="themeStore.isDark()" class="h-5 w-5" aria-hidden="true" />
+          <MoonIcon v-else class="h-5 w-5" aria-hidden="true" />
+        </button>
       </div>
 
       <!-- Navigation -->
@@ -121,8 +130,18 @@
           <h1 class="text-lg font-semibold text-gray-900">时序同笺</h1>
         </div>
         
-        <!-- Mobile user avatar -->
-        <div class="flex items-center">
+        <!-- Mobile theme toggle -->
+        <div class="flex items-center gap-x-3">
+          <button
+            @click="themeStore.toggleTheme()"
+            class="p-2 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+            :title="themeStore.isDark() ? '切换到浅色模式' : '切换到深色模式'"
+          >
+            <SunIcon v-if="themeStore.isDark()" class="h-5 w-5" aria-hidden="true" />
+            <MoonIcon v-else class="h-5 w-5" aria-hidden="true" />
+          </button>
+          
+          <!-- Mobile user avatar -->
           <UserAvatar 
             :user="authStore.user" 
             size="sm" 
@@ -144,6 +163,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useThemeStore } from '@/stores/theme';
 import MobileDrawer from './MobileDrawer.vue';
 import UserAvatar from './UserAvatar.vue';
 import {
@@ -156,9 +176,12 @@ import {
   ArrowRightOnRectangleIcon,
   InformationCircleIcon,
   AcademicCapIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/vue/24/outline';
 
 const authStore = useAuthStore();
+const themeStore = useThemeStore();
 const mobileMenuOpen = ref(false);
 
 // Get current path to determine active navigation item
