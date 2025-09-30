@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Main Content (removed separate header) -->
 
-    <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 lg:ml-72">
+    <main class="max-w-6xl mx-auto">
       <div class="space-y-8">
         <!-- Profile Card -->
         <div class="bg-white shadow rounded-lg">
