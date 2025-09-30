@@ -383,14 +383,11 @@ const handleTeamDissolved = async () => {
 
 // 解散团队功能已移至DissolveTeamModal中
 
+import { formatDisplayDate } from '@/utils/date';
+
 const formatDate = (dateString: string) => {
   try {
-    const d = new Date(dateString);
-    return d.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return formatDisplayDate(dateString);
   } catch (error) {
     return '未知时间';
   }

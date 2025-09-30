@@ -585,7 +585,7 @@ import {
   CalendarDaysIcon,
   PencilIcon,
 } from '@heroicons/vue/24/outline';
-import { formatDisplayDate, formatDisplayDateTime, formatDisplayDateShort, addWeeks, addMonths } from '@/utils/date';
+import { formatDisplayDate, formatDisplayDateTime, addWeeks, addMonths } from '@/utils/date';
 import { getUserColor } from '@/utils/colors';
 import type { Event, CalendarEvent, ScheduleResponse } from '@/types';
 
@@ -653,7 +653,7 @@ function navigateDate(direction: number) {
 function jumpToScheduleStart() {
   if (scheduleStore.activeSchedule?.start_date) {
     currentDate.value = new Date(scheduleStore.activeSchedule.start_date);
-    console.log(`跳转到开学时间: ${formatDisplayDateShort(currentDate.value)}`);
+    console.log(`跳转到开学时间: ${formatDisplayDate(currentDate.value)}`);
     
     scheduleStore.setViewMode({
       type: viewMode.value,
@@ -664,7 +664,7 @@ function jumpToScheduleStart() {
 
 function jumpToToday() {
   currentDate.value = new Date();
-  console.log(`跳转到今天: ${formatDisplayDateShort(currentDate.value)}`);
+  console.log(`跳转到今天: ${formatDisplayDate(currentDate.value)}`);
   
   scheduleStore.setViewMode({
     type: viewMode.value,
@@ -829,7 +829,7 @@ function formatScheduleInfo(schedule: ScheduleResponse): string {
   }
   
   if (schedule.start_date) {
-    parts.push(`从 ${formatDisplayDateShort(schedule.start_date)}`);
+    parts.push(`从 ${formatDisplayDate(schedule.start_date)}`);
   }
   
   return parts.join(' • ') || '无信息';
@@ -862,7 +862,7 @@ watch(() => scheduleStore.activeSchedule, (newSchedule) => {
     const daysDiff = (scheduleStartDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     if (daysDiff > 30) {
       currentDate.value = scheduleStartDate;
-      console.log(`跳转到课表开学时间: ${formatDisplayDateShort(scheduleStartDate)}`);
+      console.log(`跳转到课表开学时间: ${formatDisplayDate(scheduleStartDate)}`);
     }
   }
 }, { immediate: true });

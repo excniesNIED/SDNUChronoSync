@@ -19,15 +19,44 @@ export function formatDateChinese(date: Date | string): string {
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   
-  return `${year}-${month}-${day}`;
+  return `${year}年${month}月${day}日`;
 }
 
+// 返回纯数字格式 YYYYMMDD，用于文件名等场景
+export function formatDatePlain(date: Date | string): string {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '';
+  }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}${month}${day}`;
+}
+
+// 用于 HTML datetime-local 输入框，必须保持 YYYY-MM-DDTHH:mm 格式
 export function formatDateTime(date: Date | string): string {
   const d = new Date(date);
   if (isNaN(d.getTime())) {
     return '';
   }
   return d.toISOString().slice(0, 16);
+}
+
+// 返回中文日期时间格式，用于显示
+export function formatDateTimeChinese(date: Date | string): string {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return '无效日期时间';
+  }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hour = String(d.getHours()).padStart(2, '0');
+  const minute = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${year}年${month}月${day}日 ${hour}:${minute}`;
 }
 
 export function formatDisplayDate(date: Date | string): string {

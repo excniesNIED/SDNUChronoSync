@@ -6,10 +6,12 @@
 
     <!-- Date Range -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        日期范围
-      </label>
-      <div class="space-y-2">
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-medium text-gray-700">
+          日期范围
+        </label>
+      </div>
+      <div class="space-y-3">
         <div>
           <label class="block text-xs text-gray-500 mb-1">开始日期</label>
           <input
@@ -18,6 +20,9 @@
             type="date"
             class="block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
           />
+          <p v-if="filterState.dateRange.start" class="mt-1 text-xs text-primary-600">
+            已选择: {{ formatDatePreview(filterState.dateRange.start) }}
+          </p>
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">结束日期</label>
@@ -27,6 +32,9 @@
             type="date"
             class="block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
           />
+          <p v-if="filterState.dateRange.end" class="mt-1 text-xs text-primary-600">
+            已选择: {{ formatDatePreview(filterState.dateRange.end) }}
+          </p>
         </div>
       </div>
     </div>
@@ -370,6 +378,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { formatDisplayDate } from '@/utils/date';
 import UserAvatar from './UserAvatar.vue';
 import type { User, FilterState, Team } from '@/types';
 
@@ -557,6 +566,16 @@ function clearAllFilters() {
     nameKeyword: '',
     eventKeyword: '',
   });
+}
+
+// 格式化日期预览（显示中文格式）
+function formatDatePreview(dateString: string): string {
+  if (!dateString) return '';
+  try {
+    return formatDisplayDate(dateString);
+  } catch (error) {
+    return dateString;
+  }
 }
 
 // Close dropdown when clicking outside

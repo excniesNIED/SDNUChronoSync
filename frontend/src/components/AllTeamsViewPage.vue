@@ -484,7 +484,7 @@ function navigateDate(direction: number) {
 
 function jumpToToday() {
   currentDate.value = new Date();
-  console.log(`跳转到今天: ${currentDate.value.toLocaleDateString('zh-CN')}`);
+  console.log(`跳转到今天: ${formatDisplayDate(currentDate.value)}`);
   
   scheduleStore.setViewMode({
     type: viewMode.value,
