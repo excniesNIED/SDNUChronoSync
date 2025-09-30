@@ -18,16 +18,18 @@
       <main class="flex-1 overflow-hidden">
         <div class="flex h-full flex-col">
           <!-- Action bar -->
-          <div class="flex-shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-4">
+          <div class="flex-shrink-0 border-b border-gray-200 bg-white px-4 md:px-6 py-3 md:py-4">
+            <!-- 主要操作区域 - 使用 flex-wrap 支持换行 -->
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+              <!-- 左侧控制组 -->
+              <div class="flex items-center gap-2 flex-wrap">
                 <!-- Mobile filter button -->
                 <button
                   @click="mobileFiltersOpen = true"
-                  class="lg:hidden inline-flex items-center gap-x-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                  class="lg:hidden inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 >
                   <FunnelIcon class="h-4 w-4" />
-                  筛选
+                  <span class="hidden sm:inline">筛选</span>
                 </button>
 
                 <!-- View mode toggle (button style for larger screens, dropdown for smaller) -->
@@ -38,7 +40,7 @@
                       viewMode === 'week'
                         ? 'bg-primary-600 text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
-                      'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
+                      'relative inline-flex items-center rounded-l-md px-3 py-1.5 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
                     ]"
                   >
                     <span class="hidden xl:inline">周视图</span>
@@ -50,7 +52,7 @@
                       viewMode === 'month'
                         ? 'bg-primary-600 text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
-                      'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
+                      'relative -ml-px inline-flex items-center rounded-r-md px-3 py-1.5 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
                     ]"
                   >
                     <span class="hidden xl:inline">月视图</span>
@@ -62,9 +64,9 @@
                 <div class="lg:hidden">
                   <Menu as="div" class="relative inline-block text-left">
                     <div>
-                      <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                      <MenuButton class="inline-flex w-full justify-center gap-x-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         {{ viewMode === 'week' ? '周' : '月' }}
-                        <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
+                        <ChevronDownIcon class="-mr-0.5 h-4 w-4 text-gray-400" />
                       </MenuButton>
                     </div>
                     <transition
@@ -106,67 +108,76 @@
                     </transition>
                   </Menu>
                 </div>
-
-                <!-- Date navigation -->
-                <div class="flex items-center gap-2">
-                  <button
-                    @click="navigateDate(-1)"
-                    class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-                  >
-                    <ChevronLeftIcon class="h-5 w-5" />
-                  </button>
-                  <h2 class="text-lg font-semibold text-gray-900 min-w-[200px] text-center">
-                    {{ currentDateTitle }}
-                  </h2>
-                  <button
-                    @click="navigateDate(1)"
-                    class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-                  >
-                    <ChevronRightIcon class="h-5 w-5" />
-                  </button>
-                </div>
-
-                <!-- Navigation buttons -->
-                <div class="flex items-center gap-2">
-                  <!-- Jump to today button -->
-                  <button
-                    @click="jumpToToday"
-                    class="px-3 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
-                    title="跳转到今天"
-                  >
-                    <span class="hidden xl:inline">今天</span>
-                    <span class="xl:hidden">今天</span>
-                  </button>
-                  
-                  <!-- Force refresh events button -->
-                  <button
-                    @click="forceRefreshEvents"
-                    class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
-                    title="强制刷新数据"
-                  >
-                    <span class="hidden xl:inline">刷新</span>
-                    <span class="xl:hidden">刷新</span>
-                  </button>
-                </div>
               </div>
 
-              <!-- Team info and filter status -->
-              <div class="text-sm text-gray-600 space-y-1">
-                <div>
+              <!-- Date navigation - 可在中等屏幕换行 -->
+              <div class="flex items-center gap-1.5 md:gap-2">
+                <button
+                  @click="navigateDate(-1)"
+                  class="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
+                  title="上一周/月"
+                >
+                  <ChevronLeftIcon class="h-5 w-5" />
+                </button>
+                <h2 class="text-base md:text-lg font-semibold text-gray-900 min-w-[140px] md:min-w-[180px] text-center">
+                  {{ currentDateTitle }}
+                </h2>
+                <button
+                  @click="navigateDate(1)"
+                  class="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
+                  title="下一周/月"
+                >
+                  <ChevronRightIcon class="h-5 w-5" />
+                </button>
+              </div>
+
+              <!-- Quick action buttons -->
+              <div class="flex items-center gap-2">
+                <button
+                  @click="jumpToToday"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
+                  title="跳转到今天"
+                >
+                  <CalendarIcon class="h-3.5 w-3.5" />
+                  <span>今天</span>
+                </button>
+                
+                <button
+                  @click="forceRefreshEvents"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
+                  title="强制刷新数据"
+                >
+                  <ArrowPathIcon class="h-3.5 w-3.5" />
+                  <span>刷新</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Team info and filter status - 独立的信息栏 -->
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <div class="inline-flex items-center gap-2">
+                <span class="font-medium text-gray-700">
                   {{ selectedTeamsCount > 0 ? `已选择 ${selectedTeamsCount} 个团队` : '全部团队' }}
-                  <span v-if="totalMembersCount > 0" class="ml-2">- {{ totalMembersCount }} 名成员</span>
-                </div>
-                <div v-if="hasActiveFilters" class="text-xs">
-                  <span v-if="scheduleStore.filterState.selectedUserIds.length > 0">
-                    已筛选 {{ scheduleStore.filterState.selectedUserIds.length }} 个成员
-                  </span>
-                  <span v-if="scheduleStore.filterState.selectedClassNames.length > 0" class="ml-2">
-                    {{ scheduleStore.filterState.selectedClassNames.length }} 个班级
-                  </span>
-                  <span v-if="scheduleStore.filterState.selectedGrades.length > 0" class="ml-2">
-                    {{ scheduleStore.filterState.selectedGrades.length }} 个年级
-                  </span>
-                </div>
+                </span>
+                <span v-if="totalMembersCount > 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  {{ totalMembersCount }} 人
+                </span>
+              </div>
+              
+              <!-- 筛选状态标签 -->
+              <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-2">
+                <span v-if="scheduleStore.filterState.selectedUserIds.length > 0" 
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700">
+                  已筛选 {{ scheduleStore.filterState.selectedUserIds.length }} 个成员
+                </span>
+                <span v-if="scheduleStore.filterState.selectedClassNames.length > 0" 
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                  {{ scheduleStore.filterState.selectedClassNames.length }} 个班级
+                </span>
+                <span v-if="scheduleStore.filterState.selectedGrades.length > 0" 
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  {{ scheduleStore.filterState.selectedGrades.length }} 个年级
+                </span>
               </div>
             </div>
           </div>
@@ -335,6 +346,8 @@ import {
   FunnelIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
+  CalendarIcon,
+  ArrowPathIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDate, addWeeks, addMonths } from '@/utils/date';
 import { generateEventColor } from '@/utils/colors';

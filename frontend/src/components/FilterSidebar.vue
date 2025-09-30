@@ -1,7 +1,7 @@
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 md:p-6 space-y-5">
     <div>
-      <h3 class="text-lg font-medium text-gray-900 mb-4">筛选条件</h3>
+      <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3">筛选条件</h3>
     </div>
 
     <!-- Date Range -->
@@ -9,14 +9,14 @@
       <label class="block text-sm font-medium text-gray-700 mb-2">
         日期范围
       </label>
-      <div class="space-y-3">
+      <div class="space-y-2">
         <div>
           <label class="block text-xs text-gray-500 mb-1">开始日期</label>
           <input
             :value="filterState.dateRange.start"
             @input="updateDateRange('start', $event.target.value)"
             type="date"
-            class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm"
+            class="block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
           />
         </div>
         <div>
@@ -25,7 +25,7 @@
             :value="filterState.dateRange.end"
             @input="updateDateRange('end', $event.target.value)"
             type="date"
-            class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm"
+            class="block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
           />
         </div>
       </div>
@@ -67,16 +67,16 @@
               />
             </div>
             
-            <div class="p-2">
+            <div class="flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50">
               <button
                 @click="selectAllUsers"
-                class="w-full text-left px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-100 rounded transition-colors"
               >
                 全选
               </button>
               <button
                 @click="clearAllUsers"
-                class="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200 rounded transition-colors"
               >
                 清空
               </button>
@@ -142,18 +142,18 @@
             v-if="teamDropdownOpen"
             class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
           >
-            <div class="p-2">
+            <div class="flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50">
               <button
                 @click="selectAllTeams"
-                class="w-full text-left px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-100 rounded transition-colors"
               >
-                全选团队
+                全选
               </button>
               <button
                 @click="clearAllTeams"
-                class="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200 rounded transition-colors"
               >
-                清空团队
+                清空
               </button>
             </div>
 
@@ -212,18 +212,18 @@
             v-if="classDropdownOpen"
             class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
           >
-            <div class="p-2">
+            <div class="flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50">
               <button
                 @click="selectAllClasses"
-                class="w-full text-left px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-100 rounded transition-colors"
               >
-                全选班级
+                全选
               </button>
               <button
                 @click="clearAllClasses"
-                class="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200 rounded transition-colors"
               >
-                清空班级
+                清空
               </button>
             </div>
 
@@ -279,18 +279,18 @@
             v-if="gradeDropdownOpen"
             class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
           >
-            <div class="p-2">
+            <div class="flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50">
               <button
                 @click="selectAllGrades"
-                class="w-full text-left px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-100 rounded transition-colors"
               >
-                全选年级
+                全选
               </button>
               <button
                 @click="clearAllGrades"
-                class="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                class="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200 rounded transition-colors"
               >
-                清空年级
+                清空
               </button>
             </div>
 
@@ -347,23 +347,21 @@
       />
     </div>
 
-    <!-- Apply Button -->
-    <div>
+    <!-- Action Buttons -->
+    <div class="flex gap-3 pt-2">
       <button
         @click="$emit('apply-filter')"
-        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        class="flex-1 flex justify-center items-center gap-1.5 py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
       >
+        <CheckIcon class="h-4 w-4" />
         应用筛选
       </button>
-    </div>
-
-    <!-- Clear Button -->
-    <div>
       <button
         @click="clearAllFilters"
-        class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        class="px-4 py-2.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+        title="清空所有筛选"
       >
-        清空筛选
+        <XMarkIcon class="h-4 w-4" />
       </button>
     </div>
   </div>
@@ -371,7 +369,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/outline';
+import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import UserAvatar from './UserAvatar.vue';
 import type { User, FilterState, Team } from '@/types';
 
