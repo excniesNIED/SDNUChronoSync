@@ -1,9 +1,9 @@
 <template>
   <div class="space-y-8">
     <!-- Page Header -->
-    <div class="text-center sm:text-left">
-      <h1 class="text-3xl font-bold text-gray-900">我的团队</h1>
-      <p class="mt-2 text-lg text-gray-600">创建团队、加入团队或管理现有团队</p>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">我的团队</h1>
+      <p class="mt-2 text-sm text-gray-600">创建团队、加入团队或管理现有团队</p>
     </div>
 
     <!-- Quick Stats -->

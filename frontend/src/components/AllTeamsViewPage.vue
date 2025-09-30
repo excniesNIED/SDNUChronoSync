@@ -17,6 +17,12 @@
       <!-- Main content -->
       <main class="flex-1 overflow-hidden">
         <div class="flex h-full flex-col">
+          <!-- Page Header -->
+          <div class="flex-shrink-0 border-b border-gray-200 bg-white px-4 md:px-6 py-3 md:py-4">
+            <h1 class="text-2xl font-bold text-gray-900">团队视图</h1>
+            <p class="mt-1 text-sm text-gray-600">查看所有团队成员的课表安排</p>
+          </div>
+
           <!-- Action bar -->
           <div class="flex-shrink-0 border-b border-gray-200 bg-white px-4 md:px-6 py-3 md:py-4">
             <!-- 主要操作区域 - 使用 flex-wrap 支持换行 -->

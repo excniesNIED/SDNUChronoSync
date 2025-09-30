@@ -1,5 +1,11 @@
 <template>
   <div class="space-y-6">
+    <!-- Page Header -->
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">团队管理</h1>
+      <p class="mt-2 text-sm text-gray-600">查看和管理所有团队信息</p>
+    </div>
+
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <div class="bg-white overflow-hidden shadow rounded-lg">

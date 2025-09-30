@@ -1,5 +1,11 @@
 <template>
   <div class="space-y-6">
+    <!-- Page Header -->
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">用户管理</h1>
+      <p class="mt-2 text-sm text-gray-600">管理系统用户、角色和权限</p>
+    </div>
+
     <!-- Action bar -->
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
