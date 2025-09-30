@@ -1,4 +1,14 @@
----
-// Redirect to login page
-return Astro.redirect('/login');
----
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0;url=/login">
+  <script>
+    window.location.href = '/login';
+  </script>
+  <title>Redirecting...</title>
+</head>
+<body>
+  <p>正在跳转到登录页面...</p>
+</body>
+</html>

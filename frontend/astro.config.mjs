@@ -4,6 +4,7 @@ import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
 export default defineConfig({
+  output: 'static',
   integrations: [
     vue({
       appEntrypoint: '/src/pages/_app'
