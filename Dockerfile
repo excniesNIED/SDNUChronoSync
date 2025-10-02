@@ -1,5 +1,5 @@
 # 多阶段构建 Dockerfile - 前后端一体
-FROM node:18-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 
 # 设置工作目录
 WORKDIR /app/frontend
@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Node.js (用于服务前端构建结果)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
 # 创建应用目录
