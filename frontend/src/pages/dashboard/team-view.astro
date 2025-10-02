@@ -12,9 +12,13 @@ const description = '查看所有团队的聚合课表';
     import { createPinia } from 'pinia';
     import AllTeamsViewPage from '@/components/AllTeamsViewPage.vue';
 
-    // Get preselected team ID from URL query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const preselectedTeamId = urlParams.get('teamId') ? parseInt(urlParams.get('teamId')) : undefined;
+  // Resolve team ID from query (?teamId=) or path (/dashboard/team-view/:id)
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryTeamId = urlParams.get('teamId');
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+  const lastSegment = pathSegments[pathSegments.length - 1];
+  const pathTeamId = /^\d+$/.test(lastSegment) ? parseInt(lastSegment) : undefined;
+  const preselectedTeamId = queryTeamId ? parseInt(queryTeamId) : pathTeamId;
 
     // Create Vue app
     const pinia = createPinia();
