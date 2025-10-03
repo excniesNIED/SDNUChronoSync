@@ -374,9 +374,9 @@ const getAvatarUrl = computed(() => {
     return defaultAvatar.value;
   }
   
-  // If avatar_url starts with '/static/', prepend backend URL
+  // If avatar_url starts with '/static/', it's already a relative path that works with nginx
   if (profileData.value.avatar_url.startsWith('/static/')) {
-    return `http://localhost:8000${profileData.value.avatar_url}`;
+    return profileData.value.avatar_url;
   }
   
   // If it's already a full URL or data URL, use as is

@@ -133,9 +133,8 @@ const getAvatarUrl = (avatarUrl: string): string => {
     return avatarUrl;
   }
   
-  // 如果是相对路径，添加API基础URL
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  return `${apiBaseUrl}${avatarUrl}`;
+  // 如果是相对路径，直接返回（nginx会处理）
+  return avatarUrl;
 };
 
 const handleImageError = () => {
