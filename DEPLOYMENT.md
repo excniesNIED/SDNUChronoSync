@@ -89,28 +89,27 @@ docker-compose exec sdnu-chronosync cp /app/schedule_app.db /app/backup_$(date +
 # 1. 构建镜像
 docker build -t sdnu-chronosync:latest .
 
-# 2. 创建数据卷
-docker volume create sdnu-data
-docker volume create sdnu-uploads
-docker volume create sdnu-config
-docker volume create sdnu-logs
-
-# 3. 准备配置文件
+# 2. 准备数据目录和配置文件
 mkdir -p ~/sdnu-data/{database,uploads,config,logs}
 cp backend/config.toml ~/sdnu-data/config/
 
-# 4. 运行容器（通过环境变量指定数据库路径）
+# 3. 运行容器（通过环境变量指定数据库路径）
 docker run -d \
   --name sdnu-chronosync \
   -p 1145:1145 \
   -e DATABASE_URL=sqlite:////app/data/schedule_app.db \
-  -v sdnu-data:/app/data \
-  -v sdnu-uploads:/app/uploads \
+  -v ~/sdnu-data/database:/app/data \
+  -v ~/sdnu-data/uploads:/app/uploads \
   -v ~/sdnu-data/config/config.toml:/app/config.toml:ro \
-  -v sdnu-logs:/app/logs \
+  -v ~/sdnu-data/logs:/app/logs \
   --restart unless-stopped \
   sdnu-chronosync:latest
 ```
+
+**重要提示：**
+- 数据库目录映射：`~/sdnu-data/database:/app/data` （注意是 database 子目录，不是 sdnu-data 本身）
+- 配置文件映射：确保 `~/sdnu-data/config/config.toml` 文件存在
+- 所有挂载都使用绑定挂载方式，便于直接访问和备份
 
 #### 管理命令
 
@@ -218,6 +217,27 @@ gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 
 容器化部署需要将重要数据持久化到宿主机，确保容器重启后数据不丢失。
 
+### 宿主机目录结构
+
+推荐在宿主机上创建以下目录结构：
+
+```
+~/sdnu-data/              # 或 /www/wwwroot/sdnu.chsy/sdnu-data/
+├── database/             # 数据库目录 → 挂载到 /app/data
+│   └── schedule_app.db   # SQLite 数据库文件
+├── uploads/              # 上传文件目录 → 挂载到 /app/uploads
+│   └── avatars/          # 用户头像
+├── config/               # 配置目录
+│   └── config.toml       # 配置文件 → 挂载到 /app/config.toml
+└── logs/                 # 日志目录 → 挂载到 /app/logs
+    ├── fastapi.log
+    └── nginx.log
+```
+
+**⚠️ 重要提醒：**
+- 数据库挂载：使用 `database` 子目录，不是 `sdnu-data` 本身
+- 配置文件：必须先创建 `config.toml` 文件再挂载
+
 #### 1. Docker Compose 持久化 (自动配置)
 
 使用 `docker-compose.yml` 会自动创建以下挂载：
@@ -255,6 +275,12 @@ docker run -d \
   --restart unless-stopped \
   sdnu-chronosync:latest
 ```
+
+**挂载说明：**
+- `~/sdnu-data/database:/app/data` - 数据库文件目录（必须是 database 子目录）
+- `~/sdnu-data/uploads:/app/uploads` - 用户上传文件目录
+- `~/sdnu-data/config/config.toml:/app/config.toml:ro` - 配置文件（只读）
+- `~/sdnu-data/logs:/app/logs` - 应用日志目录
 
 #### 3. 数据备份策略
 
@@ -373,6 +399,28 @@ ls -la data/database/
 
 # 重新初始化数据库
 docker-compose exec sdnu-chronosync python -c "from main import init_db; init_db()"
+```
+
+**常见错误：数据库和配置文件未生效**
+
+如果发现数据库或 config.toml 没有按预期加载，请检查：
+
+```bash
+# 1. 确认挂载路径是否正确（注意是 database 子目录，不是 sdnu-data）
+# ❌ 错误示例：
+-v /path/to/sdnu-data/sdnu-data:/app/data  # 错误！
+
+# ✅ 正确示例：
+-v /path/to/sdnu-data/database:/app/data   # 正确！
+
+# 2. 确认配置文件是否存在
+ls -la /path/to/sdnu-data/config/config.toml
+
+# 3. 如果文件不存在，从项目中复制
+cp backend/config.toml /path/to/sdnu-data/config/
+
+# 4. 重启容器使更改生效
+docker restart sdnu-chronosync
 ```
 
 #### 3. 文件上传失败
