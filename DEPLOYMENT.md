@@ -95,13 +95,17 @@ docker volume create sdnu-uploads
 docker volume create sdnu-config
 docker volume create sdnu-logs
 
-# 3. 运行容器
+# 3. 准备配置文件
+mkdir -p ~/sdnu-data/{database,uploads,config,logs}
+cp backend/config.toml ~/sdnu-data/config/
+
+# 4. 运行容器
 docker run -d \
   --name sdnu-chronosync \
   -p 1145:1145 \
-  -v sdnu-data:/app/schedule_app.db \
+  -v sdnu-data:/app/data \
   -v sdnu-uploads:/app/uploads \
-  -v sdnu-config:/app/config.toml \
+  -v ~/sdnu-data/config/config.toml:/app/config.toml:ro \
   -v sdnu-logs:/app/logs \
   --restart unless-stopped \
   sdnu-chronosync:latest
@@ -219,12 +223,12 @@ gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 
 ```yaml
 volumes:
-  # 数据库文件
-  - ./data/database:/app/schedule_app.db
+  # 数据库文件（挂载目录）
+  - ./data/database:/app/data
   # 用户上传文件
   - ./data/uploads:/app/uploads  
-  # 配置文件
-  - ./data/config:/app/config.toml
+  # 配置文件（挂载单个文件，只读）
+  - ./data/config/config.toml:/app/config.toml:ro
   # 应用日志
   - ./data/logs:/app/logs
 ```
@@ -242,10 +246,11 @@ cp backend/config.toml ~/sdnu-data/config/
 docker run -d \
   --name sdnu-chronosync \
   -p 1145:1145 \
-  -v ~/sdnu-data/database:/app \
+  -v ~/sdnu-data/database:/app/data \
   -v ~/sdnu-data/uploads:/app/uploads \
-  -v ~/sdnu-data/config/config.toml:/app/config.toml \
+  -v ~/sdnu-data/config/config.toml:/app/config.toml:ro \
   -v ~/sdnu-data/logs:/app/logs \
+  --restart unless-stopped \
   sdnu-chronosync:latest
 ```
 
@@ -281,7 +286,7 @@ chmod +x backup.sh
 
 | 目录/文件 | 用途 | 是否必须持久化 |
 |-----------|------|---------------|
-| `/app/schedule_app.db` | SQLite数据库文件 | ✅ 必须 |
+| `/app/data/schedule_app.db` | SQLite数据库文件 | ✅ 必须 |
 | `/app/uploads/avatars/` | 用户头像文件 | ✅ 推荐 |
 | `/app/config.toml` | 应用配置文件 | ✅ 推荐 |
 | `/app/logs/` | 应用日志文件 | 📝 可选 |

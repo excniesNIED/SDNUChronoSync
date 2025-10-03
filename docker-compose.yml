@@ -9,12 +9,12 @@ services:
     ports:
       - "1145:1145"
     volumes:
-      # 数据库持久化
-      - ./data/database:/app/schedule_app.db
+      # 数据库持久化（挂载目录）
+      - ./data/database:/app/data
       # 用户上传文件持久化
       - ./data/uploads:/app/uploads
-      # 配置文件持久化
-      - ./data/config:/app/config.toml
+      # 配置文件持久化（挂载单个文件）
+      - ./data/config/config.toml:/app/config.toml:ro
       # 日志持久化
       - ./data/logs:/app/logs
     environment:
