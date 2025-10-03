@@ -20,6 +20,7 @@ services:
     environment:
       - NODE_ENV=production
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=sqlite:////app/data/schedule_app.db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:1145/health"]

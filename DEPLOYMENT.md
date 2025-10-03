@@ -99,10 +99,11 @@ docker volume create sdnu-logs
 mkdir -p ~/sdnu-data/{database,uploads,config,logs}
 cp backend/config.toml ~/sdnu-data/config/
 
-# 4. 运行容器
+# 4. 运行容器（通过环境变量指定数据库路径）
 docker run -d \
   --name sdnu-chronosync \
   -p 1145:1145 \
+  -e DATABASE_URL=sqlite:////app/data/schedule_app.db \
   -v sdnu-data:/app/data \
   -v sdnu-uploads:/app/uploads \
   -v ~/sdnu-data/config/config.toml:/app/config.toml:ro \
@@ -242,10 +243,11 @@ mkdir -p ~/sdnu-data/{database,uploads,config,logs}
 # 复制初始配置
 cp backend/config.toml ~/sdnu-data/config/
 
-# 运行容器并挂载目录
+# 运行容器并挂载目录（通过环境变量指定数据库路径）
 docker run -d \
   --name sdnu-chronosync \
   -p 1145:1145 \
+  -e DATABASE_URL=sqlite:////app/data/schedule_app.db \
   -v ~/sdnu-data/database:/app/data \
   -v ~/sdnu-data/uploads:/app/uploads \
   -v ~/sdnu-data/config/config.toml:/app/config.toml:ro \

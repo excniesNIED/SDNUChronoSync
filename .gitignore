@@ -214,3 +214,6 @@ temp/
 
 # Local development
 .local/
+
+# Data
+data/*
