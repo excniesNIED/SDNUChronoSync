@@ -15,6 +15,17 @@ export default defineConfig({
     port: 4321,
     host: true
   },
+  vite: {
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+          secure: false
+        }
+      }
+    }
+  },
   build: {
     assets: 'assets'
   }

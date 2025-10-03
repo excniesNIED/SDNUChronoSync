@@ -23,7 +23,8 @@ import type {
   TeamMemberAdd
 } from '@/types';
 
-const API_BASE_URL = 'http://localhost:8000';
+// Use relative URL to work with nginx proxy in production and dev
+const API_BASE_URL = '';
 
 class ApiClient {
   constructor() {
