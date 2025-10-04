@@ -4,16 +4,5 @@ import UserManagementPage from '../../../components/admin/UserManagementPage.vue
 ---
 
 <DashboardLayout title="用户管理 - 课表管理系统">
-  <div class="space-y-6">
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-2xl font-semibold text-gray-900">用户管理</h1>
-        <p class="mt-2 text-sm text-gray-700">
-          管理系统用户，包括学生和管理员账户
-        </p>
-      </div>
-    </div>
-
-    <UserManagementPage client:load />
-  </div>
+  <UserManagementPage client:load />
 </DashboardLayout>

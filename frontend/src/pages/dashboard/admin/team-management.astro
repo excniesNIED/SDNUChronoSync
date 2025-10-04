@@ -6,16 +6,5 @@ const description = '管理系统中的所有团队';
 ---
 
 <DashboardLayout title={title} description={description}>
-  <div class="space-y-6">
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-2xl font-semibold text-gray-900">团队管理</h1>
-        <p class="mt-2 text-sm text-gray-700">
-          管理系统中所有的团队，包括查看成员、修改信息和删除团队
-        </p>
-      </div>
-    </div>
-
-    <AdminTeamManagement client:load />
-  </div>
+  <AdminTeamManagement client:load />
 </DashboardLayout>
