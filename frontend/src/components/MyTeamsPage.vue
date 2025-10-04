@@ -69,56 +69,6 @@
         <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">团队管理</h3>
         
         <div class="grid gap-6 lg:grid-cols-2">
-          <!-- Create Team -->
-          <div class="space-y-4">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500">
-                  <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                </div>
-              </div>
-              <div class="ml-4">
-                <h4 class="text-lg font-medium text-gray-900">创建新团队</h4>
-                <p class="text-sm text-gray-500">创建一个新的团队并邀请成员加入</p>
-              </div>
-            </div>
-            
-            <form @submit.prevent="handleCreateTeam" class="space-y-4">
-              <div>
-                <label for="newTeamName" class="block text-sm font-medium text-gray-700">
-                  团队名称
-                </label>
-                <div class="mt-1">
-                  <input
-                    id="newTeamName"
-                    v-model="newTeamName"
-                    type="text"
-                    required
-                    placeholder="请输入团队名称"
-                    class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    :disabled="creating"
-                  />
-                </div>
-              </div>
-              
-              <div class="flex justify-end">
-                <button
-                  type="submit"
-                  :disabled="creating || !newTeamName.trim()"
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg v-if="creating" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {{ creating ? '创建中...' : '创建团队' }}
-                </button>
-              </div>
-            </form>
-          </div>
-
           <!-- Join Team -->
           <div class="space-y-4">
             <div class="flex items-center">
@@ -167,6 +117,56 @@
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   {{ joining ? '加入中...' : '加入团队' }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Create Team -->
+          <div class="space-y-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500">
+                  <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </div>
+              </div>
+              <div class="ml-4">
+                <h4 class="text-lg font-medium text-gray-900">创建新团队</h4>
+                <p class="text-sm text-gray-500">创建一个新的团队并邀请成员加入</p>
+              </div>
+            </div>
+            
+            <form @submit.prevent="handleCreateTeam" class="space-y-4">
+              <div>
+                <label for="newTeamName" class="block text-sm font-medium text-gray-700">
+                  团队名称
+                </label>
+                <div class="mt-1">
+                  <input
+                    id="newTeamName"
+                    v-model="newTeamName"
+                    type="text"
+                    required
+                    placeholder="请输入团队名称"
+                    class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    :disabled="creating"
+                  />
+                </div>
+              </div>
+              
+              <div class="flex justify-end">
+                <button
+                  type="submit"
+                  :disabled="creating || !newTeamName.trim()"
+                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg v-if="creating" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ creating ? '创建中...' : '创建团队' }}
                 </button>
               </div>
             </form>
