@@ -620,11 +620,10 @@ def _handle_swap_adjustment(db: Session, schedule: Schedule, data: SwapAdjustmen
     db.add(adjustment)
     db.flush()  # 获取 adjustment.id
     
-    # 2. 找出原始日期的所有活跃非覆盖事件
+    # 2. 找出原始日期的所有活跃事件（包括覆盖事件）
     from_events = db.query(Event).filter(
         Event.schedule_id == schedule.id,
         Event.is_active == True,
-        Event.is_override == False,
         func.date(Event.start_time) == data.source_date
     ).all()
     
