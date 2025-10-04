@@ -1,10 +1,43 @@
 # 时序同笺 (SDNUChronoSync)
 
-多用户课表与日程管理工具
+[![GitHub](https://img.shields.io/badge/GitHub-SDNUChronoSync-blue?logo=github)](https://github.com/excniesNIED/SDNUChronoSync)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://typescriptlang.org)
 
-一个现代化的、全功能的多用户课表与日程管理 Web 应用。支持个人多课表管理、高级调休功能、完整的团队协作系统，以及灵活的管理员控制功能。专为教育机构和团队协作场景设计。
+## 📋 项目简介
 
-## 技术栈
+时序同笺 (SDNUChronoSync) 是一个现代化的、全功能的多用户课表与日程管理 Web 应用，专为山东师范大学设计。支持个人多课表管理、高级调休功能、完整的团队协作系统，以及灵活的管理员控制功能。专为教育机构和团队协作场景设计。
+
+### 🌟 核心特性
+
+- **多用户支持**：支持个人和团队协作的课表管理
+- **智能调休**：节假日设置和课程对调功能
+- **团队协作**：基于邀请码的团队创建和管理
+- **教务导入**：支持从正方教务系统一键导入课表
+- **多平台兼容**：响应式设计，支持桌面、平板、手机
+- **数据导出**：支持ICS格式导出，兼容各大日历应用
+
+## 📑 目录
+
+- [项目简介](#-项目简介)
+- [技术栈](#技术栈)
+- [功能特性](#功能特性)
+- [核心特色](#核心特色)
+- [快速开始](#-快速开始)
+- [项目结构](#项目结构)
+- [API 接口](#api-接口)
+- [教务系统课表导入](#教务系统课表导入)
+- [使用指南](#使用指南)
+- [开发指南](#开发指南)
+- [部署说明](#部署说明)
+- [参考资料](#-参考资料)
+- [许可证](#-许可证)
+- [贡献指南](#-贡献指南)
+- [联系我们](#-联系我们)
+- [更新日志](#更新日志)
+
+## 🛠️ 技术栈
 
 ### 前端
 - **Astro** - 静态站点生成和路由
@@ -22,7 +55,7 @@
 - **JWT** - 用户认证
 - **ICS** - 日历导出
 
-## 功能特性
+## ✨ 功能特性
 
 ### 个人日程管理
 - ✅ **多课表管理**：支持创建多个课表，如"大二上学期"、"大二下学期"等
@@ -61,7 +94,7 @@
 - ✅ 多色彩用户标识
 - ✅ 实时数据更新
 
-## 核心特色
+## 🎯 核心特色
 
 ### 🎯 智能调休系统
 - **双模式调休架构**：HOLIDAY类型（节假日隐藏）+ SWAP类型（课程对调）
@@ -92,37 +125,65 @@
 - **数据库优化**：SQLAlchemy ORM 的高效查询
 - **API设计**：RESTful接口设计，支持并发访问
 
-## 快速开始
+## 🚀 快速开始
 
-### 环境要求
+### 📋 环境要求
 
-- Python 3.10+
-- Node.js 18+
-- npm 或 yarn
+- **Python** 3.10+ 
+- **Node.js** 18+
+- **npm** 或 **yarn**
+- **Git** (用于克隆项目)
 
-### 安装和运行
+### ⚡ 一键启动
 
-1. **克隆项目**
-   ```bash
-   git clone <repository-url>
-   cd SDNUChronoSync
-   ```
+我们提供了便捷的启动脚本：
 
-2. **后端设置**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   python main.py
-   ```
-   后端服务将在 http://localhost:8000 启动
+```bash
+# 克隆项目
+git clone https://github.com/excniesNIED/SDNUChronoSync.git
+cd SDNUChronoSync
 
-3. **前端设置**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-   前端应用将在 http://localhost:4321 启动
+# 使用启动脚本（推荐）
+chmod +x start_dev.sh
+./start_dev.sh
+```
+
+### 🔧 手动安装
+
+#### 1. 克隆项目
+```bash
+git clone https://github.com/excniesNIED/SDNUChronoSync.git
+cd SDNUChronoSync
+```
+
+#### 2. 后端设置
+```bash
+cd backend
+pip install -r requirements.txt
+python main.py
+```
+后端服务将在 http://localhost:8000 启动
+
+#### 3. 前端设置
+```bash
+cd frontend
+npm install
+npm run dev
+```
+前端应用将在 http://localhost:4321 启动
+
+### 🐳 Docker 部署
+
+```bash
+# 使用 Docker Compose 一键部署
+docker-compose up -d
+```
+
+### 📱 访问应用
+
+- **前端应用**: http://localhost:4321
+- **后端API**: http://localhost:8000
+- **API文档**: http://localhost:8000/docs
 
 ### 默认账户
 
@@ -140,7 +201,7 @@
 - 姓名：黄浩二
 - 班级：计工本2303
 
-## 项目结构
+## 📁 项目结构
 
 ```
 SDNUChronoSync/
@@ -224,7 +285,7 @@ SDNUChronoSync/
 └── README.md               # 项目说明
 ```
 
-## API 接口
+## 🔌 API 接口
 
 ### 认证接口
 - `POST /api/auth/token` - 用户登录
@@ -296,7 +357,7 @@ SDNUChronoSync/
 - `POST /api/admin/settings` - 更新系统设置
 - `POST /api/admin/settings/test-alist` - 测试AList连接
 
-## 教务系统课表导入
+## 📥 教务系统课表导入
 
 系统支持从山东师范大学正方教务系统导入课表。导入流程如下：
 
@@ -346,7 +407,7 @@ SDNUChronoSync/
     -   **描述**: 如果验证码无法识别，可使用此接口刷新验证码。
     -   **响应**: 返回与获取会话接口相同的结构，但包含新的验证码图片。
 
-## 使用指南
+## 📖 使用指南
 
 ### 🎯 个人课表管理
 
@@ -480,7 +541,7 @@ SDNUChronoSync/
    - 必要时删除团队
    - 监控团队活动和成员状况
 
-## 开发指南
+## 🛠️ 开发指南
 
 ### 后端开发
 
@@ -495,7 +556,7 @@ SDNUChronoSync/
 3. **状态管理**：使用 Pinia stores 管理应用状态
 4. **样式开发**：使用 Tailwind CSS 类名
 
-## 部署说明
+## 🚀 部署说明
 
 ### 开发环境
 - 后端：直接运行 `python main.py`
@@ -513,19 +574,71 @@ SDNUChronoSync/
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 创建 Pull Request
 
-## 许可证
+## 📚 参考资料
 
-本项目采用 MIT 许可证。
+本项目在开发过程中参考了以下开源项目和资源，特此致谢：
 
-## 关于我们
+### 正方教务系统相关项目
+- [openschoolcn/zfn_api](https://github.com/openschoolcn/zfn_api) - 正方教务系统API
+- [whliao5am/zfnew](https://github.com/whliao5am/zfnew) - 正方教务系统新版本
+- [whx1024/zfn_api12](https://github.com/whx1024/zfn_api12) - 正方教务系统API 1.2
+- [zaigie/zfnew_webApi](https://github.com/zaigie/zfnew_webApi) - 正方教务系统Web API
+- [dairoot/school-api](https://github.com/dairoot/school-api) - 学校API项目
+- [DuskU/zhengfang](https://gitee.com/DuskU/zhengfang) - 正方教务系统Gitee版本
+- [FarmerChillax/new-school-sdk](https://github.com/FarmerChillax/new-school-sdk) - 新学校SDK
+- [Srpihot/zfapi](https://github.com/Srpihot/zfapi) - 正方教务系统API
 
-**时序同笺** 是一个为山师学子设计的团队写作课表管理系统。
+### 课表管理相关项目
+- [xxyangyoulin/ClassSchedule](https://github.com/xxyangyoulin/ClassSchedule) - 课程表项目
+- [YZune/WakeupSchedule_Kotlin](https://github.com/YZune/WakeupSchedule_Kotlin) - WakeUp课程表Kotlin版本
+- [qwqVictor/CQUPT-ics](https://github.com/qwqVictor/CQUPT-ics) - 重庆邮电大学ICS课表
+- [XiaoNaoWeiSuo/Grade2](https://github.com/XiaoNaoWeiSuo/Grade2) - 成绩管理系统
 
-- 📖 **使用教程**：https://hs.cnies.org/archives/chronosync-user-guide
-- ℹ️ **关于本项目**：https://hs.cnies.org/archives/chronosync
-- 💬 **问题反馈**：通过项目 Issues 提出
+### 技术文档
+- [WakeUp课程表重构说明](https://yzune.github.io/2018/08/15/WakeUp%E8%AF%BE%E7%A8%8B%E8%A1%A8%E9%87%8D%E6%9E%84%E8%AF%B4%E6%98%8E/) - 课程表重构技术文档
+- [CSDN博客 - 正方教务系统](https://blog.csdn.net/gitblog_00713/article/details/147225292) - 正方教务系统相关技术文章
 
-## 更新日志
+## 📄 许可证
+
+本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
+
+## 🤝 贡献指南
+
+我们欢迎所有形式的贡献！请遵循以下步骤：
+
+1. **Fork 项目** - 点击右上角的 Fork 按钮
+2. **创建特性分支** - `git checkout -b feature/amazing-feature`
+3. **提交更改** - `git commit -m 'Add amazing feature'`
+4. **推送分支** - `git push origin feature/amazing-feature`
+5. **创建 Pull Request** - 在 GitHub 上创建 PR
+
+### 开发环境设置
+
+```bash
+# 克隆项目
+git clone https://github.com/excniesNIED/SDNUChronoSync.git
+cd SDNUChronoSync
+
+# 后端设置
+cd backend
+pip install -r requirements.txt
+python main.py
+
+# 前端设置（新终端）
+cd frontend
+npm install
+npm run dev
+```
+
+## 📞 联系我们
+
+- 🌐 **项目主页**：[https://github.com/excniesNIED/SDNUChronoSync](https://github.com/excniesNIED/SDNUChronoSync)
+- 📖 **使用教程**：[https://hs.cnies.org/archives/chronosync-user-guide](https://hs.cnies.org/archives/chronosync-user-guide)
+- ℹ️ **关于本项目**：[https://hs.cnies.org/archives/chronosync](https://hs.cnies.org/archives/chronosync)
+- 💬 **问题反馈**：通过项目 [Issues](https://github.com/excniesNIED/SDNUChronoSync/issues) 提出
+- 📧 **邮箱联系**：[hxcn@cnies.org](mailto:hxcn@cnies.org)
+
+## 📝 更新日志
 
 ### v2.1.1 (2025-09-30) - 品牌升级
 **品牌更新**
