@@ -247,5 +247,7 @@ const adminNavigation = computed(() => [
 async function handleLogout() {
   await authStore.logout();
   emit('close');
+  // Redirect to login page after logout
+  window.location.href = '/login';
 }
 </script>
