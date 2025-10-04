@@ -190,34 +190,37 @@
           </div>
         </div>
 
-        <!-- Row 3: Action buttons (icons only for mobile) -->
-        <div class="flex items-center justify-center gap-4">
+        <!-- Row 3: Action buttons -->
+        <div class="flex items-center justify-center gap-2 sm:gap-3">
           <!-- Schedule Adjustment button -->
           <button
             v-if="scheduleStore.activeSchedule"
             @click="openAdjustmentModal"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-yellow-600 text-white shadow-sm hover:bg-yellow-500"
+            class="inline-flex items-center justify-center gap-x-1.5 rounded-md bg-yellow-600 px-2.5 py-2 min-[300px]:px-3 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500"
             title="调休"
           >
-            <CalendarDaysIcon class="h-5 w-5" />
+            <CalendarDaysIcon class="h-4 w-4 flex-shrink-0" />
+            <span class="hidden min-[300px]:inline">调休</span>
           </button>
 
           <!-- Import button -->
           <button
             @click="openImportModal"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-blue-600 text-white shadow-sm hover:bg-blue-500"
+            class="inline-flex items-center justify-center gap-x-1.5 rounded-md bg-blue-600 px-2.5 py-2 min-[300px]:px-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
             title="导入"
           >
-            <CloudArrowDownIcon class="h-5 w-5" />
+            <CloudArrowDownIcon class="h-4 w-4 flex-shrink-0" />
+            <span class="hidden min-[300px]:inline">导入</span>
           </button>
 
           <!-- Add event button -->
           <button
             @click="openCreateModal"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-primary-600 text-white shadow-sm hover:bg-primary-500"
+            class="inline-flex items-center justify-center gap-x-1.5 rounded-md bg-primary-600 px-2.5 py-2 min-[300px]:px-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500"
             title="添加"
           >
-            <PlusIcon class="h-5 w-5" />
+            <PlusIcon class="h-4 w-4 flex-shrink-0" />
+            <span class="hidden min-[300px]:inline">添加</span>
           </button>
         </div>
       </div>
@@ -337,8 +340,8 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between lg:justify-end gap-4">
           <!-- View mode toggle and navigation buttons -->
           <div class="flex items-center gap-4">
-            <!-- View mode toggle (button style for larger screens, dropdown for smaller) -->
-            <div class="hidden lg:flex rounded-md shadow-sm">
+            <!-- View mode toggle (button style for >=1300px) -->
+            <div class="hidden min-[1300px]:flex rounded-md shadow-sm">
               <button
                 @click="setViewMode('week')"
                 :class="[
@@ -348,8 +351,7 @@
                   'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
                 ]"
               >
-                <span class="hidden xl:inline">周视图</span>
-                <span class="xl:hidden">周</span>
+                周视图
               </button>
               <button
                 @click="setViewMode('month')"
@@ -360,13 +362,12 @@
                   'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
                 ]"
               >
-                <span class="hidden xl:inline">月视图</span>
-                <span class="xl:hidden">月</span>
+                月视图
               </button>
             </div>
 
-            <!-- View mode dropdown for medium screens -->
-            <div class="lg:hidden">
+            <!-- View mode dropdown for <1300px -->
+            <div class="min-[1300px]:hidden">
               <Menu as="div" class="relative inline-block text-left">
                 <div>
                   <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -447,7 +448,7 @@
           </div>
 
           <!-- Action buttons -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <!-- Schedule Adjustment button -->
             <button
               v-if="scheduleStore.activeSchedule"
@@ -455,8 +456,8 @@
               class="inline-flex items-center gap-x-2 rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"
               title="调休"
             >
-              <CalendarDaysIcon class="h-4 w-4" />
-              <span>调休</span>
+              <CalendarDaysIcon class="h-4 w-4 flex-shrink-0" />
+              <span class="hidden min-[1300px]:inline">调休</span>
             </button>
 
             <!-- Import button -->
@@ -465,8 +466,8 @@
               class="inline-flex items-center gap-x-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               title="导入"
             >
-              <CloudArrowDownIcon class="h-4 w-4" />
-              <span>导入</span>
+              <CloudArrowDownIcon class="h-4 w-4 flex-shrink-0" />
+              <span class="hidden min-[1300px]:inline">导入</span>
             </button>
 
             <!-- Add event button -->
@@ -475,8 +476,8 @@
               class="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               title="添加"
             >
-              <PlusIcon class="h-4 w-4" />
-              <span>添加</span>
+              <PlusIcon class="h-4 w-4 flex-shrink-0" />
+              <span class="hidden min-[1300px]:inline">添加</span>
             </button>
           </div>
         </div>
