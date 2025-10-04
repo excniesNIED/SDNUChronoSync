@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Union
 from datetime import date, datetime, timedelta
 import ics
@@ -540,37 +541,64 @@ async def create_schedule_adjustment(
 
 def _handle_holiday_adjustment(db: Session, schedule: Schedule, data: HolidayAdjustmentRequest) -> AdjustmentOperationResponse:
     """处理放假调整"""
-    # 1. 记录调整操作
-    adjustment = ScheduleAdjustment(
-        schedule_id=schedule.id,
-        adjustment_type="HOLIDAY",
-        original_date=data.holiday_date,
-        target_date=None
-    )
-    db.add(adjustment)
-    db.flush()  # 获取 adjustment.id
+    # 确定处理的日期范围
+    start_date = data.holiday_date
+    end_date = data.end_date if data.end_date else data.holiday_date
     
-    # 2. 找出指定日期的所有活跃非覆盖事件
-    target_events = db.query(Event).filter(
-        Event.schedule_id == schedule.id,
-        Event.is_active == True,
-        Event.is_override == False,
-        db.func.date(Event.start_time) == data.holiday_date
-    ).all()
+    # 验证日期范围
+    if end_date < start_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="End date cannot be earlier than start date"
+        )
     
-    # 3. 逻辑删除这些事件
-    affected_count = 0
-    for event in target_events:
-        event.is_active = False
-        affected_count += 1
+    total_affected = 0
+    adjustment_ids = []
+    
+    # 为日期范围内的每一天创建调整记录
+    current_date = start_date
+    while current_date <= end_date:
+        # 1. 记录调整操作
+        adjustment = ScheduleAdjustment(
+            schedule_id=schedule.id,
+            adjustment_type="HOLIDAY",
+            original_date=current_date,
+            target_date=None
+        )
+        db.add(adjustment)
+        db.flush()  # 获取 adjustment.id
+        adjustment_ids.append(adjustment.id)
+        
+        # 2. 找出指定日期的所有活跃非覆盖事件
+        target_events = db.query(Event).filter(
+            Event.schedule_id == schedule.id,
+            Event.is_active == True,
+            Event.is_override == False,
+            func.date(Event.start_time) == current_date
+        ).all()
+        
+        # 3. 逻辑删除这些事件
+        for event in target_events:
+            event.is_active = False
+            total_affected += 1
+        
+        # 移动到下一天
+        current_date = current_date + timedelta(days=1)
     
     db.commit()
     
+    # 生成消息
+    if start_date == end_date:
+        message = f"Successfully set {start_date} as holiday. {total_affected} events deactivated."
+    else:
+        days_count = (end_date - start_date).days + 1
+        message = f"Successfully set {start_date} to {end_date} ({days_count} days) as holiday. {total_affected} events deactivated."
+    
     return AdjustmentOperationResponse(
         success=True,
-        message=f"Successfully set {data.holiday_date} as holiday. {affected_count} events deactivated.",
-        adjustment_id=adjustment.id,
-        affected_events=affected_count
+        message=message,
+        adjustment_id=adjustment_ids[0] if adjustment_ids else None,
+        affected_events=total_affected
     )
 
 
@@ -591,7 +619,7 @@ def _handle_swap_adjustment(db: Session, schedule: Schedule, data: SwapAdjustmen
         Event.schedule_id == schedule.id,
         Event.is_active == True,
         Event.is_override == False,
-        db.func.date(Event.start_time) == data.source_date
+        func.date(Event.start_time) == data.source_date
     ).all()
     
     # 3. 逻辑删除原始事件

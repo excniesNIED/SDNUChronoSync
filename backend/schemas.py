@@ -174,7 +174,8 @@ class ScheduleAdjustmentBase(BaseModel):
 
 class HolidayAdjustmentRequest(BaseModel):
     adjustment_type: str = Field("HOLIDAY", description="Must be 'HOLIDAY'")
-    holiday_date: date = Field(..., description="Date to set as holiday")
+    holiday_date: date = Field(..., description="Start date to set as holiday")
+    end_date: Optional[date] = Field(None, description="End date for holiday range (optional, if not provided only holiday_date will be processed)")
 
 class SwapAdjustmentRequest(BaseModel):
     adjustment_type: str = Field("SWAP", description="Must be 'SWAP'")
