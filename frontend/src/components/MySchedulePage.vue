@@ -456,7 +456,7 @@
               title="调休"
             >
               <CalendarDaysIcon class="h-4 w-4" />
-              <span class="hidden 2xl:inline">调休</span>
+              <span class="hidden lg:inline">调休</span>
             </button>
 
             <!-- Import button -->
@@ -466,7 +466,7 @@
               title="导入"
             >
               <CloudArrowDownIcon class="h-4 w-4" />
-              <span class="hidden 2xl:inline">导入</span>
+              <span class="hidden lg:inline">导入</span>
             </button>
 
             <!-- Add event button -->
@@ -476,7 +476,7 @@
               title="添加"
             >
               <PlusIcon class="h-4 w-4" />
-              <span class="hidden 2xl:inline">添加</span>
+              <span class="hidden lg:inline">添加</span>
             </button>
           </div>
         </div>
