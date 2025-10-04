@@ -10,12 +10,12 @@
           :key="day.toISOString()"
           class="p-4 text-center"
         >
-          <div class="text-sm font-medium text-gray-900">
+          <div class="text-xs sm:text-sm font-medium text-gray-900">
             {{ formatDayHeader(day) }}
           </div>
           <div
             :class="[
-              'text-2xl font-semibold mt-1',
+              'text-xl sm:text-2xl font-semibold mt-1',
               isToday(day) ? 'text-primary-600' : 'text-gray-700'
             ]"
           >
@@ -65,7 +65,7 @@
             <div v-if="eventGroup.length > 1" class="space-y-1">
               <div
                 :class="[
-                  'rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow',
+                  'rounded-md px-1.5 xs:px-2 py-1 text-[11px] sm:text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow',
                   !props.isAdminMode ? 'border border-opacity-50 min-h-[4rem]' : 'border border-opacity-25 min-h-[2.5rem]'
                 ]"
                 :style="{ 
@@ -89,26 +89,31 @@
                 </div>
                 
                 <!-- 个人视图：详细分行显示 -->
-                <div v-else class="space-y-1">
-                  <!-- 课程名称 -->
-                  <div class="font-bold truncate text-sm">{{ eventGroup[0].title }}</div>
-                  
-                  <!-- 教师 -->
-                  <div v-if="eventGroup[0].instructor" class="text-xs truncate flex items-center opacity-85">
-                    <span class="w-8 opacity-75">👨‍🏫</span>
-                    <span>{{ eventGroup[0].instructor }}</span>
+                <div v-else class="flex flex-col h-full justify-between">
+                  <!-- 课程名称 - 多行显示 -->
+                  <div class="font-bold text-[10px] xs:text-xs sm:text-sm leading-tight line-clamp-2">
+                    {{ eventGroup[0].title }}
                   </div>
                   
-                  <!-- 教室 -->
-                  <div v-if="eventGroup[0].location" class="text-xs truncate flex items-center opacity-85">
-                    <span class="w-8 opacity-75">📍</span>
-                    <span>{{ eventGroup[0].location }}</span>
-                  </div>
-                  
-                  <!-- 周数 -->
-                  <div v-if="eventGroup[0].weeks_display" class="text-xs truncate flex items-center opacity-85">
-                    <span class="w-8 opacity-75">📅</span>
-                    <span>{{ eventGroup[0].weeks_display }}</span>
+                  <!-- 详细信息组 - 底部对齐，超窄屏隐藏 -->
+                  <div class="hidden xs:block space-y-0.5 mt-auto pt-1">
+                    <!-- 教师 -->
+                    <div v-if="eventGroup[0].instructor" class="text-[9px] xs:text-[10px] truncate flex items-center opacity-85">
+                      <span class="w-4 xs:w-5 opacity-75 flex-shrink-0">👨‍🏫</span>
+                      <span class="truncate">{{ eventGroup[0].instructor }}</span>
+                    </div>
+                    
+                    <!-- 教室 -->
+                    <div v-if="eventGroup[0].location" class="text-[9px] xs:text-[10px] truncate flex items-center opacity-85">
+                      <span class="w-4 xs:w-5 opacity-75 flex-shrink-0">📍</span>
+                      <span class="truncate">{{ eventGroup[0].location }}</span>
+                    </div>
+                    
+                    <!-- 周数 -->
+                    <div v-if="eventGroup[0].weeks_display" class="text-[9px] xs:text-[10px] truncate flex items-center opacity-85">
+                      <span class="w-4 xs:w-5 opacity-75 flex-shrink-0">📅</span>
+                      <span class="truncate">{{ eventGroup[0].weeks_display }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -117,7 +122,7 @@
             <div
               v-else-if="eventGroup.length === 1"
               :class="[
-                'rounded-md px-2 py-1 text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow h-full',
+                'rounded-md px-1.5 xs:px-2 py-1 text-[11px] sm:text-xs cursor-pointer shadow-sm hover:shadow-md transition-shadow h-full',
                 !props.isAdminMode ? 'border-2 border-opacity-30 min-h-[4rem]' : 'border border-opacity-25 min-h-[2.5rem]'
               ]"
               :style="{ 
@@ -135,26 +140,31 @@
               </div>
               
               <!-- 个人视图：详细分行显示 -->
-              <div v-else class="space-y-1">
-                <!-- 课程名称 -->
-                <div class="font-bold truncate text-sm">{{ eventGroup[0].title }}</div>
-                
-                <!-- 教师 -->
-                <div v-if="eventGroup[0].instructor" class="text-xs truncate flex items-center opacity-85">
-                  <span class="w-8 opacity-75">👨‍🏫</span>
-                  <span>{{ eventGroup[0].instructor }}</span>
+              <div v-else class="flex flex-col h-full justify-between">
+                <!-- 课程名称 - 多行显示 -->
+                <div class="font-bold text-[10px] xs:text-xs sm:text-sm leading-tight line-clamp-2">
+                  {{ eventGroup[0].title }}
                 </div>
                 
-                <!-- 教室 -->
-                <div v-if="eventGroup[0].location" class="text-xs truncate flex items-center opacity-85">
-                  <span class="w-8 opacity-75">📍</span>
-                  <span>{{ eventGroup[0].location }}</span>
-                </div>
-                
-                <!-- 周数 -->
-                <div v-if="eventGroup[0].weeks_display" class="text-xs truncate flex items-center opacity-85">
-                  <span class="w-8 opacity-75">📅</span>
-                  <span>{{ eventGroup[0].weeks_display }}</span>
+                <!-- 详细信息组 - 底部对齐，超窄屏隐藏 -->
+                <div class="hidden xs:block space-y-0.5 mt-auto pt-1">
+                  <!-- 教师 -->
+                  <div v-if="eventGroup[0].instructor" class="text-[9px] xs:text-[10px] truncate flex items-center opacity-85">
+                    <span class="w-4 xs:w-5 opacity-75 flex-shrink-0">👨‍🏫</span>
+                    <span class="truncate">{{ eventGroup[0].instructor }}</span>
+                  </div>
+                  
+                  <!-- 教室 -->
+                  <div v-if="eventGroup[0].location" class="text-[9px] xs:text-[10px] truncate flex items-center opacity-85">
+                    <span class="w-4 xs:w-5 opacity-75 flex-shrink-0">📍</span>
+                    <span class="truncate">{{ eventGroup[0].location }}</span>
+                  </div>
+                  
+                  <!-- 周数 -->
+                  <div v-if="eventGroup[0].weeks_display" class="text-[9px] xs:text-[10px] truncate flex items-center opacity-85">
+                    <span class="w-4 xs:w-5 opacity-75 flex-shrink-0">📅</span>
+                    <span class="truncate">{{ eventGroup[0].weeks_display }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -170,7 +180,7 @@
         <div
           v-for="day in ['一', '二', '三', '四', '五', '六', '日']"
           :key="day"
-          class="p-4 text-center text-sm font-medium text-gray-900"
+          class="p-4 text-center text-xs sm:text-sm font-medium text-gray-900"
         >
           周{{ day }}
         </div>
@@ -189,7 +199,7 @@
         >
           <div
             :class="[
-              'text-sm font-medium mb-1',
+              'text-xs sm:text-sm font-medium mb-1',
               isToday(day) ? 'bg-primary-600 text-white rounded-full w-6 h-6 flex items-center justify-center' : ''
             ]"
           >
@@ -202,7 +212,7 @@
               v-for="(eventGroup, index) in getGroupedMonthEvents(day).slice(0, 3)"
               :key="`month-group-${index}`"
               :class="[
-                'text-xs px-2 py-1 rounded cursor-pointer hover:shadow-sm transition-all border',
+                'text-[11px] sm:text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded cursor-pointer hover:shadow-sm transition-all border',
                 !props.isAdminMode ? 'border-opacity-40 shadow-sm' : 'border-opacity-20'
               ]"
               :style="{ 
@@ -229,21 +239,24 @@
               
               <!-- 个人视图：月视图详细显示 -->
               <div v-else class="space-y-0.5">
-                <div class="font-bold truncate text-xs">{{ eventGroup[0].title }}</div>
-                <div v-if="eventGroup[0].instructor" class="truncate text-xs opacity-85 flex items-center">
-                  <span class="mr-1 opacity-75">👨‍🏫</span>{{ eventGroup[0].instructor }}
+                <div class="font-bold text-[9px] xs:text-[10px] sm:text-xs leading-tight line-clamp-2">{{ eventGroup[0].title }}</div>
+                <div v-if="eventGroup[0].instructor" class="hidden xs:flex truncate text-[8px] xs:text-[9px] sm:text-[10px] opacity-85 items-center">
+                  <span class="mr-0.5 xs:mr-1 opacity-75">👨‍🏫</span>
+                  <span class="truncate">{{ eventGroup[0].instructor }}</span>
                 </div>
-                <div v-if="eventGroup[0].location" class="truncate text-xs opacity-85 flex items-center">
-                  <span class="mr-1 opacity-75">📍</span>{{ eventGroup[0].location }}
+                <div v-if="eventGroup[0].location" class="hidden xs:flex truncate text-[8px] xs:text-[9px] sm:text-[10px] opacity-85 items-center">
+                  <span class="mr-0.5 xs:mr-1 opacity-75">📍</span>
+                  <span class="truncate">{{ eventGroup[0].location }}</span>
                 </div>
-                <div v-if="eventGroup[0].weeks_display" class="truncate text-xs opacity-85 flex items-center">
-                  <span class="mr-1 opacity-75">📅</span>{{ eventGroup[0].weeks_display }}
+                <div v-if="eventGroup[0].weeks_display" class="hidden xs:flex truncate text-[8px] xs:text-[9px] sm:text-[10px] opacity-85 items-center">
+                  <span class="mr-0.5 xs:mr-1 opacity-75">📅</span>
+                  <span class="truncate">{{ eventGroup[0].weeks_display }}</span>
                 </div>
               </div>
             </div>
             <div
               v-if="getGroupedMonthEvents(day).length > 3"
-              class="text-xs text-gray-500 px-2"
+              class="text-[11px] sm:text-xs text-gray-500 px-2"
             >
               +{{ getGroupedMonthEvents(day).length - 3 }} 更多
             </div>
