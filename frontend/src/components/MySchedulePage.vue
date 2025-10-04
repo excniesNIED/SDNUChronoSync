@@ -94,7 +94,7 @@
         </div>
 
         <!-- Row 2: View mode and navigation buttons -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-3">
           <!-- View mode dropdown for mobile -->
           <div class="flex items-center gap-3">
             <Menu as="div" class="relative inline-block text-left">
@@ -171,14 +171,14 @@
           </div>
 
           <!-- Date navigation for mobile -->
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-shrink-0">
             <button
               @click="navigateDate(-1)"
               class="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
             >
               <ChevronLeftIcon class="h-5 w-5" />
             </button>
-            <h2 class="text-sm font-semibold text-gray-900 min-w-[120px] text-center">
+            <h2 class="text-sm font-semibold text-gray-900 min-w-[120px] text-center truncate">
               {{ currentDateTitle }}
             </h2>
             <button
@@ -223,7 +223,7 @@
       </div>
 
       <!-- Desktop layout (>= 640px) -->
-      <div class="hidden sm:flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="hidden sm:flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 overflow-x-hidden">
         <!-- Top row for medium screens, left side for large screens -->
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
           <!-- Schedule selector -->

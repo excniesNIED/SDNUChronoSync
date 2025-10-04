@@ -121,70 +121,70 @@
           <!-- Teams List -->
           <ul v-else-if="filteredCreatedTeams.length > 0" role="list" class="divide-y divide-gray-200">
             <li v-for="team in filteredCreatedTeams" :key="team.id" class="px-4 py-4 sm:px-6 hover:bg-gray-50">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center min-w-0 flex-1">
                   <div class="flex-shrink-0">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
                       <span class="text-sm font-medium text-indigo-800">{{ team.name.charAt(0) }}</span>
                     </div>
                   </div>
-                  <div class="ml-4">
-                    <div class="flex items-center">
-                      <p class="text-sm font-medium text-gray-900">{{ team.name }}</p>
-                      <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <div class="ml-4 min-w-0 flex-1">
+                    <div class="flex items-center flex-wrap gap-2">
+                      <p class="text-sm font-medium text-gray-900 truncate">{{ team.name }}</p>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0">
                         {{ team.team_code }}
                       </span>
-                      <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 flex-shrink-0">
                         创建者
                       </span>
                     </div>
                     <div class="mt-1 flex items-center text-sm text-gray-500">
                       <p>{{ team.members?.length || 0 }} 名成员</p>
                       <span class="mx-2">•</span>
-                      <p>{{ formatDate(team.created_at) }}</p>
+                      <p class="truncate">{{ formatDate(team.created_at) }}</p>
                     </div>
                   </div>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 flex-shrink-0">
                   <button
                     @click="viewTeamDetails(team)"
-                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
                     title="查看团队课表"
                   >
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a4 4 0 118 0v4m-4 1v0a8 8 0 00-7.864 9.746l.349 2.083A2 2 0 006.464 17h11.072a2 2 0 001.979-1.669l.349-2.083A8 8 0 0012 8v0z" />
                     </svg>
-                    课表
+                    <span class="hidden sm:inline">课表</span>
                   </button>
                   <button
                     @click="openManageModal(team)"
-                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
                     title="管理团队"
                   >
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    管理
+                    <span class="hidden sm:inline">管理</span>
                   </button>
                   <button
                     @click="openTransferModal(team)"
-                    class="inline-flex items-center px-3 py-2 border border-orange-300 shadow-sm text-sm leading-4 font-medium rounded-md text-orange-700 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                    class="inline-flex items-center px-3 py-2 border border-orange-300 shadow-sm text-sm leading-4 font-medium rounded-md text-orange-700 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 whitespace-nowrap"
                     title="转让团队"
                   >
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
-                    转让
+                    <span class="hidden sm:inline">转让</span>
                   </button>
                   <button
                     @click="openDissolveModal(team)"
-                    class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 whitespace-nowrap"
                     title="解散团队"
                   >
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    解散
+                    <span class="hidden sm:inline">解散</span>
                   </button>
                 </div>
               </div>

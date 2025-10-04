@@ -58,81 +58,83 @@
     </div>
 
     <!-- Users table -->
-    <div v-else class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-lg">
-      <table class="min-w-full divide-y divide-gray-300">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-              用户信息
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-              班级年级
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-              角色
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-              创建时间
-            </th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">
-              操作
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <UserAvatar :user="user" size="md" />
+    <div v-else class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-300">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                用户信息
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                班级年级
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                角色
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                创建时间
+              </th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                操作
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center min-w-0">
+                  <div class="flex-shrink-0">
+                    <UserAvatar :user="user" size="md" />
+                  </div>
+                  <div class="ml-4 min-w-0">
+                    <div class="text-sm font-medium text-gray-900 truncate max-w-[150px]">{{ user.full_name }}</div>
+                    <div class="text-sm text-gray-500 truncate max-w-[150px]">{{ user.student_id }}</div>
+                  </div>
                 </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900">{{ user.full_name }}</div>
-                  <div class="text-sm text-gray-500">{{ user.student_id }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <div>{{ user.class_name }}</div>
-              <div class="text-gray-500">{{ user.grade }}级</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                :class="[
-                  user.role === 'admin'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-green-100 text-green-800',
-                  'inline-flex px-2 py-1 text-xs font-semibold rounded-full'
-                ]"
-              >
-                {{ user.role === 'admin' ? '管理员' : '用户' }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ formatDate(user.created_at) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button
-                @click="openEditModal(user)"
-                class="text-primary-600 hover:text-primary-900 mr-3"
-              >
-                编辑
-              </button>
-              <button
-                @click="confirmDelete(user)"
-                :disabled="user.id === authStore.currentUser?.id"
-                :class="[
-                  user.id === authStore.currentUser?.id
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-red-600 hover:text-red-900'
-                ]"
-              >
-                删除
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="truncate max-w-[120px]">{{ user.class_name }}</div>
+                <div class="text-gray-500">{{ user.grade }}级</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  :class="[
+                    user.role === 'admin'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-green-100 text-green-800',
+                    'inline-flex px-2 py-1 text-xs font-semibold rounded-full'
+                  ]"
+                >
+                  {{ user.role === 'admin' ? '管理员' : '用户' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ formatDate(user.created_at) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                  @click="openEditModal(user)"
+                  class="text-primary-600 hover:text-primary-900 mr-3"
+                >
+                  编辑
+                </button>
+                <button
+                  @click="confirmDelete(user)"
+                  :disabled="user.id === authStore.currentUser?.id"
+                  :class="[
+                    user.id === authStore.currentUser?.id
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-red-600 hover:text-red-900'
+                  ]"
+                >
+                  删除
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Empty state -->
       <div v-if="filteredUsers.length === 0" class="text-center py-12">

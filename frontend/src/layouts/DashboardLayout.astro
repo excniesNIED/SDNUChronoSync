@@ -11,7 +11,7 @@ const { title, description } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 overflow-x-hidden">
     <!-- Loading overlay for authentication -->
     <div id="auth-loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
       <div class="text-center">
@@ -27,7 +27,7 @@ const { title, description } = Astro.props;
     <div id="main-content" class="hidden">
       <Navigation client:load />
       
-      <main class="lg:pl-72 pt-16 lg:pt-0">
+      <main class="lg:pl-72 pt-16 lg:pt-0 overflow-x-hidden">
         <div class="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
           <slot />
         </div>

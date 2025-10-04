@@ -125,16 +125,16 @@
         <Bars3Icon class="h-6 w-6" aria-hidden="true" />
       </button>
 
-      <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-        <div class="flex flex-1 items-center">
-          <h1 class="text-lg font-semibold text-gray-900">时序同笺</h1>
+      <div class="flex flex-1 gap-x-2 sm:gap-x-4 self-stretch lg:gap-x-6">
+        <div class="flex flex-1 items-center min-w-0">
+          <h1 class="text-base sm:text-lg font-semibold text-gray-900 truncate">时序同笺</h1>
         </div>
         
         <!-- Mobile theme toggle -->
-        <div class="flex items-center gap-x-3">
+        <div class="flex items-center gap-x-2 flex-shrink-0">
           <button
             @click="themeStore.toggleTheme()"
-            class="p-2 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+            class="p-1.5 sm:p-2 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors flex-shrink-0"
             :title="themeStore.isDark() ? '切换到浅色模式' : '切换到深色模式'"
           >
             <SunIcon v-if="themeStore.isDark()" class="h-5 w-5" aria-hidden="true" />
@@ -142,12 +142,14 @@
           </button>
           
           <!-- Mobile user avatar -->
-          <UserAvatar 
-            :user="authStore.user" 
-            size="sm" 
-            :clickable="true"
-            @click="goToProfile"
-          />
+          <div class="flex-shrink-0">
+            <UserAvatar 
+              :user="authStore.user" 
+              size="sm" 
+              :clickable="true"
+              @click="goToProfile"
+            />
+          </div>
         </div>
       </div>
     </div>
