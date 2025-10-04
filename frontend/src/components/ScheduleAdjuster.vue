@@ -181,6 +181,68 @@
         </div>
       </div>
     </div>
+
+    <!-- 成功提示窗 -->
+    <div v-if="showSuccessToast" class="fixed inset-0 flex items-center justify-center z-60 pointer-events-none">
+      <div class="bg-white rounded-lg shadow-2xl max-w-sm w-full mx-4 pointer-events-auto animate-fade-in">
+        <div class="p-6">
+          <div class="flex items-center mb-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-semibold text-gray-900">操作成功</h3>
+            </div>
+          </div>
+          <div class="mb-4">
+            <p class="text-sm text-gray-600">{{ successMessage }}</p>
+          </div>
+          <div class="flex justify-end">
+            <button
+              @click="closeSuccessToast"
+              class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+            >
+              确定
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 错误提示窗 -->
+    <div v-if="showErrorToast" class="fixed inset-0 flex items-center justify-center z-60 pointer-events-none">
+      <div class="bg-white rounded-lg shadow-2xl max-w-sm w-full mx-4 pointer-events-auto animate-fade-in">
+        <div class="p-6">
+          <div class="flex items-center mb-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-semibold text-gray-900">操作失败</h3>
+            </div>
+          </div>
+          <div class="mb-4">
+            <p class="text-sm text-gray-600">{{ errorMessage }}</p>
+          </div>
+          <div class="flex justify-end">
+            <button
+              @click="closeErrorToast"
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
+            >
+              确定
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -204,6 +266,10 @@ const emit = defineEmits<Emits>();
 const adjustmentMode = ref<'holiday' | 'swap'>('swap');
 const isLoading = ref(false);
 const showConfirmDialog = ref(false);
+const showSuccessToast = ref(false);
+const showErrorToast = ref(false);
+const successMessage = ref('');
+const errorMessage = ref('');
 
 // 表单数据
 const holidayForm = ref({
@@ -245,7 +311,19 @@ const resetForms = () => {
   swapForm.value.fromDate = '';
   swapForm.value.toDate = '';
   showConfirmDialog.value = false;
+  showSuccessToast.value = false;
+  showErrorToast.value = false;
   isLoading.value = false;
+};
+
+const closeSuccessToast = () => {
+  showSuccessToast.value = false;
+  emit('adjustment-applied');
+  closeModal();
+};
+
+const closeErrorToast = () => {
+  showErrorToast.value = false;
 };
 
 const confirmHoliday = () => {
@@ -253,7 +331,8 @@ const confirmHoliday = () => {
   
   // 验证日期范围
   if (holidayForm.value.endDate && holidayForm.value.startDate > holidayForm.value.endDate) {
-    alert('结束日期不能早于开始日期！');
+    errorMessage.value = '结束日期不能早于开始日期！';
+    showErrorToast.value = true;
     return;
   }
   
@@ -263,7 +342,8 @@ const confirmHoliday = () => {
 const confirmSwap = () => {
   if (!swapForm.value.fromDate || !swapForm.value.toDate) return;
   if (swapForm.value.fromDate === swapForm.value.toDate) {
-    alert('原日期和目标日期不能相同！');
+    errorMessage.value = '原日期和目标日期不能相同！';
+    showErrorToast.value = true;
     return;
   }
   showConfirmDialog.value = true;
@@ -317,17 +397,13 @@ const executeAdjustment = async () => {
     const result = await response.json();
     
     // 显示成功消息
-    alert(result.message || '调休操作成功！');
-    
-    // 通知父组件刷新数据
-    emit('adjustment-applied');
-    
-    // 关闭模态框
-    closeModal();
+    successMessage.value = result.message || '调休操作成功！';
+    showSuccessToast.value = true;
 
   } catch (error) {
     console.error('Adjustment operation failed:', error);
-    alert(error instanceof Error ? error.message : '调休操作失败，请重试。');
+    errorMessage.value = error instanceof Error ? error.message : '调休操作失败，请重试。';
+    showErrorToast.value = true;
     
     // 如果是认证错误，可能需要重定向到登录页面
     if (error instanceof Error && error.message.includes('登录')) {
@@ -344,5 +420,20 @@ const executeAdjustment = async () => {
 <style scoped>
 .z-60 {
   z-index: 60;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
 }
 </style>

@@ -589,10 +589,16 @@ def _handle_holiday_adjustment(db: Session, schedule: Schedule, data: HolidayAdj
     
     # 生成消息
     if start_date == end_date:
-        message = f"Successfully set {start_date} as holiday. {total_affected} events deactivated."
+        if total_affected == 0:
+            message = f"已将 {start_date} 设置为假期（该日期没有课程）。"
+        else:
+            message = f"已成功将 {start_date} 设置为假期，共隐藏 {total_affected} 个课程。"
     else:
         days_count = (end_date - start_date).days + 1
-        message = f"Successfully set {start_date} to {end_date} ({days_count} days) as holiday. {total_affected} events deactivated."
+        if total_affected == 0:
+            message = f"已将 {start_date} 至 {end_date}（共 {days_count} 天）设置为假期（这些日期没有课程）。"
+        else:
+            message = f"已成功将 {start_date} 至 {end_date}（共 {days_count} 天）设置为假期，共隐藏 {total_affected} 个课程。"
     
     return AdjustmentOperationResponse(
         success=True,
@@ -662,9 +668,15 @@ def _handle_swap_adjustment(db: Session, schedule: Schedule, data: SwapAdjustmen
     
     db.commit()
     
+    # 生成消息
+    if affected_count == 0:
+        message = f"已完成操作，但 {data.source_date} 当天没有课程需要移动。"
+    else:
+        message = f"已成功将 {data.source_date} 的 {affected_count} 个课程移动到 {data.target_date}。"
+    
     return AdjustmentOperationResponse(
         success=True,
-        message=f"Successfully swapped {affected_count} events from {data.source_date} to {data.target_date}. {created_count} override events created.",
+        message=message,
         adjustment_id=adjustment.id,
         affected_events=affected_count
     )
