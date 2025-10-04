@@ -521,8 +521,8 @@ SDNUChronoSync/
 
 **时序同笺** 是一个为山师学子设计的团队写作课表管理系统。
 
-- 📖 **使用教程**：https://hs.cnies.org/archives/lag_about
-- ℹ️ **关于本项目**：https://hs.cnies.org/archives/lag
+- 📖 **使用教程**：https://hs.cnies.org/archives/chronosync-user-guide
+- ℹ️ **关于本项目**：https://hs.cnies.org/archives/chronosync
 - 💬 **问题反馈**：通过项目 Issues 提出
 
 ## 更新日志
@@ -533,8 +533,8 @@ SDNUChronoSync/
 - ✅ **界面更新**：导航栏、登录页、注册页全面使用新名称
 - ✅ **文档完善**：README 更新品牌信息
 - ✅ **导航增强**：新增"使用教程"和"关于"外部链接
-  - 使用教程：https://hs.cnies.org/archives/lag_about
-  - 关于本项目：https://hs.cnies.org/archives/lag
+  - 使用教程：https://hs.cnies.org/archives/chronosync-user-guide
+  - 关于本项目：https://hs.cnies.org/archives/chronosync
 - ✅ **用户体验**：所有页面统一品牌形象
 
 ### v2.1.0 (2025-09-30) - 团队管理系统完整升级

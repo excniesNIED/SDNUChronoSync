@@ -223,14 +223,14 @@ const navigation = computed(() => [
   },
   {
     name: '使用教程',
-    href: 'https://hs.cnies.org/archives/lag_about',
+    href: 'https://hs.cnies.org/archives/chronosync-user-guide',
     icon: AcademicCapIcon,
     current: false,
     external: true,
   },
   {
     name: '关于',
-    href: 'https://hs.cnies.org/archives/lag',
+    href: 'https://hs.cnies.org/archives/chronosync',
     icon: InformationCircleIcon,
     current: false,
     external: true,
