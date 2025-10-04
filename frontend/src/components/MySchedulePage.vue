@@ -226,9 +226,9 @@
       </div>
 
       <!-- Desktop layout (>= 640px) -->
-      <div class="hidden sm:flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 overflow-x-hidden">
+      <div class="hidden sm:flex flex-col min-[1200px]:flex-row min-[1200px]:items-center min-[1200px]:justify-between gap-4 overflow-x-hidden">
         <!-- Top row for medium screens, left side for large screens -->
-        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+        <div class="flex flex-col min-[1200px]:flex-row min-[1200px]:items-center gap-4">
           <!-- Schedule selector -->
           <div class="relative">
             <Menu as="div" class="relative inline-block text-left">
@@ -337,7 +337,7 @@
         </div>
 
         <!-- Bottom row for medium screens, right side for large screens -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between lg:justify-end gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between min-[1200px]:justify-end gap-4">
           <!-- View mode toggle and navigation buttons -->
           <div class="flex items-center gap-4">
             <!-- View mode toggle (button style for >=1300px) -->
@@ -457,7 +457,7 @@
               title="调休"
             >
               <CalendarDaysIcon class="h-4 w-4 flex-shrink-0" />
-              <span class="hidden min-[1300px]:inline">调休</span>
+              <span class="hidden min-[640px]:inline min-[1200px]:hidden min-[1300px]:inline">调休</span>
             </button>
 
             <!-- Import button -->
@@ -467,7 +467,7 @@
               title="导入"
             >
               <CloudArrowDownIcon class="h-4 w-4 flex-shrink-0" />
-              <span class="hidden min-[1300px]:inline">导入</span>
+              <span class="hidden min-[640px]:inline min-[1200px]:hidden min-[1300px]:inline">导入</span>
             </button>
 
             <!-- Add event button -->
@@ -477,7 +477,7 @@
               title="添加"
             >
               <PlusIcon class="h-4 w-4 flex-shrink-0" />
-              <span class="hidden min-[1300px]:inline">添加</span>
+              <span class="hidden min-[640px]:inline min-[1200px]:hidden min-[1300px]:inline">添加</span>
             </button>
           </div>
         </div>
