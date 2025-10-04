@@ -160,14 +160,6 @@
             >
               今天
             </button>
-            
-            <button
-              @click="forceRefreshEvents"
-              class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
-              title="强制刷新课程数据"
-            >
-              刷新
-            </button>
           </div>
 
           <!-- Date navigation for mobile -->
@@ -434,15 +426,6 @@
               >
                 <span class="hidden xl:inline">今天</span>
                 <span class="xl:hidden">今天</span>
-              </button>
-              
-              <button
-                @click="forceRefreshEvents"
-                class="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-md transition-colors"
-                title="强制刷新课程数据"
-              >
-                <span class="hidden xl:inline">刷新</span>
-                <span class="xl:hidden">刷新</span>
               </button>
             </div>
           </div>

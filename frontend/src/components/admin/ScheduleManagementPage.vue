@@ -24,10 +24,136 @@
           </div>
 
           <!-- Action bar -->
-          <div class="flex-shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-4">
-                <!-- Mobile filter button -->
+          <div class="flex-shrink-0 border-b border-gray-200 bg-white px-4 md:px-6 py-3 md:py-4">
+            <!-- Mobile layout -->
+            <div class="lg:hidden space-y-3">
+              <!-- Row 1: Filter and view mode -->
+              <div class="flex items-center gap-2">
+                <button
+                  @click="mobileFiltersOpen = true"
+                  class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                >
+                  <FunnelIcon class="h-4 w-4" />
+                  <span class="hidden sm:inline">筛选</span>
+                </button>
+
+                <!-- View mode dropdown for mobile -->
+                <Menu as="div" class="relative inline-block text-left">
+                  <div>
+                    <MenuButton class="inline-flex w-full justify-center gap-x-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                      {{ viewMode === 'week' ? '周' : '月' }}
+                      <ChevronDownIcon class="-mr-0.5 h-4 w-4 text-gray-400" />
+                    </MenuButton>
+                  </div>
+                  <transition
+                    enter-active-class="transition ease-out duration-100"
+                    enter-from-class="transform opacity-0 scale-95"
+                    enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75"
+                    leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95"
+                  >
+                    <MenuItems class="absolute left-0 z-10 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <div class="py-1">
+                        <MenuItem v-slot="{ active }">
+                          <button
+                            @click="setViewMode('week')"
+                            :class="[
+                              active ? 'bg-gray-100' : '',
+                              viewMode === 'week' ? 'font-semibold' : '',
+                              'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                            ]"
+                          >
+                            周视图
+                          </button>
+                        </MenuItem>
+                        <MenuItem v-slot="{ active }">
+                          <button
+                            @click="setViewMode('month')"
+                            :class="[
+                              active ? 'bg-gray-100' : '',
+                              viewMode === 'month' ? 'font-semibold' : '',
+                              'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                            ]"
+                          >
+                            月视图
+                          </button>
+                        </MenuItem>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu>
+              </div>
+
+              <!-- Row 2: Date navigation and quick actions -->
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <!-- Date navigation -->
+                <div class="flex items-center gap-1.5">
+                  <button
+                    @click="navigateDate(-1)"
+                    class="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+                  >
+                    <ChevronLeftIcon class="h-5 w-5" />
+                  </button>
+                  <h2 class="text-base font-semibold text-gray-900 min-w-[140px] text-center">
+                    {{ currentDateTitle }}
+                  </h2>
+                  <button
+                    @click="navigateDate(1)"
+                    class="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+                  >
+                    <ChevronRightIcon class="h-5 w-5" />
+                  </button>
+                </div>
+
+                <!-- Quick action buttons -->
+                <div class="flex items-center gap-2">
+                  <button
+                    v-if="earliestScheduleStartDate"
+                    @click="jumpToScheduleStart"
+                    class="px-2.5 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
+                    title="跳转到开学时间"
+                  >
+                    开学
+                  </button>
+                  
+                  <button
+                    @click="jumpToToday"
+                    class="px-2.5 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
+                    title="跳转到今天"
+                  >
+                    今天
+                  </button>
+                </div>
+              </div>
+
+              <!-- Row 3: Action buttons -->
+              <div class="flex items-center justify-center gap-2">
+                <button
+                  @click="openAdjustmentModal"
+                  class="inline-flex items-center gap-x-1.5 rounded-md bg-yellow-600 px-2.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500"
+                  title="调休"
+                >
+                  <CalendarDaysIcon class="h-4 w-4 flex-shrink-0" />
+                  <span>调休</span>
+                </button>
+
+                <button
+                  @click="openCreateModal"
+                  class="inline-flex items-center gap-x-1.5 rounded-md bg-primary-600 px-2.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500"
+                  title="添加"
+                >
+                  <PlusIcon class="h-4 w-4 flex-shrink-0" />
+                  <span>添加</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Desktop layout (>= 1024px) -->
+            <div class="hidden lg:flex flex-col min-[1280px]:flex-row min-[1280px]:items-center min-[1280px]:justify-between gap-4">
+              <!-- Left side: controls -->
+              <div class="flex flex-col min-[1280px]:flex-row min-[1280px]:items-center gap-4">
+                <!-- Mobile filter button (only visible on smaller desktop) -->
                 <button
                   @click="mobileFiltersOpen = true"
                   class="lg:hidden inline-flex items-center gap-x-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
@@ -35,32 +161,6 @@
                   <FunnelIcon class="h-4 w-4" />
                   筛选
                 </button>
-
-                <!-- View mode toggle -->
-                <div class="flex rounded-md shadow-sm">
-                  <button
-                    @click="setViewMode('week')"
-                    :class="[
-                      viewMode === 'week'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50',
-                      'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
-                    ]"
-                  >
-                    周视图
-                  </button>
-                  <button
-                    @click="setViewMode('month')"
-                    :class="[
-                      viewMode === 'month'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50',
-                      'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
-                    ]"
-                  >
-                    月视图
-                  </button>
-                </div>
 
                 <!-- Date navigation -->
                 <div class="flex items-center gap-2">
@@ -82,15 +182,126 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-3">
-                <!-- Add event button -->
-                <button
-                  @click="openCreateModal"
-                  class="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                >
-                  <PlusIcon class="h-4 w-4" />
-                  添加日程
-                </button>
+              <!-- Right side: view mode and actions -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between min-[1280px]:justify-end gap-4">
+                <!-- View mode and navigation buttons -->
+                <div class="flex items-center gap-4">
+                  <!-- View mode toggle (button style for >= 1400px) -->
+                  <div class="hidden min-[1400px]:flex rounded-md shadow-sm">
+                    <button
+                      @click="setViewMode('week')"
+                      :class="[
+                        viewMode === 'week'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50',
+                        'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
+                      ]"
+                    >
+                      周视图
+                    </button>
+                    <button
+                      @click="setViewMode('month')"
+                      :class="[
+                        viewMode === 'month'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50',
+                        'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10'
+                      ]"
+                    >
+                      月视图
+                    </button>
+                  </div>
+
+                  <!-- View mode dropdown for < 1400px -->
+                  <div class="min-[1400px]:hidden">
+                    <Menu as="div" class="relative inline-block text-left">
+                      <div>
+                        <MenuButton class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                          {{ viewMode === 'week' ? '周' : '月' }}
+                          <ChevronDownIcon class="-mr-1 h-5 w-5 text-gray-400" />
+                        </MenuButton>
+                      </div>
+                      <transition
+                        enter-active-class="transition ease-out duration-100"
+                        enter-from-class="transform opacity-0 scale-95"
+                        enter-to-class="transform opacity-100 scale-100"
+                        leave-active-class="transition ease-in duration-75"
+                        leave-from-class="transform opacity-100 scale-100"
+                        leave-to-class="transform opacity-0 scale-95"
+                      >
+                        <MenuItems class="absolute left-0 z-10 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div class="py-1">
+                            <MenuItem v-slot="{ active }">
+                              <button
+                                @click="setViewMode('week')"
+                                :class="[
+                                  active ? 'bg-gray-100' : '',
+                                  viewMode === 'week' ? 'font-semibold' : '',
+                                  'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                                ]"
+                              >
+                                周视图
+                              </button>
+                            </MenuItem>
+                            <MenuItem v-slot="{ active }">
+                              <button
+                                @click="setViewMode('month')"
+                                :class="[
+                                  active ? 'bg-gray-100' : '',
+                                  viewMode === 'month' ? 'font-semibold' : '',
+                                  'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                                ]"
+                              >
+                                月视图
+                              </button>
+                            </MenuItem>
+                          </div>
+                        </MenuItems>
+                      </transition>
+                    </Menu>
+                  </div>
+
+                  <!-- Quick action buttons -->
+                  <div class="flex items-center gap-2">
+                    <button
+                      v-if="earliestScheduleStartDate"
+                      @click="jumpToScheduleStart"
+                      class="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
+                      title="跳转到开学时间"
+                    >
+                      开学
+                    </button>
+                    
+                    <button
+                      @click="jumpToToday"
+                      class="px-3 py-1.5 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
+                      title="跳转到今天"
+                    >
+                      今天
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="openAdjustmentModal"
+                    class="inline-flex items-center gap-x-2 rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"
+                    title="调休"
+                  >
+                    <CalendarDaysIcon class="h-4 w-4 flex-shrink-0" />
+                    <span class="hidden min-[1280px]:inline">调休</span>
+                  </button>
+
+                  <button
+                    @click="openCreateModal"
+                    class="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                    title="添加"
+                  >
+                    <PlusIcon class="h-4 w-4 flex-shrink-0" />
+                    <span class="hidden min-[1280px]:inline">添加</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -221,6 +432,15 @@
       @save="handleEventSave"
       @delete="handleEventDelete"
     />
+
+    <!-- Schedule Adjuster Modal -->
+    <ScheduleAdjuster
+      v-if="selectedScheduleId"
+      :is-visible="isAdjustmentModalOpen"
+      :schedule-id="selectedScheduleId"
+      @close="closeAdjustmentModal"
+      @adjustment-applied="handleAdjustmentApplied"
+    />
   </div>
 </template>
 
@@ -232,19 +452,26 @@ import { useScheduleStore } from '@/stores/schedule';
 import FilterSidebar from '../FilterSidebar.vue';
 import ScheduleCalendar from '../ScheduleCalendar.vue';
 import EventModal from '../EventModal.vue';
+import ScheduleAdjuster from '../ScheduleAdjuster.vue';
 import {
   Dialog,
   DialogPanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
   TransitionChild,
   TransitionRoot,
 } from '@headlessui/vue';
 import {
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   FunnelIcon,
   PlusIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
+  CalendarDaysIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDate, formatDateTime, addWeeks, addMonths } from '@/utils/date';
 import { getUserColor } from '@/utils/colors';
@@ -259,7 +486,9 @@ const currentDate = ref(new Date());
 const viewMode = ref<'week' | 'month'>('week');
 const mobileFiltersOpen = ref(false);
 const isEventModalOpen = ref(false);
+const isAdjustmentModalOpen = ref(false);
 const selectedEvent = ref<Event | null>(null);
+const selectedScheduleId = ref<number | null>(null);
 
 // Computed properties
 const currentDateTitle = computed(() => {
@@ -293,6 +522,40 @@ const hasActiveFilters = computed(() => {
          fs.eventKeyword.trim() !== '';
 });
 
+const earliestScheduleStartDate = computed(() => {
+  // 获取所有用户的最早开学时间
+  // 这里需要通过 API 获取所有课表的开学时间，然后取最早的
+  // 暂时返回 null，实际实现需要从 teamStore.userList 中获取所有用户的课表信息
+  // 或者添加一个新的 API 来获取所有课表的最早开学时间
+  
+  // 简化实现：如果有选中的用户，从他们的课表中获取最早开学时间
+  if (scheduleStore.filterState.selectedUserIds.length > 0) {
+    // 这里假设用户有 schedules 属性
+    const selectedUsers = teamStore.userList.filter(u => 
+      scheduleStore.filterState.selectedUserIds.includes(u.id)
+    );
+    
+    let earliestDate: Date | null = null;
+    for (const user of selectedUsers) {
+      if ((user as any).schedules && Array.isArray((user as any).schedules)) {
+        for (const schedule of (user as any).schedules) {
+          if (schedule.start_date) {
+            const startDate = new Date(schedule.start_date);
+            if (!earliestDate || startDate < earliestDate) {
+              earliestDate = startDate;
+            }
+          }
+        }
+      }
+    }
+    return earliestDate;
+  }
+  
+  // 如果没有选中用户，返回一个默认的开学时间（例如当前学期的开学时间）
+  // 这里可以根据实际需求调整
+  return null;
+});
+
 // Methods
 function setViewMode(mode: 'week' | 'month') {
   viewMode.value = mode;
@@ -308,6 +571,36 @@ function navigateDate(direction: number) {
   } else {
     currentDate.value = addMonths(currentDate.value, direction);
   }
+  
+  scheduleStore.setViewMode({
+    type: viewMode.value,
+    date: currentDate.value,
+  });
+  
+  // Update date range and fetch new data
+  scheduleStore.updateDateRangeFromView();
+  handleApplyFilter();
+}
+
+function jumpToScheduleStart() {
+  if (earliestScheduleStartDate.value) {
+    currentDate.value = new Date(earliestScheduleStartDate.value);
+    console.log(`跳转到开学时间: ${formatDisplayDate(currentDate.value)}`);
+    
+    scheduleStore.setViewMode({
+      type: viewMode.value,
+      date: currentDate.value,
+    });
+    
+    // Update date range and fetch new data
+    scheduleStore.updateDateRangeFromView();
+    handleApplyFilter();
+  }
+}
+
+function jumpToToday() {
+  currentDate.value = new Date();
+  console.log(`跳转到今天: ${formatDisplayDate(currentDate.value)}`);
   
   scheduleStore.setViewMode({
     type: viewMode.value,
@@ -387,6 +680,40 @@ async function handleEventDelete(eventId: number) {
     console.error('Failed to delete event:', err);
     // Error handling can be improved here
   }
+}
+
+// Schedule adjustment methods
+function openAdjustmentModal() {
+  // 对于管理员，如果有选中的用户，使用第一个用户的课表
+  // 否则提示需要先选择用户
+  if (scheduleStore.filterState.selectedUserIds.length > 0) {
+    const firstUserId = scheduleStore.filterState.selectedUserIds[0];
+    const user = teamStore.userList.find(u => u.id === firstUserId);
+    
+    // 获取该用户的第一个课表 ID
+    // 这里假设用户有 schedules 属性
+    if ((user as any)?.schedules && Array.isArray((user as any).schedules) && (user as any).schedules.length > 0) {
+      selectedScheduleId.value = (user as any).schedules[0].id;
+      isAdjustmentModalOpen.value = true;
+    } else {
+      console.warn('选中的用户没有课表');
+      alert('选中的用户没有课表，无法进行调休操作');
+    }
+  } else {
+    console.warn('请先选择一个用户');
+    alert('请先选择一个用户，才能进行调休操作');
+  }
+}
+
+function closeAdjustmentModal() {
+  isAdjustmentModalOpen.value = false;
+  selectedScheduleId.value = null;
+}
+
+async function handleAdjustmentApplied() {
+  // 调休操作成功后，重新加载数据
+  await scheduleStore.fetchFilteredEvents();
+  closeAdjustmentModal();
 }
 
 // Initialize

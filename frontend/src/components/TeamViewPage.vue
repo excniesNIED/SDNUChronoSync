@@ -140,21 +140,22 @@
               <!-- Quick action buttons -->
               <div class="flex items-center gap-2">
                 <button
+                  v-if="firstScheduleStartDate"
+                  @click="jumpToScheduleStart"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
+                  title="跳转到开学时间"
+                >
+                  <CalendarIcon class="h-3.5 w-3.5" />
+                  <span>开学</span>
+                </button>
+                
+                <button
                   @click="jumpToToday"
                   class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
                   title="跳转到今天"
                 >
                   <CalendarIcon class="h-3.5 w-3.5" />
                   <span>今天</span>
-                </button>
-                
-                <button
-                  @click="forceRefreshEvents"
-                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
-                  title="强制刷新数据"
-                >
-                  <ArrowPathIcon class="h-3.5 w-3.5" />
-                  <span>刷新</span>
                 </button>
               </div>
             </div>
@@ -333,7 +334,6 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon,
   CalendarIcon,
-  ArrowPathIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDisplayDate, addWeeks, addMonths } from '@/utils/date';
 import { getUserColor, generateEventColor } from '@/utils/colors';
@@ -353,6 +353,31 @@ const currentTeam = ref<Team | null>(null);
 const teamEvents = ref<Event[]>([]);
 
 // Computed properties
+const firstScheduleStartDate = computed(() => {
+  if (!currentTeam.value?.members || currentTeam.value.members.length === 0) {
+    return null;
+  }
+  
+  // 遍历所有成员的所有课表，找到最早的开学时间
+  let earliestDate: Date | null = null;
+  
+  for (const member of currentTeam.value.members) {
+    // 这里假设成员可能有 schedules 属性，如果没有则跳过
+    // 实际实现可能需要根据数据结构调整
+    if (member.schedules && Array.isArray(member.schedules)) {
+      for (const schedule of member.schedules) {
+        if (schedule.start_date) {
+          const startDate = new Date(schedule.start_date);
+          if (!earliestDate || startDate < earliestDate) {
+            earliestDate = startDate;
+          }
+        }
+      }
+    }
+  }
+  
+  return earliestDate;
+});
 const currentDateTitle = computed(() => {
   if (viewMode.value === 'week') {
     return `${formatDisplayDate(currentDate.value)} 周`;
@@ -437,6 +462,22 @@ function navigateDate(direction: number) {
   handleApplyFilter();
 }
 
+function jumpToScheduleStart() {
+  if (firstScheduleStartDate.value) {
+    currentDate.value = new Date(firstScheduleStartDate.value);
+    console.log(`跳转到开学时间: ${formatDisplayDate(currentDate.value)}`);
+    
+    scheduleStore.setViewMode({
+      type: viewMode.value,
+      date: currentDate.value,
+    });
+    
+    // Update date range and fetch new data
+    scheduleStore.updateDateRangeFromView();
+    handleApplyFilter();
+  }
+}
+
 function jumpToToday() {
   currentDate.value = new Date();
   console.log(`跳转到今天: ${formatDisplayDate(currentDate.value)}`);
@@ -449,22 +490,6 @@ function jumpToToday() {
   // Update date range and fetch new data
   scheduleStore.updateDateRangeFromView();
   handleApplyFilter();
-}
-
-async function forceRefreshEvents() {
-  if (!props.teamId) return;
-  
-  try {
-    console.log('强制刷新团队数据...');
-    
-    // Force reload team data
-    await loadTeamData();
-    
-    console.log('团队数据刷新完成');
-    
-  } catch (error) {
-    console.error('刷新团队数据失败:', error);
-  }
 }
 
 function handleFilterUpdate(newFilter: Partial<FilterState>) {

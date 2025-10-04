@@ -147,15 +147,6 @@
                   <CalendarIcon class="h-3.5 w-3.5" />
                   <span>今天</span>
                 </button>
-                
-                <button
-                  @click="forceRefreshEvents"
-                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md transition-colors"
-                  title="强制刷新数据"
-                >
-                  <ArrowPathIcon class="h-3.5 w-3.5" />
-                  <span>刷新</span>
-                </button>
               </div>
             </div>
 
