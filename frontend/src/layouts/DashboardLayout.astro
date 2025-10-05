@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Navigation from '../components/Navigation.vue';
+import Footer from '../components/Footer.vue';
 
 export interface Props {
   title: string;
@@ -11,7 +12,7 @@ const { title, description } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
-  <div class="min-h-screen bg-gray-50 overflow-x-hidden">
+  <div class="min-h-screen bg-gray-50 overflow-x-hidden flex flex-col">
     <!-- Loading overlay for authentication -->
     <div id="auth-loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
       <div class="text-center">
@@ -24,14 +25,18 @@ const { title, description } = Astro.props;
     </div>
     
     <!-- Main content (hidden until auth check completes) -->
-    <div id="main-content" class="hidden">
+    <div id="main-content" class="hidden flex flex-col flex-1">
       <Navigation client:load />
       
-      <main class="lg:pl-72 pt-16 lg:pt-0 overflow-x-hidden">
+      <main class="lg:pl-72 pt-16 lg:pt-0 overflow-x-hidden flex-1">
         <div class="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
           <slot />
         </div>
       </main>
+      
+      <div class="lg:pl-72">
+        <Footer client:load />
+      </div>
     </div>
   </div>
 

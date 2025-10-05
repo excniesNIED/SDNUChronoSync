@@ -1,10 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LoginForm from '../components/LoginForm.vue';
+import Footer from '../components/Footer.vue';
 ---
 
 <BaseLayout title="登录 - 时序同笺">
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
         <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-100">
@@ -35,4 +36,5 @@ import LoginForm from '../components/LoginForm.vue';
       </div>
     </div>
   </div>
+  <Footer client:load />
 </BaseLayout>

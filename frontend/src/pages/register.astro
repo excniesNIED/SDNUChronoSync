@@ -1,23 +1,12 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
 import RegisterForm from '../components/RegisterForm.vue';
+import Footer from '../components/Footer.vue';
 ---
 
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>用户注册 - 时序同笺</title>
-  </head>
-  <body class="bg-gray-50">
+<BaseLayout title="用户注册 - 时序同笺">
+  <div class="flex-1 bg-gray-50">
     <RegisterForm client:load />
-  </body>
-</html>
-
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-  }
-</style>
+  </div>
+  <Footer client:load />
+</BaseLayout>
