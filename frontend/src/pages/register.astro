@@ -4,7 +4,13 @@ import RegisterForm from '../components/RegisterForm.vue';
 import Footer from '../components/Footer.vue';
 ---
 
-<BaseLayout title="用户注册 - 时序同笺">
+<BaseLayout 
+  title="用户注册 - 时序同笺"
+  description="注册时序同笺账户，开始高效管理您的课表和日程。免费使用个人日程管理、团队协作等功能。"
+  noindex={true}
+>
+  <h1 class="sr-only">用户注册 - 时序同笺</h1>
+  
   <div class="flex-1 bg-gray-50">
     <RegisterForm client:load />
   </div>

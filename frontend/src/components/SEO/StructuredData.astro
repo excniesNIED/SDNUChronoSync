@@ -1,0 +1,36 @@
+---
+export interface Props {
+  type?: 'WebSite' | 'WebApplication' | 'Organization';
+  name?: string;
+  description?: string;
+  url?: string;
+  image?: string;
+}
+
+const { 
+  type = 'WebApplication',
+  name = '时序同笺',
+  description = '多用户课表与日程管理工具',
+  url = Astro.site?.toString() || Astro.url.origin,
+  image = new URL('/favicon.png', Astro.url.origin).href
+} = Astro.props;
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': type,
+  name: name,
+  description: description,
+  url: url,
+  image: image,
+  applicationCategory: 'ProductivityApplication',
+  operatingSystem: 'Web Browser',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'CNY'
+  }
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+

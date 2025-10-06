@@ -4,6 +4,9 @@ import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
 export default defineConfig({
+  // 网站URL，用于生成canonical链接和sitemap
+  // 部署时请更新为实际域名
+  site: process.env.SITE_URL || 'https://sxty.hxcn.space',
   output: 'static',
   integrations: [
     vue({
