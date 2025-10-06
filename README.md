@@ -5,6 +5,12 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://typescriptlang.org)
 
+## 🌐 在线访问
+
+**线上地址：[https://sxty.hxcn.space](https://sxty.hxcn.space)**
+
+欢迎访问在线版本，体验完整的课表与日程管理功能。
+
 ## 📋 项目简介
 
 时序同笺 (SDNUChronoSync) 是一个现代化的、全功能的多用户课表与日程管理 Web 应用，专为山东师范大学设计。支持个人多课表管理、高级调休功能、完整的团队协作系统，以及灵活的管理员控制功能。专为教育机构和团队协作场景设计。
