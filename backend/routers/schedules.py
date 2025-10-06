@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Union
 from datetime import date, datetime, timedelta
 import ics
+from io import StringIO
 
 from database import get_db
 from auth import get_current_user, get_current_admin_user
@@ -499,6 +500,147 @@ async def export_schedule_to_ics(
     }
     
     return Response(content=ics_content, headers=headers)
+
+
+@router.post("/import-ics")
+async def import_schedule_from_ics(
+    file: UploadFile = File(...),
+    schedule_id: int = Form(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """从ICS文件导入事件到指定课表"""
+    # 验证课表所有权
+    schedule = db.query(Schedule).filter(
+        Schedule.id == schedule_id,
+        Schedule.owner_id == current_user.id
+    ).first()
+    
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schedule not found or access denied"
+        )
+    
+    # 验证文件类型
+    if not file.filename.endswith('.ics'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Only .ics files are supported"
+        )
+    
+    try:
+        # 读取ICS文件内容
+        content = await file.read()
+        ics_content = content.decode('utf-8')
+        
+        # 解析ICS文件
+        calendar = ics.Calendar(ics_content)
+        
+        imported_count = 0
+        errors = []
+        
+        print(f"\n=== ICS导入调试信息 ===")
+        print(f"用户ID: {current_user.id} ({current_user.full_name})")
+        print(f"目标课表ID: {schedule_id} ({schedule.name})")
+        print(f"课表开始日期: {schedule.start_date}")
+        print(f"ICS文件包含事件数: {len(calendar.events)}")
+        
+        for ics_event in calendar.events:
+            try:
+                # 提取事件信息
+                title = ics_event.name or "未命名事件"
+                start_time = ics_event.begin.datetime if ics_event.begin else None
+                end_time = ics_event.end.datetime if ics_event.end else None
+                description = ics_event.description or ""
+                location = ics_event.location or ""
+                
+                if not start_time or not end_time:
+                    errors.append(f"事件 '{title}' 缺少时间信息")
+                    continue
+                
+                # 计算周数和星期几
+                if schedule.start_date:
+                    # 计算与课表开始日期的差异
+                    start_date = start_time.date()
+                    schedule_start = schedule.start_date
+                    
+                    days_diff = (start_date - schedule_start).days
+                    
+                    # 计算周数（从第1周开始）
+                    week_number = (days_diff // 7) + 1
+                    
+                    # 计算星期几（1=周一, 7=周日）
+                    # weekday(): 0=周一, 6=周日，所以 +1 后：1=周一, 7=周日
+                    day_of_week = start_date.weekday() + 1
+                    
+                    # 如果事件时间早于课表开始时间，跳过
+                    if week_number < 1:
+                        errors.append(f"事件 '{title}' 时间早于课表开始时间")
+                        continue
+                    
+                    # 生成周数输入格式
+                    weeks_input = str(week_number)
+                    weeks_display = f"第{week_number}周"
+                else:
+                    # 如果课表没有开始日期，使用事件的星期几
+                    day_of_week = start_time.weekday() + 1  # 1=周一, 7=周日
+                    weeks_input = "1"
+                    weeks_display = "第1周"
+                
+                # 创建事件
+                new_event = Event(
+                    schedule_id=schedule_id,
+                    title=title,
+                    description=description,
+                    location=location,
+                    start_time=start_time,
+                    end_time=end_time,
+                    day_of_week=day_of_week,
+                    weeks_input=weeks_input,
+                    weeks_display=weeks_display
+                )
+                
+                db.add(new_event)
+                imported_count += 1
+                
+                print(f"  ✓ 导入事件: {title} (第{week_number}周 周{day_of_week})")
+                
+            except Exception as e:
+                error_msg = f"导入事件 '{ics_event.name if hasattr(ics_event, 'name') else 'unknown'}' 失败: {str(e)}"
+                errors.append(error_msg)
+                print(f"  ✗ {error_msg}")
+                continue
+        
+        # 提交所有更改
+        db.commit()
+        
+        print(f"\n=== ICS导入完成 ===")
+        print(f"成功导入: {imported_count} 个事件")
+        print(f"导入失败: {len(errors)} 个事件")
+        
+        response_message = f"成功导入 {imported_count} 个事件"
+        if errors:
+            response_message += f"，{len(errors)} 个事件导入失败"
+        
+        return {
+            "success": True,
+            "message": response_message,
+            "count": imported_count,
+            "errors": errors if errors else None
+        }
+        
+    except ics.parse.ParseError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"ICS文件解析失败: {str(e)}"
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"导入失败: {str(e)}"
+        )
 
 
 @router.post("/{schedule_id}/adjustments", response_model=AdjustmentOperationResponse, status_code=status.HTTP_201_CREATED)
