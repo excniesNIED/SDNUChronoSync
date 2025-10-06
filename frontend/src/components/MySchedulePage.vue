@@ -24,7 +24,7 @@
                 leave-from-class="transform opacity-100 scale-100"
                 leave-to-class="transform opacity-0 scale-95"
               >
-                <MenuItems class="absolute left-0 z-10 mt-2 w-80 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <MenuItems class="absolute left-0 z-50 mt-2 w-80 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div class="px-4 py-3">
                     <p class="text-sm font-medium text-gray-900">我的课表</p>
                   </div>
@@ -55,13 +55,50 @@
                           </div>
                         </div>
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                          <button
-                            @click.stop="exportSchedule(schedule.id)"
-                            class="p-1 text-gray-400 hover:text-blue-600 rounded"
-                            title="导出"
-                          >
-                            <ArrowDownTrayIcon class="h-4 w-4" />
-                          </button>
+                          <Menu as="div" class="relative inline-block text-left">
+                            <MenuButton
+                              @click.stop
+                              class="p-1 text-gray-400 hover:text-blue-600 rounded"
+                              title="导出"
+                            >
+                              <ArrowDownTrayIcon class="h-4 w-4" />
+                            </MenuButton>
+                            <transition
+                              enter-active-class="transition ease-out duration-100"
+                              enter-from-class="transform opacity-0 scale-95"
+                              enter-to-class="transform opacity-100 scale-100"
+                              leave-active-class="transition ease-in duration-75"
+                              leave-from-class="transform opacity-100 scale-100"
+                              leave-to-class="transform opacity-0 scale-95"
+                            >
+                              <MenuItems class="absolute right-0 z-50 mt-2 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <div class="py-1">
+                                  <MenuItem v-slot="{ active }">
+                                    <button
+                                      @click.stop="exportSchedule(schedule.id)"
+                                      :class="[
+                                        active ? 'bg-gray-100' : '',
+                                        'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                                      ]"
+                                    >
+                                      导出 ICS
+                                    </button>
+                                  </MenuItem>
+                                  <MenuItem v-slot="{ active }">
+                                    <button
+                                      @click.stop="exportScheduleImage(schedule.id)"
+                                      :class="[
+                                        active ? 'bg-gray-100' : '',
+                                        'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                                      ]"
+                                    >
+                                      导出图片
+                                    </button>
+                                  </MenuItem>
+                                </div>
+                              </MenuItems>
+                            </transition>
+                          </Menu>
                           <button
                             @click.stop="openEditScheduleModal(schedule)"
                             class="p-1 text-gray-400 hover:text-gray-600 rounded"
@@ -112,7 +149,7 @@
                 leave-from-class="transform opacity-100 scale-100"
                 leave-to-class="transform opacity-0 scale-95"
               >
-                <MenuItems class="absolute left-0 z-10 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <MenuItems class="absolute left-0 z-50 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div class="py-1">
                     <MenuItem v-slot="{ active }">
                       <button
@@ -218,7 +255,7 @@
       </div>
 
       <!-- Desktop layout (>= 640px) -->
-      <div class="hidden sm:flex flex-col min-[1200px]:flex-row min-[1200px]:items-center min-[1200px]:justify-between gap-4 overflow-x-hidden">
+      <div class="hidden sm:flex flex-col min-[1200px]:flex-row min-[1200px]:items-center min-[1200px]:justify-between gap-4">
         <!-- Top row for medium screens, left side for large screens -->
         <div class="flex flex-col min-[1200px]:flex-row min-[1200px]:items-center gap-4">
           <!-- Schedule selector -->
@@ -240,7 +277,7 @@
                 leave-from-class="transform opacity-100 scale-100"
                 leave-to-class="transform opacity-0 scale-95"
               >
-                <MenuItems class="absolute left-0 z-10 mt-2 w-80 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <MenuItems class="absolute left-0 z-50 mt-2 w-80 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div class="px-4 py-3">
                     <p class="text-sm font-medium text-gray-900">我的课表</p>
                   </div>
@@ -271,13 +308,50 @@
                           </div>
                         </div>
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                          <button
-                            @click.stop="exportSchedule(schedule.id)"
-                            class="p-1 text-gray-400 hover:text-blue-600 rounded"
-                            title="导出"
-                          >
-                            <ArrowDownTrayIcon class="h-4 w-4" />
-                          </button>
+                          <Menu as="div" class="relative inline-block text-left">
+                            <MenuButton
+                              @click.stop
+                              class="p-1 text-gray-400 hover:text-blue-600 rounded"
+                              title="导出"
+                            >
+                              <ArrowDownTrayIcon class="h-4 w-4" />
+                            </MenuButton>
+                            <transition
+                              enter-active-class="transition ease-out duration-100"
+                              enter-from-class="transform opacity-0 scale-95"
+                              enter-to-class="transform opacity-100 scale-100"
+                              leave-active-class="transition ease-in duration-75"
+                              leave-from-class="transform opacity-100 scale-100"
+                              leave-to-class="transform opacity-0 scale-95"
+                            >
+                              <MenuItems class="absolute right-0 z-50 mt-2 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <div class="py-1">
+                                  <MenuItem v-slot="{ active }">
+                                    <button
+                                      @click.stop="exportSchedule(schedule.id)"
+                                      :class="[
+                                        active ? 'bg-gray-100' : '',
+                                        'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                                      ]"
+                                    >
+                                      导出 ICS
+                                    </button>
+                                  </MenuItem>
+                                  <MenuItem v-slot="{ active }">
+                                    <button
+                                      @click.stop="exportScheduleImage(schedule.id)"
+                                      :class="[
+                                        active ? 'bg-gray-100' : '',
+                                        'group flex w-full items-center px-4 py-2 text-sm text-gray-700'
+                                      ]"
+                                    >
+                                      导出图片
+                                    </button>
+                                  </MenuItem>
+                                </div>
+                              </MenuItems>
+                            </transition>
+                          </Menu>
                           <button
                             @click.stop="openEditScheduleModal(schedule)"
                             class="p-1 text-gray-400 hover:text-gray-600 rounded"
@@ -375,7 +449,7 @@
                   leave-from-class="transform opacity-100 scale-100"
                   leave-to-class="transform opacity-0 scale-95"
                 >
-                  <MenuItems class="absolute left-0 z-10 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <MenuItems class="absolute left-0 z-50 mt-2 w-32 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div class="py-1">
                       <MenuItem v-slot="{ active }">
                         <button
@@ -572,6 +646,7 @@ import {
 import { formatDisplayDate, formatDisplayDateTime, addWeeks, addMonths } from '@/utils/date';
 import { getUserColor } from '@/utils/colors';
 import type { Event, CalendarEvent, ScheduleResponse } from '@/types';
+import html2canvas from 'html2canvas';
 
 const authStore = useAuthStore();
 const scheduleStore = useScheduleStore();
@@ -778,6 +853,222 @@ async function exportSchedule(scheduleId?: number) {
   } else {
     await scheduleStore.exportSchedule();
   }
+}
+
+// 导出课表图片
+async function exportScheduleImage(scheduleId?: number) {
+  try {
+    // 暂时切换到指定课表
+    const originalActiveId = scheduleStore.activeScheduleId;
+    if (scheduleId && scheduleId !== scheduleStore.activeScheduleId) {
+      scheduleStore.setActiveSchedule(scheduleId);
+      // 等待事件数据加载
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // 获取课表信息
+    const schedule = scheduleStore.activeSchedule;
+    if (!schedule) {
+      console.error('没有活跃的课表');
+      return;
+    }
+
+    // 计算当前是第几周
+    const now = new Date();
+    const startDate = new Date(schedule.start_date);
+    const daysDiff = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const currentWeek = Math.floor(daysDiff / 7) + 1;
+
+    // 创建导出容器
+    const exportContainer = document.createElement('div');
+    exportContainer.style.position = 'fixed';
+    exportContainer.style.left = '-9999px';
+    exportContainer.style.top = '0';
+    exportContainer.style.width = '1200px';
+    exportContainer.style.background = 'white';
+    exportContainer.style.padding = '40px';
+    document.body.appendChild(exportContainer);
+
+    // 生成课表HTML
+    exportContainer.innerHTML = generateScheduleHTML(scheduleStore.currentMyEvents, schedule, currentWeek);
+
+    // 使用html2canvas生成图片
+    const canvas = await html2canvas(exportContainer, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
+
+    // 清理导出容器
+    document.body.removeChild(exportContainer);
+
+    // 下载图片
+    const link = document.createElement('a');
+    link.download = `${schedule.name}-课表-${new Date().toISOString().split('T')[0]}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    // 恢复原来的活跃课表
+    if (scheduleId && scheduleId !== originalActiveId && originalActiveId) {
+      scheduleStore.setActiveSchedule(originalActiveId);
+    }
+  } catch (error) {
+    console.error('导出图片失败:', error);
+  }
+}
+
+// 生成课表HTML用于导出
+function generateScheduleHTML(events: Event[], schedule: ScheduleResponse, currentWeek: number): string {
+  // 课表时间段
+  const timeSlots = [
+    { period: '第1节', start: '08:20', end: '09:05' },
+    { period: '第2节', start: '09:10', end: '09:55' },
+    { period: '第3节', start: '10:10', end: '10:55' },
+    { period: '第4节', start: '11:00', end: '11:45' },
+    { period: '第5节', start: '14:00', end: '14:45' },
+    { period: '第6节', start: '14:50', end: '15:35' },
+    { period: '第7节', start: '15:50', end: '16:35' },
+    { period: '第8节', start: '16:40', end: '17:25' },
+    { period: '第9节', start: '19:00', end: '19:45' },
+    { period: '第10节', start: '19:45', end: '20:30' }
+  ];
+
+  const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+  // 按星期分组事件
+  const eventsByDay: { [key: number]: Event[] } = {};
+  for (let i = 1; i <= 7; i++) {
+    eventsByDay[i] = [];
+  }
+
+  events.forEach(event => {
+    if (event.day_of_week && event.day_of_week >= 1 && event.day_of_week <= 7) {
+      eventsByDay[event.day_of_week].push(event);
+    }
+  });
+
+  // 获取用户信息
+  const className = authStore.user?.class_name || '';
+  const userName = authStore.user?.full_name || authStore.user?.student_id || '我';
+  const displayName = className ? `${className}${userName}` : userName;
+
+  // 生成HTML
+  let html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif;">
+      <h1 style="text-align: center; margin-bottom: 10px; font-size: 28px; color: #1f2937;">${displayName}的${schedule.name}课表</h1>
+      <p style="text-align: center; margin-bottom: 30px; color: #6b7280; font-size: 14px;">
+        ${schedule.total_weeks}周 • 从 ${formatDisplayDate(schedule.start_date)} • 当前第${currentWeek}周
+      </p>
+      <table style="width: 100%; border-collapse: collapse; border: 2px solid #e5e7eb;">
+        <thead>
+          <tr style="background: #f3f4f6;">
+            <th style="border: 1px solid #e5e7eb; padding: 12px; width: 80px; text-align: center; font-size: 14px; color: #374151;">节次</th>
+  `;
+
+  days.forEach(day => {
+    html += `<th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-size: 14px; color: #374151;">${day}</th>`;
+  });
+
+  html += `
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  // 为每个时间段生成行
+  timeSlots.forEach((slot, slotIndex) => {
+    html += `
+      <tr>
+        <td style="border: 1px solid #e5e7eb; padding: 8px; text-align: center; font-size: 12px; color: #6b7280; background: #f9fafb;">
+          <div style="font-weight: 500;">${slot.period}</div>
+          <div style="font-size: 10px; margin-top: 2px;">${slot.start}-${slot.end}</div>
+        </td>
+    `;
+
+    // 为每一天生成单元格
+    for (let dayIndex = 1; dayIndex <= 7; dayIndex++) {
+      const dayEvents = eventsByDay[dayIndex] || [];
+      
+      // 找出在这个时间段的课程
+      const slotEvents = dayEvents.filter(event => {
+        const startTime = new Date(event.start_time);
+        const startTimeStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`;
+        return startTimeStr >= slot.start && startTimeStr < slot.end;
+      });
+
+      if (slotEvents.length > 0) {
+        // 合并相同课程
+        const uniqueEvents = new Map<string, Event>();
+        slotEvents.forEach(event => {
+          const key = `${event.title}_${event.instructor || ''}_${event.location || ''}`;
+          if (!uniqueEvents.has(key)) {
+            uniqueEvents.set(key, event);
+          }
+        });
+
+        const event = Array.from(uniqueEvents.values())[0];
+        const userColor = getUserColor(event.owner?.id || event.schedule_id);
+        
+        // 检查是否是当前周的课程
+        const weeks = parseWeeks(event.weeks_input || '');
+        const isCurrentWeek = weeks.includes(currentWeek);
+        const opacity = isCurrentWeek ? '1' : '0.55'; // 非本周课程45%透明度
+
+        html += `
+          <td style="border: 1px solid #e5e7eb; padding: 8px; background-color: ${userColor.bg}; opacity: ${opacity};">
+            <div style="color: ${userColor.text}; font-size: 13px; font-weight: 600; margin-bottom: 4px; line-height: 1.2;">${event.title}</div>
+        `;
+
+        if (event.instructor) {
+          html += `<div style="color: ${userColor.text}; font-size: 11px; margin-bottom: 2px; opacity: 0.9;">👨‍🏫 ${event.instructor}</div>`;
+        }
+        if (event.location) {
+          html += `<div style="color: ${userColor.text}; font-size: 11px; margin-bottom: 2px; opacity: 0.9;">📍 ${event.location}</div>`;
+        }
+        if (event.weeks_display) {
+          html += `<div style="color: ${userColor.text}; font-size: 11px; opacity: 0.9;">📅 ${event.weeks_display}</div>`;
+        }
+
+        html += `</td>`;
+      } else {
+        html += `<td style="border: 1px solid #e5e7eb; padding: 8px;"></td>`;
+      }
+    }
+
+    html += `</tr>`;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  return html;
+}
+
+// 解析周数字符串（例如："1,2,3-5,7"）
+function parseWeeks(weeksInput: string): number[] {
+  const weeks: number[] = [];
+  if (!weeksInput) return weeks;
+
+  const parts = weeksInput.split(',');
+  parts.forEach(part => {
+    part = part.trim();
+    if (part.includes('-')) {
+      const [start, end] = part.split('-').map(s => parseInt(s.trim()));
+      for (let i = start; i <= end; i++) {
+        weeks.push(i);
+      }
+    } else {
+      const week = parseInt(part);
+      if (!isNaN(week)) {
+        weeks.push(week);
+      }
+    }
+  });
+
+  return weeks;
 }
 
 // Schedule management methods
