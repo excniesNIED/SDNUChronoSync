@@ -248,7 +248,7 @@ SDNUChronoSync/
 │   │   └── uploader_service.py  # 文件上传服务
 │   └── routers/            # API 路由
 │       ├── auth.py         # 认证路由
-│       ├── schedule.py     # 个人日程路由 (废弃)
+│       ├── schedule.py     # 个人日程路由
 │       ├── schedules.py    # 多课表+调休管理+ICS导入/导出路由
 │       ├── team.py         # 完整团队管理路由
 │       ├── admin.py        # 管理员路由
@@ -398,7 +398,7 @@ SDNUChronoSync/
 - `DELETE /api/admin/users/{id}` - 删除用户
 - `GET /api/admin/settings` - 获取系统设置
 - `POST /api/admin/settings` - 更新系统设置
-- `POST /api/admin/settings/test-alist` - 测试AList连接
+- `POST /api/admin/settings/test-alist` - 测试AList存储连接
 
 ## 📥 课表导入功能
 
@@ -808,6 +808,24 @@ npm run dev
 - 📧 **邮箱联系**：[hxcn@cnies.org](mailto:hxcn@cnies.org)
 
 ## 📝 更新日志
+
+### v2.2.1 (2025-10-07) - 代码清理与优化
+
+**优化改进**
+
+- 🧹 **代码清理**：移除所有测试和废弃代码
+  - 删除示例用户创建代码
+  - 移除数据库迁移脚本
+  - 清理控制台调试日志
+  - 删除临时捕获文件和备份文件
+- ✅ **功能验证**：完成前后端功能测试
+  - 后端API接口测试通过
+  - 前端页面加载正常
+  - 用户认证功能正常
+- 📖 **文档更新**：更新README.md
+  - 移除测试账户相关说明
+  - 更新项目结构描述
+  - 修正API接口文档说明
 
 ### v2.2.0 (2025-10-07) - ICS导入功能与UI优化
 
