@@ -26,14 +26,9 @@ ENV NODE_ENV=production
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
-    curl \
     nginx \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
-
-# 安装 Node.js (用于服务前端构建结果)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
 
 # 创建应用目录
 WORKDIR /app
