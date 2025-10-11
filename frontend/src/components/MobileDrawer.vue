@@ -44,7 +44,10 @@
             <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
               <!-- Logo -->
               <div class="flex h-16 shrink-0 items-center justify-between">
-                <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
+                <div class="flex items-center gap-2">
+                  <img src="/favicon.svg" alt="时序同笺" class="h-8 w-8" />
+                  <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
+                </div>
                 <!-- Theme Toggle -->
                 <button
                   @click="themeStore.toggleTheme()"

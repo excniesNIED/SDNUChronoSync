@@ -2,8 +2,8 @@
   <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
-        <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-100">
-          <UserPlusIcon class="h-6 w-6 text-primary-600" />
+        <div class="mx-auto flex items-center justify-center">
+          <img src="/favicon.svg" alt="时序同笺" class="h-12 w-12" />
         </div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
           注册时序同笺账户

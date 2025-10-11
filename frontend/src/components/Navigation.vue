@@ -4,7 +4,10 @@
     <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-sm ring-1 ring-gray-900/5">
       <!-- Logo -->
       <div class="flex h-16 shrink-0 items-center justify-between">
-        <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
+        <div class="flex items-center gap-2">
+          <img src="/favicon.svg" alt="时序同笺" class="h-8 w-8" />
+          <h1 class="text-2xl font-bold text-primary-600">时序同笺</h1>
+        </div>
         <!-- Theme Toggle -->
         <button
           @click="themeStore.toggleTheme()"
@@ -127,7 +130,10 @@
 
       <div class="flex flex-1 gap-x-2 sm:gap-x-4 self-stretch lg:gap-x-6">
         <div class="flex flex-1 items-center min-w-0">
-          <h1 class="text-base sm:text-lg font-semibold text-gray-900 truncate">时序同笺</h1>
+          <div class="flex items-center gap-2">
+            <img src="/favicon.svg" alt="时序同笺" class="h-6 w-6 flex-shrink-0" />
+            <h1 class="text-base sm:text-lg font-semibold text-gray-900 truncate">时序同笺</h1>
+          </div>
         </div>
         
         <!-- Mobile theme toggle -->
